@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naturbesök</title>
+<style>
+:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
+h1{font:600 1.9rem/1.15 "Iowan Old Style",Charter,Georgia,serif;margin:.2rem 0 1rem}
+h2{font:600 1.15rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:2rem 0 .5rem}
+label{display:block;color:var(--mute);font-size:.9rem;margin-bottom:.25rem}
+input{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--card);font:inherit;color:inherit}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--moss);padding:.65rem 1rem;background:var(--moss);color:#fff}
+button.ghost{background:transparent;color:var(--moss)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--bark);outline-offset:2px}
+#find{width:100%;margin:1rem 0 .5rem;padding:.9rem;font-size:1.05rem}
+#status{color:var(--mute);min-height:1.5rem;margin:.25rem 0}
+#status.warn,.err{color:var(--warn)}
+.hit{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--moss);border-radius:6px;padding:.8rem 1rem;margin:.6rem 0;display:flex;gap:.75rem;align-items:center}
+.hit.other{border-left-color:var(--line)}
+.hit div{flex:1;min-width:0}
+.hit strong{display:block;overflow-wrap:anywhere}
+.hit span,.v span{color:var(--mute);font-size:.9rem}
+.hit.done{border-left-color:var(--bark)}
+.v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
+#more{margin-top:.5rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Naturbesök</h1>
+<label for="user">Ditt namn</label>
+<input id="user" autocomplete="name" placeholder="Så här sparas dina besök">
+<button id="find">Var är jag?</button>
+<p id="status" aria-live="polite"></p>
+<div id="hits"></div>
+<button id="more" class="ghost" hidden></button>
+<div id="other" hidden></div>
+<h2 id="vh">Dina besök</h2>
+<div id="visits"></div>
+</main>
+<script>
+// ---- Inställningar ----
+const CFG = {
+  wfs: "https://geodata.naturvardsverket.se/inspire/ps/wfs",
+  sheet: "https://script.google.com/macros/s/AKfycbwyGoJqdkG90khVZG2So5hR1ArfRf3ITGnb3s6rl7ZEf1xqcbtERe40Y5HtWbStSZ8beQ/exec"
+};
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)) } catch {} }
+};
+let user = store.get("user", ""), visits = store.get("visits", []), pos = null, hits = [];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function label(scheme, des){
+  if (scheme === "IUCN") return des === "nationalPark" ? "Nationalpark" : "Naturreservat";
+  if (scheme === "natura2000") return "Natura 2000";
+  if (scheme === "ramsar") return "Ramsar";
+  if (scheme.startsWith("UNESCO")) return "Biosfärområde";
+  return des || scheme || "Skyddat område";
+}
+
+function flat(f){
+  const p = f.properties || {}, d = p.siteDesignation?.DesignationType || {};
+  const lid = p.inspireID?.localId || f.id;
+  const n2k = lid.match(/^(SE\.SWEPA\.SE\d+)\.\d+$/); // .1 och .2 är två direktiv för samma område
+  const scheme = d.designationScheme?.["@href"] || "", des = d.designation?.["@href"] || "";
+  const raw = p.siteName?.GeographicalName?.spelling?.text || "Namnlöst område";
+  const rn = raw.match(/^(\d{5,})\s+(.*)$/);
+  const id = n2k ? n2k[1] : lid;
+  return { key: scheme + ":" + id, id, scheme, des, name: rn ? rn[2] : raw, typ: label(scheme, des), skydd: scheme === "IUCN" };
+}
+
+function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.className = warn ? "warn" : ""; }
+
+function find(){
+  if (!user) { setStatus("Skriv ditt namn först.", true); $("#user").focus(); return; }
+  if (!navigator.geolocation) { setStatus("Webbläsaren saknar stöd för position.", true); return; }
+  setStatus("Hämtar position…"); $("#find").disabled = true;
+  const q = new URLSearchParams(location.search), tl = parseFloat(q.get("lat")), tn = parseFloat(q.get("lon"));
+  const ok = async g => {
+    pos = { lat: g.coords.latitude, lon: g.coords.longitude, acc: Math.round(g.coords.accuracy) };
+    setStatus("Frågar Naturvårdsverket…");
+    const bb = `${pos.lat},${pos.lon},${pos.lat},${pos.lon},urn:ogc:def:crs:EPSG::4258`;
+    const url = `${CFG.wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=ps:ProtectedSite&count=20&outputFormat=application/json&bbox=${bb}`;
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json(), seen = new Set();
+      hits = (j.features || []).map(flat).filter(h => !seen.has(h.key) && seen.add(h.key));
+      const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
+      setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
+      render();
+    } catch (e) {
+      setStatus(`Kunde inte hämta träffar (${e.message}). Vid ett CORS-fel måste anropet gå via Apps Script.`, true);
+    }
+    $("#find").disabled = false;
+  };
+  if (!isNaN(tl) && !isNaN(tn)) return ok({ coords: { latitude: tl, longitude: tn, accuracy: 5 } });
+  navigator.geolocation.getCurrentPosition(ok, err => { setStatus("Ingen position: " + err.message, true); $("#find").disabled = false; },
+  { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+
+const hitHtml = h => {
+  const done = visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0,10) === new Date().toISOString().slice(0,10));
+  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><strong>${esc(h.name)}</strong><span>${esc(h.typ)}</span></div>
+  <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
+};
+
+function render(){
+  const main = hits.filter(h => h.skydd), rest = hits.filter(h => !h.skydd);
+  $("#hits").innerHTML = main.map(hitHtml).join("");
+  $("#other").innerHTML = rest.map(hitHtml).join("");
+  const m = $("#more"); m.hidden = !rest.length;
+  m.textContent = ($("#other").hidden ? "Visa " : "Dölj ") + rest.length + " andra skyddsformer";
+  const seen = new Set(visits.map(v => v.scheme + ":" + v.id));
+  $("#vh").textContent = `Dina besök (${seen.size} olika platser)`;
+  $("#visits").innerHTML = visits.length ? visits.map(v =>
+    `<div class="v"><div>${esc(v.namn)}<br><span>${esc(v.typ)}</span></div><span>${new Date(v.datum).toLocaleDateString("sv-SE")}</span></div>`).join("")
+    : `<p><span class="err" style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
+}
+
+async function logVisit(key){
+  const h = hits.find(x => x.key === key); if (!h) return;
+  const row = { datum: new Date().toISOString(), user, id: h.id, scheme: h.scheme, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc };
+  visits.unshift(row); store.set("visits", visits); render();
+  if (CFG.sheet) {
+    try { await fetch(CFG.sheet, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) }); }
+    catch { setStatus("Sparades på enheten men inte i Google Sheets.", true); }
+  }
+}
+
+async function sync(){
+  if (!CFG.sheet || !user) return;
+  try {
+    const r = await fetch(CFG.sheet + "?user=" + encodeURIComponent(user));
+    const rows = await r.json();
+    if (Array.isArray(rows)) { visits = rows; store.set("visits", visits); render(); }
+  } catch {}
+}
+
+document.addEventListener("click", e => { const k = e.target.dataset?.k; if (k) logVisit(k); });
+$("#find").addEventListener("click", find);
+$("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
+$("#user").value = user;
+$("#user").addEventListener("change", e => { user = e.target.value.trim(); store.set("user", user); sync(); });
+render(); sync();
+</script>
+</body>
+</html>
