@@ -135,7 +135,9 @@ function initMap(){
   const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: .8, attribution: "Naturvårdsverket" });
   const over = { "Naturreservat": wms("PS.ProtectedSites.NR"), "Nationalparker": wms("PS.ProtectedSites.NP") };
   Object.values(over).forEach(l => l.addTo(map));
-  L.control.layers({ "OpenTopoMap": topo, "Satellit (Esri)": sat }, over).addTo(map);
+  const ctl = L.control.layers({ "OpenTopoMap": topo, "Satellit (Esri)": sat }, over).addTo(map);
+  areaLayer = L.layerGroup().addTo(map);
+  ctl.addOverlay(areaLayer, "Besökta områden");
   pins = L.layerGroup().addTo(map);
 }
 function showMe(lat, lon, acc){
@@ -164,6 +166,32 @@ function drawPins(){
     L.circleMarker([lat, lon], { radius: 7, color: "#7a5c3e", weight: 2, fillColor: "#7a5c3e", fillOpacity: .8 })
       .bindPopup(`<strong>${esc(v.namn)}</strong><br>${esc(v.typ)}`).addTo(pins);
   });
+}
+
+let areaLayer;
+const drawn = new Set(), geoCache = new Map();
+// Hämtar området där besöket loggades och väljer det objekt som matchar sparat ID.
+async function fetchArea(v){
+  try {
+    const p = `${+v.lat},${+v.lon}`;
+    const r = await fetch(`${CFG.wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=ps:ProtectedSite&count=20&outputFormat=application/json&bbox=${p},${p},urn:ogc:def:crs:EPSG::4258`);
+    const j = await r.json();
+    return (j.features || []).find(f => { const h = flat(f); return h.scheme === v.scheme && h.id === v.id; }) || null;
+  } catch { return null; }
+}
+async function drawAreas(){
+  if (!areaLayer) return;
+  const first = new Map();
+  visits.forEach(v => { const k = v.scheme + ":" + v.id; if (!first.has(k) && !isNaN(+v.lat) && !isNaN(+v.lon)) first.set(k, v); });
+  for (const [k, v] of first) {
+    if (drawn.has(k)) continue;
+    if (!geoCache.has(k)) geoCache.set(k, fetchArea(v));
+    const f = await geoCache.get(k);
+    if (!f || drawn.has(k)) continue;
+    drawn.add(k);
+    L.geoJSON(f, { style: { color: "#c2410c", weight: 3, fillColor: "#c2410c", fillOpacity: .3 } })
+      .bindPopup(`<strong>${esc(v.namn)}</strong><br>${esc(v.typ)}`).addTo(areaLayer);
+  }
 }
 
 const ORDER = ["Nationalpark", "Naturreservat", "Natura 2000", "Ramsar", "Biosfärområde"];
@@ -195,6 +223,7 @@ function render(){
       `<div class="v"><div>${esc(e.namn)}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}</span></div>`).join("")).join("")
     : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
   drawPins();
+  drawAreas();
 }
 
 async function logVisit(key){
