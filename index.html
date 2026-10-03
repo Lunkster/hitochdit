@@ -48,8 +48,8 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <h2>Karta</h2>
 <button id="loc" class="ghost">Centrera på min position</button>
 <div id="map" role="region" aria-label="Karta"></div>
-<h2 id="vh">Dina besök</h2>
-<div id="visits"></div>
+<button id="vb" class="ghost" style="width:100%;margin-top:1.5rem">Mina besök</button>
+<div id="visits" hidden></div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -65,7 +65,14 @@ const store = {
   get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)) } catch {} }
 };
-let user = store.get("user", ""), visits = store.get("visits", []), pos = null, hits = [];
+let user = store.get("user", ""), visits = store.get("visits:" + user, []), pos = null, hits = [];
+function setUser(n){
+  n = n.trim(); if (n === user) return;
+  user = n; store.set("user", user);
+  visits = store.get("visits:" + user, []);
+  if (pins) pins.clearLayers();
+  render(); sync();
+}
 const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function label(scheme, des){
@@ -84,12 +91,13 @@ function flat(f){
   const raw = p.siteName?.GeographicalName?.spelling?.text || "Namnlöst område";
   const rn = raw.match(/^(\d{5,})\s+(.*)$/);
   const id = n2k ? n2k[1] : lid;
-  return { key: scheme + ":" + id, id, scheme, des, name: rn ? rn[2] : raw, typ: label(scheme, des), skydd: scheme === "IUCN" };
+  return { key: scheme + ":" + id, id, scheme, des, name: rn ? rn[2] : raw, typ: label(scheme, des), skydd: scheme === "IUCN", nvrid: rn ? rn[1] : "" };
 }
 
 function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.className = warn ? "warn" : ""; }
 
 function find(){
+  setUser($("#user").value);
   if (!user) { setStatus("Skriv ditt namn först.", true); $("#user").focus(); return; }
   if (!navigator.geolocation) { setStatus("Webbläsaren saknar stöd för position.", true); return; }
   setStatus("Hämtar position…"); $("#find").disabled = true;
@@ -135,9 +143,9 @@ function initMap(){
   const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: .8, attribution: "Naturvårdsverket" });
   const over = { "Naturreservat": wms("PS.ProtectedSites.NR"), "Nationalparker": wms("PS.ProtectedSites.NP") };
   Object.values(over).forEach(l => l.addTo(map));
-  const ctl = L.control.layers({ "OpenTopoMap": topo, "Satellit (Esri)": sat }, over).addTo(map);
-  areaLayer = L.layerGroup().addTo(map);
-  ctl.addOverlay(areaLayer, "Besökta områden");
+  ctl = L.control.layers({ "OpenTopoMap": topo, "Satellit (Esri)": sat }, over).addTo(map);
+  hiGroup = L.layerGroup().addTo(map);
+  ctl.addOverlay(hiGroup, "Besökta områden");
   pins = L.layerGroup().addTo(map);
 }
 function showMe(lat, lon, acc){
@@ -168,30 +176,28 @@ function drawPins(){
   });
 }
 
-let areaLayer;
-const drawn = new Set(), geoCache = new Map();
-// Hämtar området där besöket loggades och väljer det objekt som matchar sparat ID.
-async function fetchArea(v){
-  try {
-    const p = `${+v.lat},${+v.lon}`;
-    const r = await fetch(`${CFG.wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=ps:ProtectedSite&count=20&outputFormat=application/json&bbox=${p},${p},urn:ogc:def:crs:EPSG::4258`);
-    const j = await r.json();
-    return (j.features || []).find(f => { const h = flat(f); return h.scheme === v.scheme && h.id === v.id; }) || null;
-  } catch { return null; }
-}
-async function drawAreas(){
-  if (!areaLayer) return;
-  const first = new Map();
-  visits.forEach(v => { const k = v.scheme + ":" + v.id; if (!first.has(k) && !isNaN(+v.lat) && !isNaN(+v.lon)) first.set(k, v); });
-  for (const [k, v] of first) {
-    if (drawn.has(k)) continue;
-    if (!geoCache.has(k)) geoCache.set(k, fetchArea(v));
-    const f = await geoCache.get(k);
-    if (!f || drawn.has(k)) continue;
-    drawn.add(k);
-    L.geoJSON(f, { style: { color: "#c2410c", weight: 3, fillColor: "#c2410c", fillOpacity: .3 } })
-      .bindPopup(`<strong>${esc(v.namn)}</strong><br>${esc(v.typ)}`).addTo(areaLayer);
-  }
+// Besökta objekt färgas av servern: WMS-lagret ritas om med filter (cql_filter) och egen stil (sld_body).
+let ctl, hiGroup;
+const hi = {};
+const LAGER = { "Nationalpark": "PS.ProtectedSites.NP", "Naturreservat": "PS.ProtectedSites.NR" };
+const sldFor = n => `<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld"><NamedLayer><Name>${n}</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Fill><CssParameter name="fill">#c2410c</CssParameter><CssParameter name="fill-opacity">0.45</CssParameter></Fill><Stroke><CssParameter name="stroke">#c2410c</CssParameter><CssParameter name="stroke-width">2</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;
+function updateHighlight(){
+  if (!map) return;
+  const q = x => "'" + String(x).replace(/'/g, "''") + "'";
+  Object.values(LAGER).forEach(layer => {
+    const ids = new Set(), names = new Set();
+    visits.forEach(v => {
+      if (LAGER[v.typ] !== layer) return;
+      if (v.nvrid) ids.add(String(v.nvrid)); else names.add(v.namn); // äldre rader saknar nvrid: matcha på namn
+    });
+    const parts = [];
+    if (ids.size) parts.push(`nvrid IN (${[...ids].map(q).join(",")})`);
+    if (names.size) parts.push(`namn IN (${[...names].map(q).join(",")})`);
+    if (!parts.length) { if (hi[layer]) { hiGroup.removeLayer(hi[layer]); delete hi[layer]; } return; }
+    const params = { cql_filter: parts.join(" OR "), sld_body: sldFor(layer) };
+    if (hi[layer]) hi[layer].setParams(params);
+    else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
+  });
 }
 
 const ORDER = ["Nationalpark", "Naturreservat", "Natura 2000", "Ramsar", "Biosfärområde"];
@@ -215,7 +221,7 @@ function render(){
   const m = $("#more"); m.hidden = !rest.length;
   m.textContent = ($("#other").hidden ? "Visa " : "Dölj ") + rest.length + " andra skyddsformer";
   const seen = new Set(visits.map(v => v.scheme + ":" + v.id));
-  $("#vh").textContent = `Dina besök (${seen.size} olika platser)`;
+  $("#vb").textContent = `${$("#visits").hidden ? "Visa" : "Dölj"} mina besök (${seen.size} platser)`;
   const dat = t => new Date(t).toLocaleDateString("sv-SE");
   $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
     `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
@@ -223,13 +229,13 @@ function render(){
       `<div class="v"><div>${esc(e.namn)}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}</span></div>`).join("")).join("")
     : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
   drawPins();
-  drawAreas();
+  updateHighlight();
 }
 
 async function logVisit(key){
   const h = hits.find(x => x.key === key); if (!h) return;
-  const row = { datum: new Date().toISOString(), user, id: h.id, scheme: h.scheme, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc };
-  visits.unshift(row); store.set("visits", visits); render();
+  const row = { datum: new Date().toISOString(), user, id: h.id, scheme: h.scheme, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc, nvrid: h.nvrid };
+  visits.unshift(row); store.set("visits:" + user, visits); render();
   if (CFG.sheet) {
     try { await fetch(CFG.sheet, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) }); }
     catch { setStatus("Sparades på enheten men inte i Google Sheets.", true); }
@@ -239,9 +245,9 @@ async function logVisit(key){
 async function sync(){
   if (!CFG.sheet || !user) return;
   try {
-    const r = await fetch(CFG.sheet + "?user=" + encodeURIComponent(user));
+    const u = user, r = await fetch(CFG.sheet + "?user=" + encodeURIComponent(u));
     const rows = await r.json();
-    if (Array.isArray(rows)) { visits = rows; store.set("visits", visits); render(); }
+    if (Array.isArray(rows) && u === user) { visits = rows; store.set("visits:" + u, visits); render(); }
   } catch { setStatus("Kunde inte läsa loggen från Google Sheets, visar det som finns på enheten.", true); }
 }
 
@@ -249,7 +255,12 @@ document.addEventListener("click", e => { const k = e.target.dataset?.k; if (k) 
 $("#find").addEventListener("click", find);
 $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
 $("#user").value = user;
-$("#user").addEventListener("change", e => { user = e.target.value.trim(); store.set("user", user); sync(); });
+$("#user").addEventListener("change", e => setUser(e.target.value));
+$("#vb").addEventListener("click", async () => {
+  const d = $("#visits"); d.hidden = !d.hidden;
+  if (!d.hidden) await sync();
+  render();
+});
 $("#loc").addEventListener("click", locate);
 initMap(); render(); sync();
 </script>
