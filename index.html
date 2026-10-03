@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Naturbesök</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b}
 *{box-sizing:border-box}
@@ -28,6 +29,10 @@ button:disabled{opacity:.5;cursor:default}
 .hit.done{border-left-color:var(--bark)}
 .v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
 #more{margin-top:.5rem}
+#map{height:55vh;min-height:320px;border:1px solid var(--line);border-radius:6px;margin-top:.6rem;background:var(--card);color:var(--mute)}
+#loc{width:100%}
+h3{font:600 1rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:1.3rem 0 .1rem}
+h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
@@ -40,13 +45,18 @@ button:disabled{opacity:.5;cursor:default}
 <div id="hits"></div>
 <button id="more" class="ghost" hidden></button>
 <div id="other" hidden></div>
+<h2>Karta</h2>
+<button id="loc" class="ghost">Centrera på min position</button>
+<div id="map" role="region" aria-label="Karta"></div>
 <h2 id="vh">Dina besök</h2>
 <div id="visits"></div>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ---- Inställningar ----
 const CFG = {
   wfs: "https://geodata.naturvardsverket.se/inspire/ps/wfs",
+  wms: "https://geodata.naturvardsverket.se/inspire/ps-nvr/ows",
   sheet: "https://script.google.com/macros/s/AKfycbwyGoJqdkG90khVZG2So5hR1ArfRf3ITGnb3s6rl7ZEf1xqcbtERe40Y5HtWbStSZ8beQ/exec"
 };
 
@@ -86,6 +96,7 @@ function find(){
   const q = new URLSearchParams(location.search), tl = parseFloat(q.get("lat")), tn = parseFloat(q.get("lon"));
   const ok = async g => {
     pos = { lat: g.coords.latitude, lon: g.coords.longitude, acc: Math.round(g.coords.accuracy) };
+    showMe(pos.lat, pos.lon, pos.acc);
     setStatus("Frågar Naturvårdsverket…");
     const bb = `${pos.lat},${pos.lon},${pos.lat},${pos.lon},urn:ogc:def:crs:EPSG::4258`;
     const url = `${CFG.wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=ps:ProtectedSite&count=20&outputFormat=application/json&bbox=${bb}`;
@@ -113,6 +124,60 @@ const hitHtml = h => {
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
+let map, meL = [], pins;
+function initMap(){
+  if (!window.L) { $("#map").textContent = "Kartan kunde inte laddas."; return; }
+  map = L.map("map").setView([62, 15], 5);
+  const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17,
+    attribution: "Kartdata © OpenStreetMap-bidragsgivare, SRTM | Stil © OpenTopoMap (CC-BY-SA)" }).addTo(map);
+  const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: .6, attribution: "Naturvårdsverket" });
+  const over = { "Naturreservat": wms("PS.ProtectedSites.NR"), "Nationalparker": wms("PS.ProtectedSites.NP") };
+  Object.values(over).forEach(l => l.addTo(map));
+  L.control.layers({ "OpenTopoMap": topo }, over).addTo(map);
+  pins = L.layerGroup().addTo(map);
+}
+function showMe(lat, lon, acc){
+  if (!map) return;
+  meL.forEach(l => map.removeLayer(l));
+  const ll = [lat, lon];
+  meL = [L.circle(ll, { radius: acc, color: "#2b6cb0", weight: 1, fillOpacity: .1 }).addTo(map),
+         L.circleMarker(ll, { radius: 8, color: "#fff", weight: 2, fillColor: "#2b6cb0", fillOpacity: 1 }).addTo(map)];
+  map.setView(ll, Math.max(map.getZoom(), 14));
+}
+function locate(){
+  const q = new URLSearchParams(location.search), tl = parseFloat(q.get("lat")), tn = parseFloat(q.get("lon"));
+  if (!isNaN(tl) && !isNaN(tn)) return showMe(tl, tn, 5);
+  if (!navigator.geolocation) return setStatus("Webbläsaren saknar stöd för position.", true);
+  navigator.geolocation.getCurrentPosition(g => showMe(g.coords.latitude, g.coords.longitude, g.coords.accuracy),
+    e => setStatus("Ingen position: " + e.message, true), { enableHighAccuracy: true, timeout: 20000 });
+}
+function drawPins(){
+  if (!pins) return;
+  pins.clearLayers();
+  const seen = new Set();
+  visits.forEach(v => {
+    const lat = +v.lat, lon = +v.lon, k = v.scheme + ":" + v.id;
+    if (isNaN(lat) || isNaN(lon) || seen.has(k)) return;
+    seen.add(k);
+    L.circleMarker([lat, lon], { radius: 7, color: "#7a5c3e", weight: 2, fillColor: "#7a5c3e", fillOpacity: .8 })
+      .bindPopup(`<strong>${esc(v.namn)}</strong><br>${esc(v.typ)}`).addTo(pins);
+  });
+}
+
+const ORDER = ["Nationalpark", "Naturreservat", "Natura 2000", "Ramsar", "Biosfärområde"];
+function grouped(){
+  const m = new Map();
+  visits.forEach(v => {
+    const k = v.scheme + ":" + v.id, t = new Date(v.datum).getTime();
+    const e = m.get(k) || { namn: v.namn, typ: v.typ, n: 0, senast: t };
+    e.n++; if (t > e.senast) e.senast = t; m.set(k, e);
+  });
+  const g = {};
+  m.forEach(e => (g[e.typ] = g[e.typ] || []).push(e));
+  const pos = t => { const i = ORDER.indexOf(t); return i < 0 ? 99 : i; };
+  return Object.entries(g).sort(([a], [b]) => pos(a) - pos(b) || a.localeCompare(b, "sv"));
+}
+
 function render(){
   const main = hits.filter(h => h.skydd), rest = hits.filter(h => !h.skydd);
   $("#hits").innerHTML = main.map(hitHtml).join("");
@@ -121,9 +186,13 @@ function render(){
   m.textContent = ($("#other").hidden ? "Visa " : "Dölj ") + rest.length + " andra skyddsformer";
   const seen = new Set(visits.map(v => v.scheme + ":" + v.id));
   $("#vh").textContent = `Dina besök (${seen.size} olika platser)`;
-  $("#visits").innerHTML = visits.length ? visits.map(v =>
-    `<div class="v"><div>${esc(v.namn)}<br><span>${esc(v.typ)}</span></div><span>${new Date(v.datum).toLocaleDateString("sv-SE")}</span></div>`).join("")
-    : `<p><span class="err" style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
+  const dat = t => new Date(t).toLocaleDateString("sv-SE");
+  $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
+    `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
+    list.sort((a, b) => a.namn.localeCompare(b.namn, "sv")).map(e =>
+      `<div class="v"><div>${esc(e.namn)}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}</span></div>`).join("")).join("")
+    : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
+  drawPins();
 }
 
 async function logVisit(key){
@@ -142,7 +211,7 @@ async function sync(){
     const r = await fetch(CFG.sheet + "?user=" + encodeURIComponent(user));
     const rows = await r.json();
     if (Array.isArray(rows)) { visits = rows; store.set("visits", visits); render(); }
-  } catch {}
+  } catch { setStatus("Kunde inte läsa loggen från Google Sheets, visar det som finns på enheten.", true); }
 }
 
 document.addEventListener("click", e => { const k = e.target.dataset?.k; if (k) logVisit(k); });
@@ -150,7 +219,8 @@ $("#find").addEventListener("click", find);
 $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
 $("#user").value = user;
 $("#user").addEventListener("change", e => { user = e.target.value.trim(); store.set("user", user); sync(); });
-render(); sync();
+$("#loc").addEventListener("click", locate);
+initMap(); render(); sync();
 </script>
 </body>
 </html>
