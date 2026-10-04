@@ -10,6 +10,10 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
+.topbar{background:var(--moss);color:#fff;display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;position:sticky;top:0;z-index:1000;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.topbar .flag{width:1.9rem;height:1.2rem;border-radius:2px;flex:none}
+.topbar h1{margin:0;font:600 1.05rem/1.2 "Iowan Old Style",Charter,Georgia,serif;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+@media (max-width:360px){.topbar h1 span{display:none}}
 h1{font:600 1.9rem/1.15 "Iowan Old Style",Charter,Georgia,serif;margin:.2rem 0 1rem}
 h2{font:600 1.15rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:2rem 0 .5rem}
 label{display:block;color:var(--mute);font-size:.9rem;margin-bottom:.25rem}
@@ -47,8 +51,11 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
+<header class="topbar">
+  <svg class="flag" viewBox="0 0 16 10" aria-hidden="true"><rect width="16" height="10" fill="#006aa7"/><rect x="5" width="2" height="10" fill="#fecc02"/><rect y="4" width="16" height="2" fill="#fecc02"/></svg>
+  <h1>Hit och Dit<span>: Utforska Sverige</span></h1>
+</header>
 <main>
-<h1>Hit och Dit</h1>
 <section id="auth">
   <form id="login" hidden>
     <label for="email">Logga in med e-post</label>
@@ -213,9 +220,18 @@ function initMap(){
     }
   });
   new BasCtl({ position: "topright" }).addTo(map);
-  const wms = (l, z) => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: 1, zIndex: z, attribution: "Naturvårdsverket" });
-  const over = overlays = { "Naturreservat": wms("PS.ProtectedSites.NR", 10), "Nationalparker": wms("PS.ProtectedSites.NP", 11) };
-  Object.values(over).forEach(l => l.addTo(map));
+  // NV-skikten hämtas som EN bild där servern lägger nationalparker ovanpå reservat.
+  // Kryssrutorna styr bara vilka skikt som ingår (layers-parametern), så två bildlager kan inte skymma varandra.
+  const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.NP", format: "image/png", transparent: true,
+    opacity: 1, zIndex: 10, attribution: "Naturvårdsverket" }).addTo(map);
+  const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map) };
+  const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Nationalparker": "PS.ProtectedSites.NP" };
+  const nvUppdatera = () => {
+    const l = Object.keys(over).filter(n => map.hasLayer(over[n])).map(n => NV_NAMN[n]);
+    if (!l.length) { map.removeLayer(nvSkikt); return; }
+    nvSkikt.setParams({ layers: l.join(",") }); if (!map.hasLayer(nvSkikt)) nvSkikt.addTo(map);
+  };
+  map.on("overlayadd overlayremove", e => { if (NV_NAMN[e.name]) nvUppdatera(); });
   ctl = L.control.layers(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
   ctl.addOverlay(hiGroup, "Besökta områden");
