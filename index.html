@@ -197,7 +197,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.12.0", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.13.0", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
@@ -207,6 +207,7 @@ const CFG = {
   // RAÄ-data: kartbild hämtas från RAÄ (WMS), positionsmatchning görs mot egen PostGIS-tabell i Supabase
   // (RAÄ:s WFS tillåter inte anrop från webbsidor – CORS). Laddas med tools/ladda_*.sh.
   vaWms: "https://inspire-raa.metria.se/geoserver/Varldsarv/ows",
+  bmWms: "https://inspire-raa.metria.se/geoserver/Bebyggelse/ows",
   supabaseUrl: "https://jihglrfinqsmigpxzfhk.supabase.co",
   supabaseKey: "sb_publishable_v6uCzg15rdSyO4LAmNWaJA_BtOdAJBi"
 };
@@ -292,7 +293,7 @@ function find(){
       hits = (j.features || []).map(flat).filter(h => !seen.has(h.key) && seen.add(h.key));
       await fillNvrid(hits, pos);
       const egna = await objektVid(pos.lat, pos.lon, 25);
-      hits.push(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true, nvrid: "" })));
+      hits.push(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true, nvrid: "", url: o.url })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
@@ -308,7 +309,7 @@ function find(){
 
 const hitHtml = h => {
   const done = visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0,10) === new Date().toISOString().slice(0,10));
-  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><strong>${esc(h.name)}</strong><span>${esc(h.typ)}</span></div>
+  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><strong>${esc(h.name)}</strong><span>${esc(h.typ)}${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Läs mer ↗</a>` : ""}</span></div>
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
@@ -343,6 +344,7 @@ function setTema(t){
   if (t === "dark" && ["Nedtonad (OSM)", "Ljusgrå (Esri)"].includes(basNamn)) bytBas("Mörk (OSM)");
   if (t === "light" && basNamn === "Mörk (OSM)") bytBas("Nedtonad (OSM)");
   nvUppdatera();
+  bmSkikt?.setParams({ sld_body: sldBM() });
 }
 const PANELER = { settings: "#gear", info: "#infoknapp" };
 function visaPanel(id, vis){
@@ -418,7 +420,9 @@ function initMap(){
     opacity: 1, zIndex: 10, attribution: "Naturvårdsverket" }).addTo(map);
   const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map),
     "Världsarv": L.tileLayer.wms(CFG.vaWms, { layers: "PS.ProtectedSite", format: "image/png", transparent: true, zIndex: 12,
-      attribution: "Riksantikvarieämbetet" }).addTo(map) };
+      attribution: "Riksantikvarieämbetet" }).addTo(map),
+    "Byggnadsminnen": bmSkikt = L.tileLayer.wms(CFG.bmWms, { layers: "byggnadsminnen_skyddsomraden", format: "image/png", transparent: true, zIndex: 13,
+      sld_body: sldBM(), attribution: "Riksantikvarieämbetet" }).addTo(map) };
   const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Nationalparker": "PS.ProtectedSites.NP" };
   nvUppdatera = () => {
     const l = Object.keys(over).filter(n => NV_NAMN[n] && map.hasLayer(over[n])).map(n => NV_NAMN[n]);
@@ -521,7 +525,20 @@ async function loadShapes(){
 
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
-const SKIKT_KALLA = { "Världsarv": "VA" };
+const SKIKT_KALLA = { "Världsarv": "VA", "Byggnadsminnen": "BM" };
+// Byggnadsminnen: RAÄ:s WMS har bara en grå standardstil, så vi skickar en egen (SLD).
+// Inzoomat: ytor. Utzoomat (> 1:60 000): en prick per byggnadsminne så att de syns.
+let bmSkikt;
+const sldBM = () => {
+  const c = tema() === "dark" ? "#e0b884" : "#8a5a2b";
+  return `<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc"><NamedLayer><Name>byggnadsminnen_skyddsomraden</Name><UserStyle><FeatureTypeStyle>` +
+    `<Rule><MaxScaleDenominator>60000</MaxScaleDenominator><PolygonSymbolizer><Fill><CssParameter name="fill">${c}</CssParameter><CssParameter name="fill-opacity">0.25</CssParameter></Fill>` +
+    `<Stroke><CssParameter name="stroke">${c}</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer></Rule>` +
+    `<Rule><MinScaleDenominator>60000</MinScaleDenominator><PointSymbolizer><Geometry><ogc:Function name="centroid"><ogc:PropertyName>geom</ogc:PropertyName></ogc:Function></Geometry>` +
+    `<Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><CssParameter name="fill">${c}</CssParameter></Fill><Stroke><CssParameter name="stroke">#ffffff</CssParameter><CssParameter name="stroke-width">1</CssParameter></Stroke></Mark><Size>7</Size></Graphic></PointSymbolizer></Rule>` +
+    `</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;
+};
+const lankRaa = url => url ? `<br><a href="${esc(url)}" target="_blank" rel="noopener">Läs mer${url.includes("unesco") ? " hos UNESCO" : " hos RAÄ"} ↗</a>` : "";
 const EGNA_KALLOR = new Set(Object.values(SKIKT_KALLA));
 async function objektVid(lat, lon, radie = 25, kallor = null){
   if (!sb) return [];
@@ -540,7 +557,7 @@ async function loadGeoShapes(){
   (data || []).forEach(o => {
     const k = o.kalla + ":" + o.ext_id;
     geoShapes[k] = L.geoJSON(o.geojson, { style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 }, bubblingMouseEvents: false })
-      .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`);
+      .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`);
   });
   nycklar.forEach(k => { if (!geoShapes[k]) geoFailed.add(k); });
   return true;
@@ -620,7 +637,7 @@ async function infoClick(e){
   console.log("Infoklick:", res, va);
   if (!res.length && !va.length) { map.closePopup(popup); return; }
   popup.setContent([
-    ...va.map(o => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`),
+    ...va.map(o => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`),
     ...res.map(o => {
       const namn = prop(o, "namn"), id = String(prop(o, "nvrid"));
       const status = besokStatus(id, namn, o.typ);
@@ -656,7 +673,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Byggnadsminne", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {

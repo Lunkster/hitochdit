@@ -6,7 +6,7 @@ begin;
 insert into public.objekt (kalla, kategori, typ, ext_id, namn, geom, egenskaper, uppdaterad)
 select 'VA', 'kultur', 'Världsarv', sitename_sve, sitename_sve,
        ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_Union(ST_MakeValid(geom))), 3)),
-       jsonb_build_object('namn_en', max(sitename_eng), 'unesco', max(unesco_href), 'ar', max(legalfoundationyear), 'delar', count(*)),
+       jsonb_build_object('namn_en', max(sitename_eng), 'url', max(unesco_href), 'ar', max(legalfoundationyear), 'delar', count(*)),
        now()
 from import.varldsarv
 where sitename_sve is not null
