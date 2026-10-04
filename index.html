@@ -9,7 +9,7 @@
 <style>
 :root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;color-scheme:light}
 /* Mörkt läge: samma mossgröna familj, mörka ytor */
-:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#5a7a53;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;color-scheme:dark}
+:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -241,6 +241,20 @@ function bytBas(n){
   if (basSel) basSel.value = n;
 }
 
+// NV-skiktens stil i mörkt läge. Ordningen i SLD:n = ritordning (reservat först, nationalparker överst).
+let nvUppdatera = () => {};
+const SLD_NV = {
+  "PS.ProtectedSites.NR": `<PolygonSymbolizer><Fill><CssParameter name="fill">#7fa276</CssParameter><CssParameter name="fill-opacity">0.22</CssParameter></Fill>
+    <Stroke><CssParameter name="stroke">#8fb285</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer>`,
+  // Nationalpark: bred beige kant under en grön gränslinje
+  "PS.ProtectedSites.NP": `<PolygonSymbolizer><Stroke><CssParameter name="stroke">#e6d5ad</CssParameter><CssParameter name="stroke-width">6</CssParameter><CssParameter name="stroke-opacity">0.9</CssParameter></Stroke></PolygonSymbolizer>
+    <PolygonSymbolizer><Fill><CssParameter name="fill">#8fb285</CssParameter><CssParameter name="fill-opacity">0.25</CssParameter></Fill>
+    <Stroke><CssParameter name="stroke">#8fb285</CssParameter><CssParameter name="stroke-width">2</CssParameter></Stroke></PolygonSymbolizer>`
+};
+const sldNV = lager => `<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld">` +
+  lager.map(n => `<NamedLayer><Name>${n}</Name><UserStyle><FeatureTypeStyle><Rule>${SLD_NV[n]}</Rule></FeatureTypeStyle></UserStyle></NamedLayer>`).join("") +
+  `</StyledLayerDescriptor>`;
+
 // ---- Tema (ljust är förval) ----
 const tema = () => document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 function setTema(t){
@@ -250,6 +264,7 @@ function setTema(t){
   // Byt till passande bakgrundskarta om man har en av standardkartorna
   if (t === "dark" && ["Nedtonad (OSM)", "Ljusgrå (Esri)"].includes(basNamn)) bytBas("Mörk (OSM)");
   if (t === "light" && basNamn === "Mörk (OSM)") bytBas("Nedtonad (OSM)");
+  nvUppdatera();
 }
 function visaInst(vis){
   const p = $("#settings"); p.hidden = vis === undefined ? !p.hidden : !vis;
@@ -321,11 +336,14 @@ function initMap(){
     opacity: 1, zIndex: 10, attribution: "Naturvårdsverket" }).addTo(map);
   const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map) };
   const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Nationalparker": "PS.ProtectedSites.NP" };
-  const nvUppdatera = () => {
+  nvUppdatera = () => {
     const l = Object.keys(over).filter(n => map.hasLayer(over[n])).map(n => NV_NAMN[n]);
     if (!l.length) { map.removeLayer(nvSkikt); return; }
+    // Mörkt läge: egen stil (SLD) så att båda skikten syns mot mörk karta. Ljust läge: NV:s egen stil.
+    if (tema() === "dark") nvSkikt.wmsParams.sld_body = sldNV(l); else delete nvSkikt.wmsParams.sld_body;
     nvSkikt.setParams({ layers: l.join(",") }); if (!map.hasLayer(nvSkikt)) nvSkikt.addTo(map);
   };
+  nvUppdatera();
   map.on("overlayadd overlayremove", e => { if (NV_NAMN[e.name]) nvUppdatera(); });
   ctl = L.control.layers(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
