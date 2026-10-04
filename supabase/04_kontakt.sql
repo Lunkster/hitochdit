@@ -24,20 +24,30 @@ create policy "meddelanden: alla kan skicka" on public.meddelanden
   with check (user_id is null or user_id = (select auth.uid()));
 
 -- ============ Avisering via ntfy (https://ntfy.sh) ============
--- Skickar bara "Nytt kontaktmeddelande" – inget innehåll eller e-post lämnar Supabase.
+-- Skickar hela meddelandet (max ~1500 tecken) och ev. e-post till ntfy, med en Svara-knapp (mailto).
+-- Obs: innehållet passerar då ntfy.sh och cachas där en kort tid – står i integritetstexten.
 create extension if not exists pg_net with schema extensions;
 
 create or replace function public.avisera_meddelande() returns trigger
 language plpgsql security definer set search_path = '' as $$
+declare
+  text_ut text := left(new.meddelande, 1500) || case when char_length(new.meddelande) > 1500 then ' …' else '' end;
+  knappar jsonb := '[]'::jsonb;
 begin
+  if new.epost is not null then
+    text_ut := text_ut || E'\n\n— ' || new.epost;
+    knappar := jsonb_build_array(jsonb_build_object(
+      'action', 'view', 'label', 'Svara',
+      'url', 'mailto:' || new.epost || '?subject=' || replace('Hit och Dit – ditt meddelande', ' ', '%20')));
+  end if;
   perform net.http_post(
     url  := 'https://ntfy.sh',
     body := jsonb_build_object(
       'topic',   'DITT-NTFY-AMNE',
-      'title',   'Hit och Dit',
-      'message', 'Nytt kontaktmeddelande (#' || new.id || '). Läs det i Supabase → Table Editor → meddelanden.',
+      'title',   'Hit och Dit – meddelande #' || new.id,
+      'message', text_ut,
       'tags',    jsonb_build_array('envelope'),
-      'click',   'https://supabase.com/dashboard/project/jihglrfinqsmigpxzfhk/editor'
+      'actions', knappar
     )
   );
   return new;
