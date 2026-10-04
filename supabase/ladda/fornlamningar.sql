@@ -1,6 +1,7 @@
 -- Flyttar fornlämningar från import.fl_punkt/fl_linje/fl_yta (ogr2ogr) till public.objekt (kalla = FL).
 -- Bara antikvarisk bedömning "Fornlämning" (filtreras även här ifall servern inte kunde filtrera).
 -- ext_id = lämningsnummer (t.ex. L1969:3430). Ytor och linjer förenklas (~2 m).
+-- Kommun/län sparas inte (tar plats för 300 000 objekt) – kommer från Lantmäteriets indelning.
 \set ON_ERROR_STOP on
 begin;
 
@@ -18,8 +19,6 @@ select coalesce(nullif(j->>'lamningsnummer', ''), j->>'pk_id') as ext_id,
        jsonb_strip_nulls(jsonb_build_object(
          'lamningstyp', max(j->>'lamningstyp'),
          'raa_nummer',  max(j->>'raa_nummer'),
-         'kommun',      max(j->>'kommun'),
-         'lan',         max(coalesce(j->>'län', j->>'lan')),
          'url',         max(j->>'url'))) as egenskaper
 from (select j, case when GeometryType(geom) ilike '%POINT%' then geom
                     else ST_SimplifyPreserveTopology(ST_MakeValid(geom), 0.00002) end as g, geom

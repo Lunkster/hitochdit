@@ -22,7 +22,7 @@ create table if not exists public.objekt (
   unique (kalla, ext_id)
 );
 create index if not exists objekt_geom_idx  on public.objekt using gist (geom);
-create index if not exists objekt_geog_idx  on public.objekt using gist ((geom::extensions.geography));
+-- (geografi-index borttaget i 10_optimera_utrymme.sql – objekt_vid använder geometri-indexet)
 create index if not exists objekt_kalla_idx on public.objekt (kalla);
 
 alter table public.objekt enable row level security;

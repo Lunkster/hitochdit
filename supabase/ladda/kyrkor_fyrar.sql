@@ -10,16 +10,18 @@ select to_jsonb(t) - 'geom' - 'ogc_fid' as j, ST_MakeValid(t.geom) as geom from 
 
 -- Kontroll: vilka värden finns? (visas i utskriften så att urvalet kan justeras)
 \pset pager off
-select 'kyrkligt_kulturminnestyp' as falt, j->>'kyrkligt_kulturminnestyp_namn' as varde, count(*)
-from b where j->>'kyrkligt_kulturminnestyp_namn' is not null group by 1, 2
-union all
-select 'andamal (fyr)', coalesce(j->>'andamal_underkategori', '-') || ' / ' || coalesce(j->>'sekundart_andamal', '-'), count(*)
-from b where concat_ws(' ', j->>'andamal_underkategori', j->>'sekundart_andamal') ~* 'fyr'
-group by 1, 2 order by 1, 3 desc;
+-- Kyrkliga kulturminnen fördelat på objekttyp och ändamål (fältet kyrkligt_kulturminnestyp är bara lagrum: tillståndsplikt/vårdplikt)
+select coalesce(j->>'objekttyp_namn', '-') as objekttyp, coalesce(j->>'andamal_underkategori', j->>'andamal_huvudkategori', '-') as andamal, count(*)
+from b where j->>'kyrkligt_kulturminnestyp_namn' is not null
+group by 1, 2 order by 3 desc limit 30;
 
 create temp table ut as
 select 'KY' as kalla, 'Kyrka' as typ, j, geom from b
-where (j->>'kyrkligt_kulturminnestyp_namn') ~* 'kyrkobyggnad|^kyrka'
+-- Kyrkligt kulturminne som är en byggnad med ändamål Kyrka, Kapell eller Frikyrka
+-- (inte gravkapell, klockstapel, bårhus, församlingshem m.m.). Ändamålet ligger ibland bara i huvudkategorin.
+where j->>'kyrkligt_kulturminnestyp_namn' is not null
+  and coalesce(j->>'objekttyp_namn', 'Byggnad') = 'Byggnad'
+  and coalesce(nullif(j->>'andamal_underkategori', ''), j->>'andamal_huvudkategori') in ('Kyrka', 'Kapell', 'Frikyrka')
 union all
 select 'FY', 'Fyr', j, geom from b
 -- Huvudändamål som slutar på -fyr (Fyr, Ledfyr, Angöringsfyr, Hamnfyr …) men inte Fyrvaktarbostad/Fyrmästarbostad,
