@@ -78,6 +78,10 @@ select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid
 .panel ul{padding-left:1.2rem;margin:.3rem 0}
 .panel a{color:var(--moss)}
 .panel .liten{color:var(--mute);font-size:.85rem}
+.tagg{display:inline-block;margin-left:.35rem;padding:0 .4rem;border:1px solid var(--line);border-radius:999px;color:var(--mute);font-size:.75rem;vertical-align:1px}
+.v.efterhand .goto{font-style:italic}
+.efterform{display:flex;gap:.4rem;align-items:center;margin-top:.4rem}
+.efterform input{padding:.3rem .4rem;font-size:.9rem;width:auto}
 .farlig{color:var(--warn);border-color:var(--warn)}
 .val{display:flex;gap:.5rem}
 .val label{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;margin:0;padding:.55rem;border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer}
@@ -118,6 +122,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <div class="btns"><button id="export" class="ghost small">Ladda ner (JSON)</button><button id="exportcsv" class="ghost small">Besök som CSV</button><button id="radera" class="ghost small farlig">Radera mitt konto</button></div>
     <p class="liten">Radering tar bort konto, användarnamn och alla besök direkt och går inte att ångra.</p>
   </div>
+  <p class="liten" style="margin-top:1rem">Hit och Dit version <span class="appver"></span></p>
 </div>
 <div id="info" class="panel" role="dialog" aria-label="Om Hit och Dit" hidden>
   <button class="ghost small stang" aria-label="Stäng">✕</button>
@@ -152,6 +157,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
   <p><strong>Dina rättigheter:</strong> du kan när som helst ladda ner dina uppgifter, ta bort enskilda besök, byta användarnamn och radera hela ditt konto under ⚙ Inställningar. Du har också rätt att begära rättelse och att klaga hos <a href="https://www.imy.se/" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a>.</p>
   <p class="liten">Senast uppdaterad 2026-10-04.</p>
+  <p class="liten">Version <span class="appver"></span></p>
 
   <h3 id="kontakt">Kontakt</h3>
   <form id="kontaktform">
@@ -186,6 +192,9 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
+const VERSION = "0.10.0", VERSION_DATUM = "2026-10-04";
+
 // ---- Inställningar ----
 const CFG = {
   wfs: "https://geodata.naturvardsverket.se/inspire/ps/wfs",
@@ -435,7 +444,7 @@ function drawPins(){
   pins.clearLayers();
   const seen = new Set();
   visits.forEach(v => {
-    const lat = +v.lat, lon = +v.lon, k = v.scheme + ":" + v.id;
+    const lat = num(v.lat), lon = num(v.lon), k = platsNyckel(v);
     if (isNaN(lat) || isNaN(lon) || seen.has(k)) return;
     seen.add(k);
     L.circleMarker([lat, lon], { radius: 7, color: "#7a5c3e", weight: 2, fillColor: "#7a5c3e", fillOpacity: .8, bubblingMouseEvents: false })
@@ -485,7 +494,7 @@ async function loadShapes(){
           coordsToLatLng: toLL,
           style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 },
           bubblingMouseEvents: false
-        }).bindPopup(() => `<strong>${esc(namn)}</strong><br>${esc(typ)} · NVR-id ${esc(id)}<br><em>${besokStatus(id, namn, typ)}</em>`);
+        }).bindPopup(() => `<strong>${esc(namn)}</strong><br>${esc(typ)} · NVR-id ${esc(id)}<br><em>${besokStatus(id, namn, typ)}</em>${efterForm(id, namn, typ)}`);
         nytt = true;
       });
       ids.forEach(id => { if (!shapes[id]) failed.add(id); });
@@ -567,17 +576,46 @@ async function infoClick(e){
   popup.setContent(res.map(o => {
     const namn = prop(o, "namn"), id = String(prop(o, "nvrid"));
     const status = besokStatus(id, namn, o.typ);
-    return `<strong>${esc(namn || "Namnlöst område")}</strong><br>${esc(o.typ)}${id ? " · NVR-id " + esc(id) : ""}<br><em>${status}</em>`;
+    const efter = efterForm(id, namn, o.typ);
+    return `<strong>${esc(namn || "Namnlöst område")}</strong><br>${esc(o.typ)}${id ? " · NVR-id " + esc(id) : ""}<br><em>${status}</em>${efter}`;
   }).join("<hr>"));
 }
+
+function efterForm(id, namn, typ){
+  if (!user || !id) return "";
+  const idag = new Date().toLocaleDateString("sv-SE");
+  return `<form class="efterform" data-nvrid="${esc(id)}" data-namn="${esc(namn)}" data-typ="${esc(typ)}">
+    <input type="date" required max="${idag}" value="${idag}" aria-label="Datum för besöket">
+    <button class="small">Logga tidigare besök</button></form>`;
+}
+// Efterhandsloggning: besök man gjort tidigare, utan GPS-kontroll. Taggas pa_plats = false.
+document.addEventListener("submit", async e => {
+  const f = e.target.closest?.(".efterform"); if (!f) return;
+  e.preventDefault();
+  if (!user) return;
+  const dag = f.querySelector("input").value; if (!dag) return;
+  const { nvrid, namn, typ } = f.dataset;
+  const datum = new Date(dag + "T12:00:00").toISOString();
+  const btn = f.querySelector("button"); btn.disabled = true;
+  const { data: ny, error } = await sb.from("besok").insert({ datum, objekt_id: "NVR-" + nvrid, scheme: "IUCN", nvrid, namn, typ, pa_plats: false }).select("id").single();
+  btn.disabled = false;
+  if (error) { setStatus("Kunde inte spara besöket: " + error.message, true); return; }
+  visits.unshift({ dbid: ny.id, datum, id: "NVR-" + nvrid, scheme: "IUCN", namn, typ, lat: null, lon: null, acc: null, nvrid, pa_plats: false });
+  visits.sort((a, b) => new Date(b.datum) - new Date(a.datum));
+  store.set("visits:" + user.id, visits); render();
+  map.closePopup();
+  setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
+});
 
 const ORDER = ["Nationalpark", "Naturreservat", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {
-    const k = v.scheme + ":" + v.id, t = new Date(v.datum).getTime();
-    const e = m.get(k) || { key: k, namn: v.namn, typ: v.typ, n: 0, senast: t, lat: +v.lat, lon: +v.lon, nvrid: "", rader: [] };
+    const k = platsNyckel(v), t = new Date(v.datum).getTime();
+    const e = m.get(k) || { key: k, namn: v.namn, typ: v.typ, n: 0, senast: t, lat: NaN, lon: NaN, nvrid: "", rader: [], efterhand: true };
     e.rader.push(v);
+    if (v.pa_plats !== false) e.efterhand = false;
+    if (isNaN(e.lat) && !isNaN(num(v.lat))) { e.lat = num(v.lat); e.lon = num(v.lon); }
     if (v.nvrid) e.nvrid = String(v.nvrid);
     e.n++; if (t > e.senast) e.senast = t; m.set(k, e);
   });
@@ -593,21 +631,24 @@ function render(){
   $("#other").innerHTML = rest.map(hitHtml).join("");
   const m = $("#more"); m.hidden = !rest.length;
   m.textContent = ($("#other").hidden ? "Visa " : "Dölj ") + rest.length + " andra skyddsformer";
-  const seen = new Set(visits.map(v => v.scheme + ":" + v.id));
+  const seen = new Set(visits.map(platsNyckel));
   $("#vb").textContent = `${$("#visits").hidden ? "Visa" : "Dölj"} mina besök (${seen.size} platser)`;
   const dat = t => new Date(t).toLocaleDateString("sv-SE");
   $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
     `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
     list.sort((a, b) => a.namn.localeCompare(b.namn, "sv")).map(e =>
-      `<div class="v"><div>${isNaN(e.lat) || isNaN(e.lon) ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-id="${esc(e.nvrid)}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}<button class="ghost tiny" data-open="${esc(e.key)}" aria-expanded="${oppna.has(e.key)}" title="Visa enskilda besök">${oppna.has(e.key) ? "▴" : "▾"}</button></span></div>` +
-      (oppna.has(e.key) ? `<div class="vd">${e.rader.map(r => `<div><span>${new Date(r.datum).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>${r.dbid ? `<button class="ghost tiny" data-del="${r.dbid}">Ta bort</button>` : ""}</div>`).join("")}</div>` : "")).join("")).join("")
+      `<div class="v${e.efterhand ? " efterhand" : ""}"><div>${(isNaN(e.lat) || isNaN(e.lon)) && !e.nvrid ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-id="${esc(e.nvrid)}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}${e.efterhand ? ' <span class="tagg" title="Bara loggat i efterhand – räknas inte i topplistor">i efterhand</span>' : ""}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}<button class="ghost tiny" data-open="${esc(e.key)}" aria-expanded="${oppna.has(e.key)}" title="Visa enskilda besök">${oppna.has(e.key) ? "▴" : "▾"}</button></span></div>` +
+      (oppna.has(e.key) ? `<div class="vd">${e.rader.map(r => `<div><span>${r.pa_plats === false ? new Date(r.datum).toLocaleDateString("sv-SE") + " · i efterhand" : new Date(r.datum).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>${r.dbid ? `<button class="ghost tiny" data-del="${r.dbid}">Ta bort</button>` : ""}</div>`).join("")}</div>` : "")).join("")).join("")
     : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
   drawPins();
   updateHighlight();
 }
 
 // Databasrad <-> appens format
-const fromDb = r => ({ dbid: r.id, datum: r.datum, id: r.objekt_id, scheme: r.scheme, namn: r.namn, typ: r.typ, lat: r.lat, lon: r.lon, acc: r.acc, nvrid: r.nvrid || "" });
+const fromDb = r => ({ dbid: r.id, datum: r.datum, id: r.objekt_id, scheme: r.scheme, namn: r.namn, typ: r.typ, lat: r.lat, lon: r.lon, acc: r.acc, nvrid: r.nvrid || "", pa_plats: r.pa_plats !== false });
+const num = x => x == null || x === "" ? NaN : +x;
+// Samma plats ska grupperas ihop oavsett hur den loggades: NVR-id om det finns, annars INSPIRE-id
+const platsNyckel = v => v.nvrid ? "nvr:" + v.nvrid : v.scheme + ":" + v.id;
 
 async function logVisit(key){
   const h = hits.find(x => x.key === key); if (!h || !user) return;
@@ -655,7 +696,7 @@ async function skickaKontakt(e){
   if (meddelande.length < 2) { st.textContent = "Skriv ett meddelande först."; return; }
   if (!sb) { st.textContent = "Kunde inte nå servern just nu."; return; }
   btn.disabled = true; st.textContent = "Skickar…";
-  const { error } = await sb.from("meddelanden").insert({ meddelande, epost });
+  const { error } = await sb.from("meddelanden").insert({ meddelande, epost, version: VERSION });
   btn.disabled = false;
   if (error) { console.error(error); st.textContent = "Meddelandet kunde inte skickas: " + error.message; return; }
   $("#kmedd").value = ""; st.textContent = "Tack! Meddelandet är skickat.";
@@ -670,7 +711,7 @@ async function exporteraCsv(){
   if (!user) return;
   const { data, error } = await sb.from("besok").select("*").order("datum", { ascending: false });
   if (error) { setStatus("Kunde inte hämta dina besök: " + error.message, true); return; }
-  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc"];
+  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc", "pa_plats"];
   const cell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   const csv = [kol.join(","), ...data.map(r => kol.map(k => cell(r[k])).join(","))].join("\r\n");
   laddaNer("\ufeff" + csv, "text/csv;charset=utf-8", `hitochdit-besok-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -717,6 +758,7 @@ function gotoVisit(lat, lon, namn, id){
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
   const yta = id && shapes[id];
   if (yta) { map.fitBounds(yta.getBounds(), { padding: [20, 20], maxZoom: 15 }); yta.openPopup(); return; }
+  if (isNaN(lat) || isNaN(lon)) { setStatus("Området laddas – försök igen om en stund."); return; }
   map.setView([lat, lon], 14);
   L.popup().setLatLng([lat, lon]).setContent(`<strong>${esc(namn)}</strong><br><span style="color:var(--mute)">Här loggade du besöket</span>`).openOn(map);
 }
@@ -729,6 +771,7 @@ $("#infoknapp").addEventListener("click", () => visaPanel("info"));
 document.querySelectorAll(".panel .stang").forEach(b => b.addEventListener("click", () => visaPanel(null)));
 document.addEventListener("keydown", e => { if (e.key === "Escape") visaPanel(null); });
 document.addEventListener("click", e => { if (!e.target.closest(".panel, .gear")) visaPanel(null); });
+document.querySelectorAll(".appver").forEach(el => el.textContent = `${VERSION} (${VERSION_DATUM})`);
 $("#export").addEventListener("click", exportera);
 $("#kontaktform").addEventListener("submit", skickaKontakt);
 $("#infoknapp").addEventListener("click", () => { if (user && !$("#kepost").value) $("#kepost").value = user.email; });

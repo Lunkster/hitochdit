@@ -44,7 +44,7 @@ begin
     url  := 'https://ntfy.sh',
     body := jsonb_build_object(
       'topic',   'DITT-NTFY-AMNE',
-      'title',   'Hit och Dit – meddelande #' || new.id,
+      'title',   'Hit och Dit – meddelande #' || new.id || coalesce(' (v' || new.version || ')', ''),
       'message', text_ut,
       'tags',    jsonb_build_array('envelope'),
       'actions', knappar

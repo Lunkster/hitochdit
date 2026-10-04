@@ -12,12 +12,17 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 | `supabase/01_schema.sql` | Tabeller och Row Level Security i Supabase. Körs i SQL Editor. |
 | `supabase/02_profiler.sql` | Automatisk profil vid registrering, unika användarnamn. |
 | `supabase/03_radera_konto.sql` | Funktion så att användare kan radera sitt eget konto. |
+| `supabase/04_kontakt.sql` | Kontaktformulär + avisering via ntfy (ämnet fylls i vid körning, ligger inte i repot). |
+| `supabase/05_version_efterhand.sql` | Kolumn `pa_plats` för efterhandsbesök, version i meddelanden. |
 | `apps-script/Code.gs` | Gamla Google Sheets-lagringen (ersatt av Supabase 2026-10, tas bort). |
 
 ## Datakällor
 - WFS `https://geodata.naturvardsverket.se/inspire/ps/wfs` – träff på skyddat område vid position
 - WMS `https://geodata.naturvardsverket.se/inspire/ps-nvr/ows` – kartskikt för naturreservat och nationalparker, besökta färgas med SLD + CQL-filter
 - Bakgrund: OpenTopoMap, Esri World Imagery
+
+## Version
+Konstanten `VERSION` överst i skriptet i `index.html` höjs vid varje ändring: `0.MINOR.0` för nya funktioner, `0.x.PATCH` för rättningar. Visas under ⓘ och ⚙ och skickas med kontaktmeddelanden.
 
 ## Arbetsflöde
 ```bash
