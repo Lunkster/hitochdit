@@ -34,5 +34,6 @@ ladda_wfs () {
 # kor_sql <fil>
 kor_sql () {
   echo "→ Kör $1"
-  psql "$HITOCHDIT_DB" -v ON_ERROR_STOP=1 -q -f "$REPO/$1"
+  # Supabase avbryter frågor efter en kort stund som standard – laddningar får ta längre tid
+  psql "$HITOCHDIT_DB" -v ON_ERROR_STOP=1 -q -c "set statement_timeout = '30min'" -f "$REPO/$1"
 }

@@ -147,7 +147,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och världsarv från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -201,7 +201,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.15.1", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.16.0", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
@@ -561,19 +561,23 @@ function ritaSymboler(){
     if (!aktiva.length) return;
     if (map.getZoom() < 9) { aktiva.forEach(k => symbolSkikt[k].clearLayers()); return; }
     const b = map.getBounds();
-    const { data, error } = await sb.rpc("objekt_i_ruta", { kallor: aktiva, vast: b.getWest(), syd: b.getSouth(), ost: b.getEast(), norr: b.getNorth() });
+    const { data, error } = await sb.rpc("objekt_i_ruta", { kallor: aktiva.flatMap(kallorFor), vast: b.getWest(), syd: b.getSouth(), ost: b.getEast(), norr: b.getNorth() });
     if (error) { console.warn("objekt_i_ruta", error); return; }
     aktiva.forEach(k => symbolSkikt[k].clearLayers());
     (data || []).forEach(o => {
       const besokt = visits.some(v => v.scheme === o.kalla && v.id === o.ext_id);
-      L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "symbol" + (besokt ? " besokt" : ""), html: SYMBOL[o.kalla], iconSize: [18, 22], iconAnchor: [9, 22], popupAnchor: [0, -20] }),
+      const grupp = o.kalla === "KO" ? "KY" : o.kalla;
+      L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "symbol" + (besokt ? " besokt" : ""), html: SYMBOL[grupp], iconSize: [18, 22], iconAnchor: [9, 22], popupAnchor: [0, -20] }),
         title: o.namn, bubblingMouseEvents: false })
         .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`)
-        .addTo(symbolSkikt[o.kalla]);
+        .addTo(symbolSkikt[grupp]);
     });
   }, 250);
 }
 const NV_KALLOR = new Set(["NR", "NP", "KR"]);   // NV-objekt: ext_id = NVR-id
+// Ett kartskikt kan omfatta flera källor: kyrkor = RAÄ (KY) + komplement från OpenStreetMap (KO)
+const EXTRA_KALLOR = { KY: ["KO"] };
+const kallorFor = k => [k, ...(EXTRA_KALLOR[k] || [])];
 // Byggnadsminnen: RAÄ:s WMS har bara en grå standardstil, så vi skickar en egen (SLD).
 // Inzoomat: ytor. Utzoomat (> 1:60 000): en prick per byggnadsminne så att de syns.
 let bmSkikt;
@@ -586,8 +590,8 @@ const sldBM = () => {
     `<Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><CssParameter name="fill">${c}</CssParameter></Fill><Stroke><CssParameter name="stroke">#ffffff</CssParameter><CssParameter name="stroke-width">1</CssParameter></Stroke></Mark><Size>7</Size></Graphic></PointSymbolizer></Rule>` +
     `</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;
 };
-const lankRaa = url => url ? `<br><a href="${esc(url)}" target="_blank" rel="noopener">Läs mer${url.includes("unesco") ? " hos UNESCO" : " hos RAÄ"} ↗</a>` : "";
-const EGNA_KALLOR = new Set(Object.values(SKIKT_KALLA));
+const lankRaa = url => url ? `<br><a href="${esc(url)}" target="_blank" rel="noopener">${url.includes("openstreetmap") ? "Visa i OpenStreetMap" : "Läs mer" + (url.includes("unesco") ? " hos UNESCO" : " hos RAÄ")} ↗</a>` : "";
+const EGNA_KALLOR = new Set(Object.values(SKIKT_KALLA).flatMap(kallorFor));
 async function objektVid(lat, lon, radie = 25, kallor = null){
   if (!sb) return [];
   const { data, error } = await sb.rpc("objekt_vid", { lat, lon, radie_m: radie, kallor });
@@ -662,7 +666,7 @@ async function nvYtaVidPunkt(lat, lon, key){
 
 // Infoklick: fråga NV:s WMS vad som finns där man klickade och visa namn och besöksstatus.
 async function infoClick(e){
-  const kallor = Object.entries(SKIKT_KALLA).filter(([n]) => overlays[n] && map.hasLayer(overlays[n])).map(([, k]) => k);
+  const kallor = Object.entries(SKIKT_KALLA).filter(([n]) => overlays[n] && map.hasLayer(overlays[n])).flatMap(([, k]) => kallorFor(k));
   if (!kallor.length) return;
   const p = map.latLngToContainerPoint(e.latlng), a = map.containerPointToLatLng(p.subtract([4, 4]));
   const popup = L.popup().setLatLng(e.latlng).setContent("Hämtar…").openOn(map);
