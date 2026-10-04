@@ -197,8 +197,8 @@ function updateHighlight(){
     if (names.size) parts.push(`namn IN (${[...names].map(q).join(",")})`);
     if (!parts.length) { if (hi[layer]) { hiGroup.removeLayer(hi[layer]); delete hi[layer]; } return; }
     const params = { cql_filter: parts.join(" OR "), sld_body: sldFor(layer) };
-    if (hi[layer]) hi[layer].setParams(params);
-    else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
+    if (hi[layer]) { if (hi[layer].wmsParams.cql_filter !== params.cql_filter) hi[layer].setParams(params); } // rita bara om när urvalet ändrats
+    else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, tileSize: 512, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
   });
 }
 
