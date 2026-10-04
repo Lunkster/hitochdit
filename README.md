@@ -17,6 +17,7 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 | `supabase/06_geodata.sql` | PostGIS, tabellen `objekt` (alla egna geodata) och funktionerna `objekt_vid` / `objekt_geom`. |
 | `supabase/07_objekt_url.sql` | Länk till källans objektsida i `objekt_vid`/`objekt_geom`. |
 | `supabase/08_koppla_om_nv_besok.sql` | Engång: kopplar gamla reservatsbesök (scheme IUCN) till geodatabasen (NR/NP). |
+| `supabase/09_objekt_i_ruta.sql` | Punkter inom kartutsnittet – kyrkor och fyrar som symboler. |
 | `supabase/ladda/*.sql` | Flyttar data från `import`-schemat till `objekt` efter ogr2ogr. |
 | `tools/ladda_*.sh` | Laddar en datamängd från källans WFS till Supabase med ogr2ogr. Kräver `~/.config/hitochdit/db.env` (se `tools/db.env.exempel`). |
 | `tools/geodata_status.sh` | Visar antal objekt och databasens storlek. |

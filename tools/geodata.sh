@@ -15,10 +15,12 @@ done
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PGCLIENTENCODING=UTF8
+export PAGER=cat PSQL_PAGER=cat   # ingen bläddring (":") i utskrifterna
 # WFS-sidindelning så att stora datamängder hämtas i omgångar
 OGR_WFS=(--config OGR_WFS_PAGING_ALLOWED ON --config OGR_WFS_PAGE_SIZE 5000 --config OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN NO)
 
-# ladda_wfs <wfs-url> <lager> <importtabell>
+# ladda_wfs <wfs-url> <lager> <importtabell> [attributfilter]
+#   attributfilter skickas som ogr2ogr -where (översätts till WFS-filter hos servern när det går)
 ladda_wfs () {
   # Lagernamnet kan ha arbetsytans prefix (t.ex. Varldsarv_ogc:varldsarv_sverige) – leta upp rätt variant
   local lager
@@ -27,7 +29,7 @@ ladda_wfs () {
   echo "→ Hämtar $lager från $1"
   ogr2ogr "${OGR_WFS[@]}" -f PostgreSQL "PG:${HITOCHDIT_DB}" "WFS:$1" "$lager" \
     -nln "import.$3" -overwrite -t_srs EPSG:4326 -nlt PROMOTE_TO_MULTI \
-    -lco GEOMETRY_NAME=geom -lco FID=ogc_fid -lco SPATIAL_INDEX=NONE -progress
+    -lco GEOMETRY_NAME=geom -lco FID=ogc_fid -lco SPATIAL_INDEX=NONE -progress ${4:+-where "$4"}
 }
 # kor_sql <fil>
 kor_sql () {
