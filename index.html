@@ -113,6 +113,7 @@ function find(){
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json(), seen = new Set();
       hits = (j.features || []).map(flat).filter(h => !seen.has(h.key) && seen.add(h.key));
+      await fillNvrid(hits, pos);
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
@@ -197,6 +198,30 @@ function updateHighlight(){
     const params = { cql_filter: parts.join(" OR "), sld_body: sldFor(layer) };
     if (hi[layer]) hi[layer].setParams(params);
     else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
+  });
+}
+
+// NVR-id finns inte alltid i INSPIRE-namnet. Hämta det från NV:s WMS-skikt (GetFeatureInfo) i stället.
+async function nvrAt(lat, lon){
+  const d = 0.0005, out = [];
+  await Promise.all(Object.entries(LAGER).map(async ([typ, layer]) => {
+    const u = `${CFG.wms}?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=${layer}&query_layers=${layer}&styles=` +
+      `&crs=EPSG:4326&bbox=${lat-d},${lon-d},${lat+d},${lon+d}&width=101&height=101&i=50&j=50&info_format=application/json&feature_count=10`;
+    try { const j = await (await fetch(u)).json(); (j.features || []).forEach(f => out.push({ typ, ...f.properties })); }
+    catch (e) { console.warn("GetFeatureInfo", layer, e); }
+  }));
+  return out;
+}
+async function fillNvrid(list, p){
+  if (!list.some(h => h.skydd && !h.nvrid)) return;
+  const nvr = await nvrAt(p.lat, p.lon);
+  console.log("NVR-objekt vid position:", nvr);
+  const get = (o, k) => o[k] ?? o[k.toUpperCase()] ?? "";
+  list.forEach(h => {
+    if (!h.skydd || h.nvrid) return;
+    const same = nvr.filter(n => n.typ === h.typ);
+    const m = same.find(n => String(get(n, "namn")).toLowerCase() === h.name.toLowerCase()) || (same.length === 1 ? same[0] : null);
+    if (m) h.nvrid = String(get(m, "nvrid"));
   });
 }
 
