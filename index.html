@@ -33,14 +33,22 @@ button:disabled{opacity:.5;cursor:default}
 #loc{width:100%}
 h3{font:600 1rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:1.3rem 0 .1rem}
 button.goto{background:none;border:0;padding:0;color:var(--moss);text-align:left;font:inherit;text-decoration:underline;text-underline-offset:3px}
+.row{display:flex;gap:.5rem}.row input{flex:1}
+#who{display:flex;justify-content:space-between;align-items:center;gap:.5rem;color:var(--mute);margin:0}
+button.small{padding:.35rem .7rem;font-size:.9rem}
 h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
 <main>
 <h1>Naturbesök</h1>
-<label for="user">Ditt namn</label>
-<input id="user" autocomplete="name" placeholder="Så här sparas dina besök">
+<section id="auth">
+  <form id="login" hidden>
+    <label for="email">Logga in med e-post</label>
+    <div class="row"><input id="email" type="email" autocomplete="email" required placeholder="namn@exempel.se"><button>Skicka länk</button></div>
+  </form>
+  <p id="who" hidden><span></span> <button id="logout" class="ghost small">Logga ut</button></p>
+</section>
 <button id="find">Var är jag?</button>
 <p id="status" aria-live="polite"></p>
 <div id="hits"></div>
@@ -53,24 +61,30 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <div id="visits" hidden></div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Inställningar ----
 const CFG = {
   wfs: "https://geodata.naturvardsverket.se/inspire/ps/wfs",
   wms: "https://geodata.naturvardsverket.se/inspire/ps-nvr/ows",
-  sheet: "https://script.google.com/macros/s/AKfycbxUgd9WFye-hGfQng3-3-ZOWgJeh9NlrY05J7FRxAVoo9jpACvl8NhU1zCw7zxQGUFGIw/exec"
+  // Supabase: URL och publishable key får ligga öppet – skyddet är Row Level Security i databasen.
+  supabaseUrl: "https://jihglrfinqsmigpxzfhk.supabase.co",
+  supabaseKey: "sb_publishable_v6uCzg15rdSyO4LAmNWaJA_BtOdAJBi"
 };
+const sb = window.supabase?.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { flowType: "implicit", persistSession: true, detectSessionInUrl: true } });
 
 const $ = s => document.querySelector(s);
 const store = {
   get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)) } catch {} }
 };
-let user = store.get("user", ""), visits = store.get("visits:" + user, []), pos = null, hits = [];
-function setUser(n){
-  n = n.trim(); if (n === user) return;
-  user = n; store.set("user", user);
-  visits = store.get("visits:" + user, []);
+let user = null, visits = [], pos = null, hits = [];   // user = { id, email } när inloggad
+function setUser(u){
+  if ((u?.id || null) === (user?.id || null)) return;
+  user = u ? { id: u.id, email: u.email } : null;
+  visits = user ? store.get("visits:" + user.id, []) : [];
+  $("#login").hidden = !!user; $("#who").hidden = !user;
+  if (user) $("#who span").textContent = "Inloggad som " + user.email;
   if (pins) pins.clearLayers();
   render(); sync();
 }
@@ -98,8 +112,7 @@ function flat(f){
 function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.className = warn ? "warn" : ""; }
 
 function find(){
-  setUser($("#user").value);
-  if (!user) { setStatus("Skriv ditt namn först.", true); $("#user").focus(); return; }
+  if (!user) { setStatus("Logga in först, så att besöken sparas på ditt konto.", true); $("#email").focus(); return; }
   if (!navigator.geolocation) { setStatus("Webbläsaren saknar stöd för position.", true); return; }
   setStatus("Hämtar position…"); $("#find").disabled = true;
   const q = new URLSearchParams(location.search), tl = parseFloat(q.get("lat")), tn = parseFloat(q.get("lon"));
@@ -340,23 +353,41 @@ function render(){
   updateHighlight();
 }
 
+// Databasrad <-> appens format
+const fromDb = r => ({ datum: r.datum, id: r.objekt_id, scheme: r.scheme, namn: r.namn, typ: r.typ, lat: r.lat, lon: r.lon, acc: r.acc, nvrid: r.nvrid || "" });
+
 async function logVisit(key){
-  const h = hits.find(x => x.key === key); if (!h) return;
-  const row = { datum: new Date().toISOString(), user, id: h.id, scheme: h.scheme, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc, nvrid: h.nvrid };
-  visits.unshift(row); store.set("visits:" + user, visits); render();
-  if (CFG.sheet) {
-    try { await fetch(CFG.sheet, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) }); }
-    catch { setStatus("Sparades på enheten men inte i Google Sheets.", true); }
+  const h = hits.find(x => x.key === key); if (!h || !user) return;
+  const row = { datum: new Date().toISOString(), id: h.id, scheme: h.scheme, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc, nvrid: h.nvrid };
+  visits.unshift(row); render();
+  const { error } = await sb.from("besok").insert({ objekt_id: h.id, scheme: h.scheme, nvrid: h.nvrid || null, namn: h.name, typ: h.typ, lat: pos.lat, lon: pos.lon, acc: pos.acc });
+  if (error) {
+    console.error("Kunde inte spara besöket", error);
+    visits.shift(); render();
+    setStatus("Besöket kunde inte sparas: " + error.message, true);
+    return;
   }
+  store.set("visits:" + user.id, visits);
+  setStatus(`Besök i ${h.name} sparat.`);
 }
 
 async function sync(){
-  if (!CFG.sheet || !user) return;
-  try {
-    const u = user, r = await fetch(CFG.sheet + "?user=" + encodeURIComponent(u));
-    const rows = await r.json();
-    if (Array.isArray(rows) && u === user) { visits = rows; store.set("visits:" + u, visits); render(); }
-  } catch { setStatus("Kunde inte läsa loggen från Google Sheets, visar det som finns på enheten.", true); }
+  if (!sb || !user) return;
+  const u = user.id;
+  const { data, error } = await sb.from("besok").select("*").order("datum", { ascending: false });
+  if (error) { console.error(error); setStatus("Kunde inte läsa dina besök, visar det som finns på enheten.", true); return; }
+  if (u !== user?.id) return;
+  visits = data.map(fromDb); store.set("visits:" + u, visits); render();
+}
+
+async function sendLink(e){
+  e.preventDefault();
+  const email = $("#email").value.trim(); if (!email) return;
+  const btn = $("#login button"); btn.disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+  btn.disabled = false;
+  if (error) setStatus("Kunde inte skicka länken: " + error.message, true);
+  else setStatus(`En inloggningslänk är skickad till ${email}. Öppna den på den här enheten.`);
 }
 
 document.addEventListener("click", e => {
@@ -373,15 +404,20 @@ function gotoVisit(lat, lon, namn, id){
 }
 $("#find").addEventListener("click", find);
 $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
-$("#user").value = user;
-$("#user").addEventListener("change", e => setUser(e.target.value));
+$("#login").addEventListener("submit", sendLink);
+$("#logout").addEventListener("click", async () => { await sb.auth.signOut(); setStatus("Utloggad."); });
 $("#vb").addEventListener("click", async () => {
   const d = $("#visits"); d.hidden = !d.hidden;
   if (!d.hidden) await sync();
   render();
 });
 $("#loc").addEventListener("click", locate);
-initMap(); render(); sync();
+initMap(); render();
+if (!sb) { setStatus("Kunde inte ladda Supabase – kontrollera nätet och ladda om sidan.", true); }
+else {
+  $("#login").hidden = false;
+  sb.auth.onAuthStateChange((_ev, session) => setTimeout(() => setUser(session?.user || null), 0));
+}
 </script>
 </body>
 </html>

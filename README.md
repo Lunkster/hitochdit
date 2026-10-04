@@ -1,6 +1,6 @@
 # Hit och dit – naturbesök
 
-Webbapp som tar din position, visar vilka skyddade områden du står i (Naturvårdsverkets öppna geodata) och loggar besöket.
+Webbapp som tar din position, visar vilka skyddade områden du står i (Naturvårdsverkets öppna geodata) och loggar besöket. Inloggning och lagring i Supabase.
 
 **App:** https://lunkster.github.io/hitochdit/
 Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
@@ -9,7 +9,8 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 | Fil | Vad |
 | --- | --- |
 | `index.html` | Hela appen (HTML, CSS, JS). Publiceras via GitHub Pages. |
-| `apps-script/Code.gs` | Kopia av Apps Script-koden i Google Sheet som tar emot och läser besök. Ändringar här måste klistras in i Apps Script och publiceras som ny version. |
+| `supabase/01_schema.sql` | Tabeller och Row Level Security i Supabase. Körs i SQL Editor. |
+| `apps-script/Code.gs` | Gamla Google Sheets-lagringen (ersatt av Supabase 2026-10, tas bort). |
 
 ## Datakällor
 - WFS `https://geodata.naturvardsverket.se/inspire/ps/wfs` – träff på skyddat område vid position
