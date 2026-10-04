@@ -197,7 +197,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.13.1", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.14.0", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
@@ -290,15 +290,16 @@ function find(){
       const r = await fetch(url);
       if (!r.ok) throw new Error("HTTP " + r.status);
       const j = await r.json(), seen = new Set();
-      hits = (j.features || []).map(flat).filter(h => !seen.has(h.key) && seen.add(h.key));
-      await fillNvrid(hits, pos);
+      // Naturreservat och nationalparker kommer från egen databas; NV:s WFS används bara för övriga skyddsformer (Natura 2000 m.fl.)
+      hits = (j.features || []).map(flat).filter(h => h.scheme !== "IUCN" && !seen.has(h.key) && seen.add(h.key)).map(h => ({ ...h, skydd: false }));
       const egna = await objektVid(pos.lat, pos.lon, 25);
-      hits.push(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true, nvrid: "", url: o.url })));
+      hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
+        nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
     } catch (e) {
-      setStatus(`Kunde inte hämta träffar (${e.message}). Vid ett CORS-fel måste anropet gå via Apps Script.`, true);
+      setStatus(`Kunde inte hämta träffar (${e.message}).`, true);
     }
     $("#find").disabled = false;
   };
@@ -325,6 +326,8 @@ let nvUppdatera = () => {};
 const SLD_NV = {
   "PS.ProtectedSites.NR": `<PolygonSymbolizer><Fill><CssParameter name="fill">#7fa276</CssParameter><CssParameter name="fill-opacity">0.22</CssParameter></Fill>
     <Stroke><CssParameter name="stroke">#8fb285</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer>`,
+  "PS.ProtectedSites.KR": `<PolygonSymbolizer><Fill><CssParameter name="fill">#e0b884</CssParameter><CssParameter name="fill-opacity">0.18</CssParameter></Fill>
+    <Stroke><CssParameter name="stroke">#e0b884</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer>`,
   // Nationalpark: bred beige kant under en grön gränslinje
   "PS.ProtectedSites.NP": `<PolygonSymbolizer><Stroke><CssParameter name="stroke">#e6d5ad</CssParameter><CssParameter name="stroke-width">6</CssParameter><CssParameter name="stroke-opacity">0.9</CssParameter></Stroke></PolygonSymbolizer>
     <PolygonSymbolizer><Fill><CssParameter name="fill">#8fb285</CssParameter><CssParameter name="fill-opacity">0.25</CssParameter></Fill>
@@ -416,14 +419,14 @@ function initMap(){
   new BasCtl({ position: "topright" }).addTo(map);
   // NV-skikten hämtas som EN bild där servern lägger nationalparker ovanpå reservat.
   // Kryssrutorna styr bara vilka skikt som ingår (layers-parametern), så två bildlager kan inte skymma varandra.
-  const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.NP", format: "image/png", transparent: true,
+  const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.KR,PS.ProtectedSites.NP", format: "image/png", transparent: true,
     opacity: 1, zIndex: 10, attribution: "Naturvårdsverket" }).addTo(map);
-  const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map),
+  const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Kulturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map),
     "Världsarv": L.tileLayer.wms(CFG.vaWms, { layers: "PS.ProtectedSite", format: "image/png", transparent: true, zIndex: 12,
       attribution: "Riksantikvarieämbetet" }).addTo(map),
     "Byggnadsminnen": bmSkikt = L.tileLayer.wms(CFG.bmWms, { layers: "byggnadsminnen_skyddsomraden", format: "image/png", transparent: true, zIndex: 13,
       sld_body: sldBM(), attribution: "Riksantikvarieämbetet" }).addTo(map) };
-  const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Nationalparker": "PS.ProtectedSites.NP" };
+  const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Kulturreservat": "PS.ProtectedSites.KR", "Nationalparker": "PS.ProtectedSites.NP" };
   nvUppdatera = () => {
     const l = Object.keys(over).filter(n => NV_NAMN[n] && map.hasLayer(over[n])).map(n => NV_NAMN[n]);
     if (!l.length) { map.removeLayer(nvSkikt); return; }
@@ -490,10 +493,12 @@ function besokStatus(id, namn, typ){
     : "Inte besökt än";
 }
 
+// Besök sparade på gamla sättet (scheme IUCN) innan reservaten fanns i egen databas
+const gamlaNV = () => visits.filter(v => !EGNA_KALLOR.has(v.scheme));
 async function loadShapes(){
   let nytt = false;
   for (const [typ, layer] of Object.entries(LAGER)) {
-    const ids = [...new Set(visits.filter(v => v.typ === typ && v.nvrid).map(v => String(v.nvrid)))]
+    const ids = [...new Set(gamlaNV().filter(v => v.typ === typ && v.nvrid).map(v => String(v.nvrid)))]
       .filter(id => !shapes[id] && !failed.has(id));
     if (!ids.length) continue;
     const u = `${CFG.wms}?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application/json&srsName=EPSG:4326` +
@@ -525,7 +530,8 @@ async function loadShapes(){
 
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
-const SKIKT_KALLA = { "Världsarv": "VA", "Byggnadsminnen": "BM" };
+const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Världsarv": "VA", "Byggnadsminnen": "BM" };
+const NV_KALLOR = new Set(["NR", "NP", "KR"]);   // NV-objekt: ext_id = NVR-id
 // Byggnadsminnen: RAÄ:s WMS har bara en grå standardstil, så vi skickar en egen (SLD).
 // Inzoomat: ytor. Utzoomat (> 1:60 000): en prick per byggnadsminne så att de syns.
 let bmSkikt;
@@ -557,7 +563,8 @@ async function loadGeoShapes(){
   (data || []).forEach(o => {
     const k = o.kalla + ":" + o.ext_id;
     geoShapes[k] = L.geoJSON(o.geojson, { style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 }, bubblingMouseEvents: false })
-      .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`);
+      .bindPopup(() => { const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
+        return `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ })}`; });
   });
   nycklar.forEach(k => { if (!geoShapes[k]) geoFailed.add(k); });
   return true;
@@ -570,7 +577,7 @@ function updateHighlight(){
   Object.entries(geoShapes).forEach(([k, l]) => { if (geoBesokta.has(k)) { if (!hiGroup.hasLayer(l)) hiGroup.addLayer(l); } else hiGroup.removeLayer(l); });
   if (!geoLoading) { geoLoading = true; loadGeoShapes().then(nytt => { geoLoading = false; if (nytt) updateHighlight(); }); }
   // 1. Egna ytor
-  const aktuella = new Set(visits.filter(v => v.nvrid).map(v => String(v.nvrid)));
+  const aktuella = new Set(gamlaNV().filter(v => v.nvrid).map(v => String(v.nvrid)));
   Object.entries(shapes).forEach(([id, l]) => {
     if (aktuella.has(id)) { if (!hiGroup.hasLayer(l)) hiGroup.addLayer(l); }
     else hiGroup.removeLayer(l);
@@ -578,7 +585,7 @@ function updateHighlight(){
   // 2. WMS-reserv för det som saknar egen yta
   Object.values(LAGER).forEach(layer => {
     const ids = new Set(), names = new Set();
-    visits.forEach(v => {
+    gamlaNV().forEach(v => {
       if (LAGER[v.typ] !== layer) return;
       if (v.nvrid && shapes[String(v.nvrid)]) return;
       if (v.nvrid && failed.has(String(v.nvrid))) ids.add(String(v.nvrid));
@@ -609,55 +616,21 @@ async function nvYtaVidPunkt(lat, lon, key){
   } catch (e) { console.warn("nvYtaVidPunkt", e); return null; }
 }
 
-// NVR-id finns inte alltid i INSPIRE-namnet. Hämta det från NV:s WMS-skikt (GetFeatureInfo) i stället.
-async function nvrAt(lat, lon, d = 0.0005, lager = LAGER){
-  const out = [];
-  await Promise.all(Object.entries(lager).map(async ([typ, layer]) => {
-    const u = `${CFG.wms}?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=${layer}&query_layers=${layer}&styles=` +
-      `&crs=EPSG:4326&bbox=${lat-d},${lon-d},${lat+d},${lon+d}&width=101&height=101&i=50&j=50&info_format=application/json&feature_count=10`;
-    try { const j = await (await fetch(u)).json(); (j.features || []).forEach(f => out.push({ typ, ...f.properties })); }
-    catch (e) { console.warn("GetFeatureInfo", layer, e); }
-  }));
-  return out;
-}
-async function fillNvrid(list, p){
-  if (!list.some(h => h.skydd && !h.nvrid)) return;
-  const nvr = await nvrAt(p.lat, p.lon);
-  console.log("NVR-objekt vid position:", nvr);
-  const get = (o, k) => o[k] ?? o[k.toUpperCase()] ?? "";
-  list.forEach(h => {
-    if (!h.skydd || h.nvrid) return;
-    const same = nvr.filter(n => n.typ === h.typ);
-    const m = same.find(n => String(get(n, "namn")).toLowerCase() === h.name.toLowerCase()) || (same.length === 1 ? same[0] : null);
-    if (m) h.nvrid = String(get(m, "nvrid"));
-  });
-}
 
 // Infoklick: fråga NV:s WMS vad som finns där man klickade och visa namn och besöksstatus.
-const OVERLAY_TYP = { "Naturreservat": "Naturreservat", "Nationalparker": "Nationalpark" };   // bara NV-skikten
 async function infoClick(e){
-  const lager = {};
-  Object.entries(overlays).forEach(([namn, l]) => { if (OVERLAY_TYP[namn] && map.hasLayer(l)) lager[OVERLAY_TYP[namn]] = LAGER[OVERLAY_TYP[namn]]; });
-  const kallor = Object.entries(SKIKT_KALLA).filter(([n]) => map.hasLayer(overlays[n])).map(([, k]) => k);
-  if (!Object.keys(lager).length && !kallor.length) return;
+  const kallor = Object.entries(SKIKT_KALLA).filter(([n]) => overlays[n] && map.hasLayer(overlays[n])).map(([, k]) => k);
+  if (!kallor.length) return;
   const p = map.latLngToContainerPoint(e.latlng), a = map.containerPointToLatLng(p.subtract([4, 4]));
-  const d = Math.max(Math.abs(a.lat - e.latlng.lat), Math.abs(a.lng - e.latlng.lng));
   const popup = L.popup().setLatLng(e.latlng).setContent("Hämtar…").openOn(map);
-  const [res, va] = await Promise.all([
-    Object.keys(lager).length ? nvrAt(e.latlng.lat, e.latlng.lng, d, lager) : [],
-    kallor.length ? objektVid(e.latlng.lat, e.latlng.lng, Math.max(10, map.distance(e.latlng, a)), kallor) : []
-  ]);
-  console.log("Infoklick:", res, va);
-  if (!res.length && !va.length) { map.closePopup(popup); return; }
-  popup.setContent([
-    ...va.map(o => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`),
-    ...res.map(o => {
-      const namn = prop(o, "namn"), id = String(prop(o, "nvrid"));
-      const status = besokStatus(id, namn, o.typ);
-      const efter = id ? efterForm({ oid: "NVR-" + id, scheme: "IUCN", nvrid: id, namn, typ: o.typ }) : "";
-      return `<strong>${esc(namn || "Namnlöst område")}</strong><br>${esc(o.typ)}${id ? " · NVR-id " + esc(id) : ""}<br><em>${status}</em>${efter}`;
-    })
-  ].join("<hr>"));
+  const res = await objektVid(e.latlng.lat, e.latlng.lng, Math.max(10, map.distance(e.latlng, a)), kallor);
+  console.log("Infoklick:", res);
+  if (!res.length) { map.closePopup(popup); return; }
+  popup.setContent(res.map(o => {
+    const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
+    return `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}${nvrid ? " · NVR-id " + esc(nvrid) : ""}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}` +
+      efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ });
+  }).join("<hr>"));
 }
 
 function efterForm({ oid, scheme, nvrid = "", namn, typ }){
@@ -686,7 +659,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Byggnadsminne", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Kulturreservat", "Byggnadsminne", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {
@@ -727,7 +700,7 @@ function render(){
 const fromDb = r => ({ dbid: r.id, datum: r.datum, id: r.objekt_id, scheme: r.scheme, namn: r.namn, typ: r.typ, lat: r.lat, lon: r.lon, acc: r.acc, nvrid: r.nvrid || "", pa_plats: r.pa_plats !== false });
 const num = x => x == null || x === "" ? NaN : +x;
 // Samma plats ska grupperas ihop oavsett hur den loggades: NVR-id om det finns, annars INSPIRE-id
-const platsNyckel = v => v.nvrid ? "nvr:" + v.nvrid : v.scheme + ":" + v.id;
+const platsNyckel = v => EGNA_KALLOR.has(v.scheme) ? v.scheme + ":" + v.id : v.nvrid ? "nvr:" + v.nvrid : v.scheme + ":" + v.id;
 
 async function logVisit(key){
   const h = hits.find(x => x.key === key); if (!h || !user) return;
