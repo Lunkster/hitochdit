@@ -195,6 +195,7 @@ function initMap(){
     "Satellit (Esri)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 18, maxNativeZoom: 17, attribution: "Bilder © Esri, Maxar, Earthstar Geographics m.fl." })
   };
+  Object.values(BAS).forEach(l => l.setZIndex(1));   // bakgrund alltid underst, oavsett när den läggs till
   let basNamn = store.get("bas", "");
   if (!BAS[basNamn]) basNamn = Object.keys(BAS)[0];
   BAS[basNamn].addTo(map);
@@ -212,8 +213,8 @@ function initMap(){
     }
   });
   new BasCtl({ position: "topright" }).addTo(map);
-  const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: 1, attribution: "Naturvårdsverket" });
-  const over = overlays = { "Naturreservat": wms("PS.ProtectedSites.NR"), "Nationalparker": wms("PS.ProtectedSites.NP") };
+  const wms = (l, z) => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: 1, zIndex: z, attribution: "Naturvårdsverket" });
+  const over = overlays = { "Naturreservat": wms("PS.ProtectedSites.NR", 10), "Nationalparker": wms("PS.ProtectedSites.NP", 11) };
   Object.values(over).forEach(l => l.addTo(map));
   ctl = L.control.layers(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
@@ -328,7 +329,7 @@ function updateHighlight(){
     if (!parts.length) { if (hi[layer]) { hiGroup.removeLayer(hi[layer]); delete hi[layer]; } return; }
     const params = { cql_filter: parts.join(" OR "), sld_body: sldFor(layer) };
     if (hi[layer]) { if (hi[layer].wmsParams.cql_filter !== params.cql_filter) hi[layer].setParams(params); } // rita bara om när urvalet ändrats
-    else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, tileSize: 512, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
+    else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, tileSize: 512, zIndex: 20, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
   });
   // 3. Hämta saknade ytor i bakgrunden och rita om när de kommit
   if (!loading) { loading = true; loadShapes().then(nytt => { loading = false; if (nytt) updateHighlight(); }); }
