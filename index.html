@@ -179,28 +179,89 @@ function drawPins(){
   });
 }
 
-// Besökta objekt färgas av servern: WMS-lagret ritas om med filter (cql_filter) och egen stil (sld_body).
+// Besökta objekt: ytorna hämtas en gång via WFS (på NVR-id) och ritas av appen.
+// Reserv: besök utan NVR-id, eller ytor som inte gick att hämta, färgas av servern via WMS (cql_filter + sld_body).
 let ctl, hiGroup;
 const hi = {};
 const LAGER = { "Nationalpark": "PS.ProtectedSites.NP", "Naturreservat": "PS.ProtectedSites.NR" };
-const sldFor = n => `<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld"><NamedLayer><Name>${n}</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Fill><CssParameter name="fill">#c2410c</CssParameter><CssParameter name="fill-opacity">0.45</CssParameter></Fill><Stroke><CssParameter name="stroke">#c2410c</CssParameter><CssParameter name="stroke-width">2</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;
+const FARG = "#c2410c";
+const sldFor = n => `<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld"><NamedLayer><Name>${n}</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Fill><CssParameter name="fill">${FARG}</CssParameter><CssParameter name="fill-opacity">0.45</CssParameter></Fill><Stroke><CssParameter name="stroke">${FARG}</CssParameter><CssParameter name="stroke-width">2</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;
+const sq = x => "'" + String(x).replace(/'/g, "''") + "'";
+const prop = (o, k) => o?.[k] ?? o?.[k.toUpperCase()] ?? "";
+const shapes = {}, failed = new Set();   // nvrid -> Leaflet-lager, resp. id som inte gick att hämta
+let loading = false;
+
+// Sverige: lat 55–69, lon 10–24. Vänd koordinaterna om servern skickar lat/lon i stället för lon/lat.
+const toLL = c => c[0] > 40 ? L.latLng(c[0], c[1]) : L.latLng(c[1], c[0]);
+
+function besokStatus(id, namn, typ){
+  const dat = t => new Date(t).toLocaleDateString("sv-SE");
+  const mine = visits.filter(v => (id && String(v.nvrid) === String(id)) || (v.typ === typ && v.namn === namn));
+  return mine.length
+    ? `Besökt ${mine.length} ${mine.length > 1 ? "gånger" : "gång"}, senast ${dat(Math.max(...mine.map(v => new Date(v.datum).getTime())))}`
+    : "Inte besökt än";
+}
+
+async function loadShapes(){
+  let nytt = false;
+  for (const [typ, layer] of Object.entries(LAGER)) {
+    const ids = [...new Set(visits.filter(v => v.typ === typ && v.nvrid).map(v => String(v.nvrid)))]
+      .filter(id => !shapes[id] && !failed.has(id));
+    if (!ids.length) continue;
+    const u = `${CFG.wms}?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application/json&srsName=EPSG:4326` +
+      `&CQL_FILTER=` + encodeURIComponent(`nvrid IN (${ids.map(sq).join(",")})`);
+    try {
+      const r = await fetch(u);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json(), per = {};
+      (j.features || []).forEach(f => { const id = String(prop(f.properties, "nvrid")); (per[id] = per[id] || []).push(f); });
+      Object.entries(per).forEach(([id, fs]) => {
+        const namn = prop(fs[0].properties, "namn");
+        shapes[id] = L.geoJSON({ type: "FeatureCollection", features: fs }, {
+          coordsToLatLng: toLL,
+          style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 },
+          bubblingMouseEvents: false
+        }).bindPopup(() => `<strong>${esc(namn)}</strong><br>${esc(typ)} · NVR-id ${esc(id)}<br><em>${besokStatus(id, namn, typ)}</em>`);
+        nytt = true;
+      });
+      ids.forEach(id => { if (!shapes[id]) failed.add(id); });
+      console.log(`Ytor ${typ}:`, Object.keys(per).length, "hämtade av", ids.length);
+    } catch (e) {
+      console.warn("Kunde inte hämta ytor via WFS, använder WMS-färgning", layer, e);
+      ids.forEach(id => failed.add(id));
+      nytt = true;
+    }
+  }
+  return nytt;
+}
+
 function updateHighlight(){
   if (!map) return;
-  const q = x => "'" + String(x).replace(/'/g, "''") + "'";
+  // 1. Egna ytor
+  const aktuella = new Set(visits.filter(v => v.nvrid).map(v => String(v.nvrid)));
+  Object.entries(shapes).forEach(([id, l]) => {
+    if (aktuella.has(id)) { if (!hiGroup.hasLayer(l)) hiGroup.addLayer(l); }
+    else hiGroup.removeLayer(l);
+  });
+  // 2. WMS-reserv för det som saknar egen yta
   Object.values(LAGER).forEach(layer => {
     const ids = new Set(), names = new Set();
     visits.forEach(v => {
       if (LAGER[v.typ] !== layer) return;
-      if (v.nvrid) ids.add(String(v.nvrid)); else names.add(v.namn); // äldre rader saknar nvrid: matcha på namn
+      if (v.nvrid && shapes[String(v.nvrid)]) return;
+      if (v.nvrid && failed.has(String(v.nvrid))) ids.add(String(v.nvrid));
+      else if (!v.nvrid) names.add(v.namn); // äldre rader saknar nvrid: matcha på namn
     });
     const parts = [];
-    if (ids.size) parts.push(`nvrid IN (${[...ids].map(q).join(",")})`);
-    if (names.size) parts.push(`namn IN (${[...names].map(q).join(",")})`);
+    if (ids.size) parts.push(`nvrid IN (${[...ids].map(sq).join(",")})`);
+    if (names.size) parts.push(`namn IN (${[...names].map(sq).join(",")})`);
     if (!parts.length) { if (hi[layer]) { hiGroup.removeLayer(hi[layer]); delete hi[layer]; } return; }
     const params = { cql_filter: parts.join(" OR "), sld_body: sldFor(layer) };
     if (hi[layer]) { if (hi[layer].wmsParams.cql_filter !== params.cql_filter) hi[layer].setParams(params); } // rita bara om när urvalet ändrats
     else { hi[layer] = L.tileLayer.wms(CFG.wms, { layers: layer, format: "image/png", transparent: true, opacity: .9, tileSize: 512, attribution: "Naturvårdsverket", ...params }); hiGroup.addLayer(hi[layer]); }
   });
+  // 3. Hämta saknade ytor i bakgrunden och rita om när de kommit
+  if (!loading) { loading = true; loadShapes().then(nytt => { loading = false; if (nytt) updateHighlight(); }); }
 }
 
 // NVR-id finns inte alltid i INSPIRE-namnet. Hämta det från NV:s WMS-skikt (GetFeatureInfo) i stället.
@@ -239,14 +300,9 @@ async function infoClick(e){
   const res = await nvrAt(e.latlng.lat, e.latlng.lng, d, lager);
   console.log("Infoklick:", res);
   if (!res.length) { map.closePopup(popup); return; }
-  const get = (o, k) => o[k] ?? o[k.toUpperCase()] ?? "";
-  const dat = t => new Date(t).toLocaleDateString("sv-SE");
   popup.setContent(res.map(o => {
-    const namn = get(o, "namn"), id = String(get(o, "nvrid"));
-    const mine = visits.filter(v => (id && String(v.nvrid) === id) || (v.typ === o.typ && v.namn === namn));
-    const status = mine.length
-      ? `Besökt ${mine.length} ${mine.length > 1 ? "gånger" : "gång"}, senast ${dat(Math.max(...mine.map(v => new Date(v.datum).getTime())))}`
-      : "Inte besökt än";
+    const namn = prop(o, "namn"), id = String(prop(o, "nvrid"));
+    const status = besokStatus(id, namn, o.typ);
     return `<strong>${esc(namn || "Namnlöst område")}</strong><br>${esc(o.typ)}${id ? " · NVR-id " + esc(id) : ""}<br><em>${status}</em>`;
   }).join("<hr>"));
 }
@@ -256,7 +312,8 @@ function grouped(){
   const m = new Map();
   visits.forEach(v => {
     const k = v.scheme + ":" + v.id, t = new Date(v.datum).getTime();
-    const e = m.get(k) || { namn: v.namn, typ: v.typ, n: 0, senast: t, lat: +v.lat, lon: +v.lon };
+    const e = m.get(k) || { namn: v.namn, typ: v.typ, n: 0, senast: t, lat: +v.lat, lon: +v.lon, nvrid: "" };
+    if (v.nvrid) e.nvrid = String(v.nvrid);
     e.n++; if (t > e.senast) e.senast = t; m.set(k, e);
   });
   const g = {};
@@ -277,7 +334,7 @@ function render(){
   $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
     `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
     list.sort((a, b) => a.namn.localeCompare(b.namn, "sv")).map(e =>
-      `<div class="v"><div>${isNaN(e.lat) || isNaN(e.lon) ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}</span></div>`).join("")).join("")
+      `<div class="v"><div>${isNaN(e.lat) || isNaN(e.lon) ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-id="${esc(e.nvrid)}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}</span></div>`).join("")).join("")
     : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
   drawPins();
   updateHighlight();
@@ -304,11 +361,13 @@ async function sync(){
 
 document.addEventListener("click", e => {
   const k = e.target.dataset?.k; if (k) logVisit(k);
-  const g = e.target.closest?.(".goto"); if (g) gotoVisit(+g.dataset.lat, +g.dataset.lon, g.dataset.namn);
+  const g = e.target.closest?.(".goto"); if (g) gotoVisit(+g.dataset.lat, +g.dataset.lon, g.dataset.namn, g.dataset.id);
 });
-function gotoVisit(lat, lon, namn){
+function gotoVisit(lat, lon, namn, id){
   if (!map) return;
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
+  const yta = id && shapes[id];
+  if (yta) { map.fitBounds(yta.getBounds(), { padding: [20, 20], maxZoom: 15 }); yta.openPopup(); return; }
   map.setView([lat, lon], 14);
   L.popup().setLatLng([lat, lon]).setContent(`<strong>${esc(namn)}</strong><br><span style="color:var(--mute)">Här loggade du besöket</span>`).openOn(map);
 }
