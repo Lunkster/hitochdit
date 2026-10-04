@@ -197,7 +197,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.13.0", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.13.1", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
@@ -596,6 +596,19 @@ function updateHighlight(){
   if (!loading) { loading = true; loadShapes().then(nytt => { loading = false; if (nytt) updateHighlight(); }); }
 }
 
+// Yta för ett NV-objekt utan egen yta i appen: fråga NV:s WFS vid besökets position och välj rätt objekt.
+const nvPunktYtor = {};
+async function nvYtaVidPunkt(lat, lon, key){
+  if (nvPunktYtor[key]) return nvPunktYtor[key];
+  const bb = `${lat},${lon},${lat},${lon},urn:ogc:def:crs:EPSG::4258`;
+  try {
+    const r = await fetch(`${CFG.wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=ps:ProtectedSite&count=20&outputFormat=application/json&bbox=${bb}`);
+    if (!r.ok) return null;
+    const f = ((await r.json()).features || []).find(f => { const h = flat(f); return h.key === key || (h.nvrid && "nvr:" + h.nvrid === key); });
+    return f ? (nvPunktYtor[key] = L.geoJSON(f, { coordsToLatLng: toLL })) : null;
+  } catch (e) { console.warn("nvYtaVidPunkt", e); return null; }
+}
+
 // NVR-id finns inte alltid i INSPIRE-namnet. Hämta det från NV:s WMS-skikt (GetFeatureInfo) i stället.
 async function nvrAt(lat, lon, d = 0.0005, lager = LAGER){
   const out = [];
@@ -819,12 +832,23 @@ async function delVisit(dbid){
   visits = visits.filter(x => x.dbid !== dbid); store.set("visits:" + user.id, visits);
   render(); setStatus(`Besöket i ${v.namn} är borttaget.`);
 }
-function gotoVisit(lat, lon, namn, id, key){
+// Zooma till platsens hela utbredning. Om ytan inte hunnit laddas hämtas den först.
+async function gotoVisit(lat, lon, namn, id, key){
   if (!map) return;
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
-  const yta = (id && shapes[id]) || geoShapes[key];
-  if (yta) { map.fitBounds(yta.getBounds(), { padding: [20, 20], maxZoom: 15 }); yta.openPopup(); return; }
-  if (isNaN(lat) || isNaN(lon)) { setStatus("Området laddas – försök igen om en stund."); return; }
+  let yta = (id && shapes[id]) || geoShapes[key];
+  if (!yta && key && EGNA_KALLOR.has(key.split(":")[0])) { await loadGeoShapes(); yta = geoShapes[key]; }
+  if (!yta && id) { await loadShapes(); yta = shapes[id]; }
+  if (yta) updateHighlight();
+  let popup = !!yta;
+  if (!yta && !isNaN(lat) && !isNaN(lon)) yta = await nvYtaVidPunkt(lat, lon, key);   // t.ex. Natura 2000 eller besök utan NVR-id
+  if (yta) {
+    map.fitBounds(yta.getBounds(), { padding: [20, 20], maxZoom: 17 });
+    if (popup) yta.openPopup();
+    else L.popup().setLatLng(yta.getBounds().getCenter()).setContent(`<strong>${esc(namn)}</strong>`).openOn(map);
+    return;
+  }
+  if (isNaN(lat) || isNaN(lon)) { setStatus("Kunde inte hitta ytan för " + namn + "."); return; }
   map.setView([lat, lon], 14);
   L.popup().setLatLng([lat, lon]).setContent(`<strong>${esc(namn)}</strong><br><span style="color:var(--mute)">Här loggade du besöket</span>`).openOn(map);
 }
