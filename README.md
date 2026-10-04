@@ -14,6 +14,10 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 | `supabase/03_radera_konto.sql` | Funktion så att användare kan radera sitt eget konto. |
 | `supabase/04_kontakt.sql` | Kontaktformulär + avisering via ntfy (ämnet fylls i vid körning, ligger inte i repot). |
 | `supabase/05_version_efterhand.sql` | Kolumn `pa_plats` för efterhandsbesök, version i meddelanden. |
+| `supabase/06_geodata.sql` | PostGIS, tabellen `objekt` (alla egna geodata) och funktionerna `objekt_vid` / `objekt_geom`. |
+| `supabase/ladda/*.sql` | Flyttar data från `import`-schemat till `objekt` efter ogr2ogr. |
+| `tools/ladda_*.sh` | Laddar en datamängd från källans WFS till Supabase med ogr2ogr. Kräver `~/.config/hitochdit/db.env` (se `tools/db.env.exempel`). |
+| `tools/geodata_status.sh` | Visar antal objekt och databasens storlek. |
 | `apps-script/Code.gs` | Gamla Google Sheets-lagringen (ersatt av Supabase 2026-10, tas bort). |
 
 ## Datakällor

@@ -82,6 +82,10 @@ select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid
 .v.efterhand .goto{font-style:italic}
 .efterform{display:flex;gap:.4rem;align-items:center;margin-top:.4rem}
 .efterform input{padding:.3rem .4rem;font-size:.9rem;width:auto}
+/* Skiktmenyn: kryssruta och namn på samma rad (appens globala input/label-stil får inte slå igenom) */
+.leaflet-control-layers label{display:block;margin:0;color:var(--ink);font-size:.9rem}
+.leaflet-control-layers label > span,.leaflet-control-layers label > div{display:flex;align-items:center;gap:.4rem}
+.leaflet-control-layers input{width:auto;padding:0;margin:0;accent-color:var(--moss)}
 .farlig{color:var(--warn);border-color:var(--warn)}
 .val{display:flex;gap:.5rem}
 .val label{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;margin:0;padding:.55rem;border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer}
@@ -150,7 +154,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <li>Dina loggade besök – område, datum och tid samt din position och dess noggrannhet när du loggade besöket.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
-  <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets och Riksantikvarieämbetets karttjänster för att ta reda på vilket område du står i. Positionen sparas bara om du loggar ett besök.</p>
+  <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
   <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
   <p><strong>Kontaktformuläret:</strong> ditt meddelande och den e-postadress du eventuellt anger sparas i Supabase tills ärendet är hanterat. Meddelandet skickas också till mig som en avisering via tjänsten ntfy.sh, där det mellanlagras en kort tid.</p>
@@ -193,16 +197,15 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.11.0", VERSION_DATUM = "2026-10-04";
+const VERSION = "0.12.0", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
   wfs: "https://geodata.naturvardsverket.se/inspire/ps/wfs",
   wms: "https://geodata.naturvardsverket.se/inspire/ps-nvr/ows",
   // Supabase: URL och publishable key får ligga öppet – skyddet är Row Level Security i databasen.
-  // Världsarv från Riksantikvarieämbetet (RAÄ)
-  vaWfs: "https://inspire-raa.metria.se/geoserver/Varldsarv_ogc/wfs",
-  vaTyp: "varldsarv_sverige",
+  // RAÄ-data: kartbild hämtas från RAÄ (WMS), positionsmatchning görs mot egen PostGIS-tabell i Supabase
+  // (RAÄ:s WFS tillåter inte anrop från webbsidor – CORS). Laddas med tools/ladda_*.sh.
   vaWms: "https://inspire-raa.metria.se/geoserver/Varldsarv/ows",
   supabaseUrl: "https://jihglrfinqsmigpxzfhk.supabase.co",
   supabaseKey: "sb_publishable_v6uCzg15rdSyO4LAmNWaJA_BtOdAJBi"
@@ -288,8 +291,8 @@ function find(){
       const j = await r.json(), seen = new Set();
       hits = (j.features || []).map(flat).filter(h => !seen.has(h.key) && seen.add(h.key));
       await fillNvrid(hits, pos);
-      const va = await vaAt(pos.lat, pos.lon);
-      hits.push(...va.map(o => ({ key: "UNESCO:" + o.oid, id: o.oid, scheme: "UNESCO", des: "", name: o.namn, typ: "Världsarv", skydd: true, nvrid: "" })));
+      const egna = await objektVid(pos.lat, pos.lon, 25);
+      hits.push(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true, nvrid: "" })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
@@ -516,46 +519,39 @@ async function loadShapes(){
   return nytt;
 }
 
-// ---- Världsarv (RAÄ) ----
-// Ett världsarv kan bestå av många delområden (Hälsingegårdarna, Struves meridianbåge …); de hålls ihop via namnet.
-const vaOid = p => "VA-" + (p.sitename_sve || p.id);
-async function vaAt(lat, lon, d = 0.0003){
-  const u = `${CFG.vaWfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=${CFG.vaTyp}&outputFormat=application/json` +
-    `&propertyName=sitename_sve,unesco_href,id&bbox=${lat-d},${lon-d},${lat+d},${lon+d},urn:ogc:def:crs:EPSG::4326`;
-  try {
-    const r = await fetch(u); if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json(), ut = new Map();
-    (j.features || []).forEach(f => { const p = f.properties || {}, oid = vaOid(p); if (!ut.has(oid)) ut.set(oid, { oid, namn: p.sitename_sve || "Världsarv" }); });
-    return [...ut.values()];
-  } catch (e) { console.warn("Världsarv (RAÄ) kunde inte hämtas – CORS eller nätverk?", e); return []; }
+// ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
+// Kartskikt (overlay-namn) -> källkod i tabellen objekt
+const SKIKT_KALLA = { "Världsarv": "VA" };
+const EGNA_KALLOR = new Set(Object.values(SKIKT_KALLA));
+async function objektVid(lat, lon, radie = 25, kallor = null){
+  if (!sb) return [];
+  const { data, error } = await sb.rpc("objekt_vid", { lat, lon, radie_m: radie, kallor });
+  if (error) { console.warn("objekt_vid", error); return []; }
+  return data || [];
 }
-const vaShapes = {}, vaFailed = new Set();
-let vaLoading = false;
-async function loadVaShapes(){
-  const namn = [...new Set(visits.filter(v => v.scheme === "UNESCO").map(v => v.namn))].filter(n => !vaShapes[n] && !vaFailed.has(n));
-  if (!namn.length) return false;
-  const u = `${CFG.vaWfs}?service=WFS&version=1.0.0&request=GetFeature&typeName=${CFG.vaTyp}&outputFormat=application/json&srsName=EPSG:4326` +
-    `&CQL_FILTER=` + encodeURIComponent(`sitename_sve IN (${namn.map(sq).join(",")})`);
-  try {
-    const r = await fetch(u); if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json(), per = {};
-    (j.features || []).forEach(f => { const n = f.properties?.sitename_sve; (per[n] = per[n] || []).push(f); });
-    Object.entries(per).forEach(([n, fs]) => {
-      vaShapes[n] = L.geoJSON({ type: "FeatureCollection", features: fs }, {
-        coordsToLatLng: toLL, style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 }, bubblingMouseEvents: false
-      }).bindPopup(() => `<strong>${esc(n)}</strong><br>Världsarv<br><em>${besokStatus("", n, "Världsarv")}</em>${efterForm({ oid: vaOid(fs[0].properties || {}), scheme: "UNESCO", namn: n, typ: "Världsarv" })}`);
-    });
-    namn.forEach(n => { if (!vaShapes[n]) vaFailed.add(n); });
-  } catch (e) { console.warn("Världsarvsytor kunde inte hämtas", e); namn.forEach(n => vaFailed.add(n)); }
+// Besökta objekt ritas med förenklade ytor från databasen, nyckel 'KALLA:ext_id'
+const geoShapes = {}, geoFailed = new Set();
+let geoLoading = false;
+async function loadGeoShapes(){
+  const nycklar = [...new Set(visits.filter(v => EGNA_KALLOR.has(v.scheme)).map(platsNyckel))].filter(k => !geoShapes[k] && !geoFailed.has(k));
+  if (!nycklar.length || !sb) return false;
+  const { data, error } = await sb.rpc("objekt_geom", { nycklar });
+  if (error) { console.warn("objekt_geom", error); nycklar.forEach(k => geoFailed.add(k)); return false; }
+  (data || []).forEach(o => {
+    const k = o.kalla + ":" + o.ext_id;
+    geoShapes[k] = L.geoJSON(o.geojson, { style: { color: FARG, weight: 2, fillColor: FARG, fillOpacity: .35 }, bubblingMouseEvents: false })
+      .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`);
+  });
+  nycklar.forEach(k => { if (!geoShapes[k]) geoFailed.add(k); });
   return true;
 }
 
 function updateHighlight(){
   if (!map) return;
   // 0. Världsarv
-  const vaBesokta = new Set(visits.filter(v => v.scheme === "UNESCO").map(v => v.namn));
-  Object.entries(vaShapes).forEach(([n, l]) => { if (vaBesokta.has(n)) { if (!hiGroup.hasLayer(l)) hiGroup.addLayer(l); } else hiGroup.removeLayer(l); });
-  if (!vaLoading) { vaLoading = true; loadVaShapes().then(nytt => { vaLoading = false; if (nytt) updateHighlight(); }); }
+  const geoBesokta = new Set(visits.filter(v => EGNA_KALLOR.has(v.scheme)).map(platsNyckel));
+  Object.entries(geoShapes).forEach(([k, l]) => { if (geoBesokta.has(k)) { if (!hiGroup.hasLayer(l)) hiGroup.addLayer(l); } else hiGroup.removeLayer(l); });
+  if (!geoLoading) { geoLoading = true; loadGeoShapes().then(nytt => { geoLoading = false; if (nytt) updateHighlight(); }); }
   // 1. Egna ytor
   const aktuella = new Set(visits.filter(v => v.nvrid).map(v => String(v.nvrid)));
   Object.entries(shapes).forEach(([id, l]) => {
@@ -612,19 +608,19 @@ const OVERLAY_TYP = { "Naturreservat": "Naturreservat", "Nationalparker": "Natio
 async function infoClick(e){
   const lager = {};
   Object.entries(overlays).forEach(([namn, l]) => { if (OVERLAY_TYP[namn] && map.hasLayer(l)) lager[OVERLAY_TYP[namn]] = LAGER[OVERLAY_TYP[namn]]; });
-  const medVa = map.hasLayer(overlays["Världsarv"]);
-  if (!Object.keys(lager).length && !medVa) return;
+  const kallor = Object.entries(SKIKT_KALLA).filter(([n]) => map.hasLayer(overlays[n])).map(([, k]) => k);
+  if (!Object.keys(lager).length && !kallor.length) return;
   const p = map.latLngToContainerPoint(e.latlng), a = map.containerPointToLatLng(p.subtract([4, 4]));
   const d = Math.max(Math.abs(a.lat - e.latlng.lat), Math.abs(a.lng - e.latlng.lng));
   const popup = L.popup().setLatLng(e.latlng).setContent("Hämtar…").openOn(map);
   const [res, va] = await Promise.all([
     Object.keys(lager).length ? nvrAt(e.latlng.lat, e.latlng.lng, d, lager) : [],
-    medVa ? vaAt(e.latlng.lat, e.latlng.lng, d) : []
+    kallor.length ? objektVid(e.latlng.lat, e.latlng.lng, Math.max(10, map.distance(e.latlng, a)), kallor) : []
   ]);
   console.log("Infoklick:", res, va);
   if (!res.length && !va.length) { map.closePopup(popup); return; }
   popup.setContent([
-    ...va.map(o => `<strong>${esc(o.namn)}</strong><br>Världsarv<br><em>${besokStatus("", o.namn, "Världsarv")}</em>${efterForm({ oid: o.oid, scheme: "UNESCO", namn: o.namn, typ: "Världsarv" })}`),
+    ...va.map(o => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus("", o.namn, o.typ)}</em>${efterForm({ oid: o.ext_id, scheme: o.kalla, namn: o.namn, typ: o.typ })}`),
     ...res.map(o => {
       const namn = prop(o, "namn"), id = String(prop(o, "nvrid"));
       const status = besokStatus(id, namn, o.typ);
@@ -690,7 +686,7 @@ function render(){
   $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
     `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
     list.sort((a, b) => a.namn.localeCompare(b.namn, "sv")).map(e =>
-      `<div class="v${e.efterhand ? " efterhand" : ""}"><div>${(isNaN(e.lat) || isNaN(e.lon)) && !e.nvrid && e.typ !== "Världsarv" ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-id="${esc(e.nvrid)}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}${e.efterhand ? ' <span class="tagg" title="Bara loggat i efterhand – räknas inte i topplistor">i efterhand</span>' : ""}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}<button class="ghost tiny" data-open="${esc(e.key)}" aria-expanded="${oppna.has(e.key)}" title="Visa enskilda besök">${oppna.has(e.key) ? "▴" : "▾"}</button></span></div>` +
+      `<div class="v${e.efterhand ? " efterhand" : ""}"><div>${(isNaN(e.lat) || isNaN(e.lon)) && !e.nvrid && !EGNA_KALLOR.has(e.rader[0].scheme) ? esc(e.namn) : `<button class="goto" data-lat="${e.lat}" data-lon="${e.lon}" data-id="${esc(e.nvrid)}" data-key="${esc(e.key)}" data-namn="${esc(e.namn)}" title="Visa på kartan">${esc(e.namn)}</button>`}${e.efterhand ? ' <span class="tagg" title="Bara loggat i efterhand – räknas inte i topplistor">i efterhand</span>' : ""}</div><span>${e.n > 1 ? e.n + " besök · senast " : ""}${dat(e.senast)}<button class="ghost tiny" data-open="${esc(e.key)}" aria-expanded="${oppna.has(e.key)}" title="Visa enskilda besök">${oppna.has(e.key) ? "▴" : "▾"}</button></span></div>` +
       (oppna.has(e.key) ? `<div class="vd">${e.rader.map(r => `<div><span>${r.pa_plats === false ? new Date(r.datum).toLocaleDateString("sv-SE") + " · i efterhand" : new Date(r.datum).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}</span>${r.dbid ? `<button class="ghost tiny" data-del="${r.dbid}">Ta bort</button>` : ""}</div>`).join("")}</div>` : "")).join("")).join("")
     : `<p><span style="color:var(--mute)">Inga besök än. Tryck på Var är jag? när du är ute.</span></p>`;
   drawPins();
@@ -794,7 +790,7 @@ async function sendLink(e){
 
 document.addEventListener("click", e => {
   const k = e.target.dataset?.k; if (k) logVisit(k);
-  const g = e.target.closest?.(".goto"); if (g) gotoVisit(+g.dataset.lat, +g.dataset.lon, g.dataset.namn, g.dataset.id);
+  const g = e.target.closest?.(".goto"); if (g) gotoVisit(+g.dataset.lat, +g.dataset.lon, g.dataset.namn, g.dataset.id, g.dataset.key);
   const o = e.target.dataset?.open; if (o) { oppna.has(o) ? oppna.delete(o) : oppna.add(o); render(); }
   const d = e.target.dataset?.del; if (d) delVisit(+d);
 });
@@ -806,10 +802,10 @@ async function delVisit(dbid){
   visits = visits.filter(x => x.dbid !== dbid); store.set("visits:" + user.id, visits);
   render(); setStatus(`Besöket i ${v.namn} är borttaget.`);
 }
-function gotoVisit(lat, lon, namn, id){
+function gotoVisit(lat, lon, namn, id, key){
   if (!map) return;
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
-  const yta = (id && shapes[id]) || vaShapes[namn];
+  const yta = (id && shapes[id]) || geoShapes[key];
   if (yta) { map.fitBounds(yta.getBounds(), { padding: [20, 20], maxZoom: 15 }); yta.openPopup(); return; }
   if (isNaN(lat) || isNaN(lon)) { setStatus("Området laddas – försök igen om en stund."); return; }
   map.setView([lat, lon], 14);
