@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Naturbesök</title>
+<title>Hit och Dit</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b}
@@ -41,12 +41,13 @@ button.small{padding:.35rem .7rem;font-size:.9rem}
 button.tiny{padding:.1rem .5rem;font-size:.85rem;margin-left:.4rem}
 .vd{padding:.2rem 0 .6rem 1rem;border-bottom:1px solid var(--line)}
 .vd div{display:flex;justify-content:space-between;align-items:center;padding:.2rem 0;color:var(--mute);font-size:.9rem}
+select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid rgba(0,0,0,.2);border-radius:4px;background:#fff;color:var(--ink);max-width:11rem}
 h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
 <main>
-<h1>Naturbesök</h1>
+<h1>Hit och Dit</h1>
 <section id="auth">
   <form id="login" hidden>
     <label for="email">Logga in med e-post</label>
@@ -181,14 +182,38 @@ let map, meL = [], pins, overlays = {};
 function initMap(){
   if (!window.L) { $("#map").textContent = "Kartan kunde inte laddas."; return; }
   map = L.map("map").setView([62, 15], 5);
-  const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17,
-    attribution: "Kartdata © OpenStreetMap-bidragsgivare, SRTM | Stil © OpenTopoMap (CC-BY-SA)" }).addTo(map);
-  const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 18, maxNativeZoom: 17, attribution: "Bilder © Esri, Maxar, Earthstar Geographics m.fl." });
-  const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: .8, attribution: "Naturvårdsverket" });
+  // Bakgrundskartor – den första är förvald
+  const BAS = {
+    "Nedtonad (OSM)": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd",
+      attribution: "Kartdata © OpenStreetMap-bidragsgivare | Stil © CARTO" }),
+    "Ljus (OSM)": L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd",
+      attribution: "Kartdata © OpenStreetMap-bidragsgivare | Stil © CARTO" }),
+    "Topografisk (OpenTopoMap)": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17,
+      attribution: "Kartdata © OpenStreetMap-bidragsgivare, SRTM | Stil © OpenTopoMap (CC-BY-SA)" }),
+    "Satellit (Esri)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18, maxNativeZoom: 17, attribution: "Bilder © Esri, Maxar, Earthstar Geographics m.fl." })
+  };
+  let basNamn = store.get("bas", "");
+  if (!BAS[basNamn]) basNamn = Object.keys(BAS)[0];
+  BAS[basNamn].addTo(map);
+  // Kompakt väljare för bakgrundskarta (rullgardin) i stället för en lång lista
+  const BasCtl = L.Control.extend({
+    onAdd(){
+      const el = L.DomUtil.create("select", "basval");
+      el.setAttribute("aria-label", "Bakgrundskarta");
+      el.innerHTML = Object.keys(BAS).map(n => `<option${n === basNamn ? " selected" : ""}>${n}</option>`).join("");
+      L.DomEvent.disableClickPropagation(el);
+      el.addEventListener("change", () => {
+        map.removeLayer(BAS[basNamn]); basNamn = el.value; BAS[basNamn].addTo(map); store.set("bas", basNamn);
+      });
+      return el;
+    }
+  });
+  new BasCtl({ position: "topright" }).addTo(map);
+  const wms = l => L.tileLayer.wms(CFG.wms, { layers: l, format: "image/png", transparent: true, opacity: 1, attribution: "Naturvårdsverket" });
   const over = overlays = { "Naturreservat": wms("PS.ProtectedSites.NR"), "Nationalparker": wms("PS.ProtectedSites.NP") };
   Object.values(over).forEach(l => l.addTo(map));
-  ctl = L.control.layers({ "OpenTopoMap": topo, "Satellit (Esri)": sat }, over).addTo(map);
+  ctl = L.control.layers(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
   ctl.addOverlay(hiGroup, "Besökta områden");
   pins = L.layerGroup().addTo(map);
