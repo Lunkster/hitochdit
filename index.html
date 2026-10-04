@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hit och Dit</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script>try { if (JSON.parse(localStorage.getItem("tema")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>
 <style>
-:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b}
+:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;color-scheme:light}
+/* Mörkt läge: samma mossgröna familj, mörka ytor */
+:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#5a7a53;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
-.topbar{background:var(--moss);color:#fff;display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;position:sticky;top:0;z-index:1000;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.topbar{background:var(--top);color:#fff;display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;position:sticky;top:0;z-index:1000;box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .topbar .flag{width:1.9rem;height:1.2rem;border-radius:2px;flex:none}
 .topbar h1{margin:0;font:600 1.05rem/1.2 "Iowan Old Style",Charter,Georgia,serif;letter-spacing:.06em;text-transform:uppercase;color:#fff}
 @media (max-width:360px){.topbar h1 span{display:none}}
@@ -18,7 +22,8 @@ h1{font:600 1.9rem/1.15 "Iowan Old Style",Charter,Georgia,serif;margin:.2rem 0 1
 h2{font:600 1.15rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:2rem 0 .5rem}
 label{display:block;color:var(--mute);font-size:.9rem;margin-bottom:.25rem}
 input{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--card);font:inherit;color:inherit}
-button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--moss);padding:.65rem 1rem;background:var(--moss);color:#fff}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--btn);padding:.65rem 1rem;background:var(--btn);color:#fff}
+button.ghost{border-color:var(--moss)}
 button.ghost{background:transparent;color:var(--moss)}
 button:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:3px solid var(--bark);outline-offset:2px}
@@ -51,7 +56,27 @@ button.tiny{padding:.1rem .5rem;font-size:.85rem;margin-left:.4rem}
 .vd{padding:.2rem 0 .6rem 1rem;border-bottom:1px solid var(--line)}
 .vd div{display:flex;justify-content:space-between;align-items:center;padding:.2rem 0;color:var(--mute);font-size:.9rem}
 .osm-nedtonad{filter:saturate(.3) brightness(1.06) contrast(.92)}
-select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid rgba(0,0,0,.2);border-radius:4px;background:#fff;color:var(--ink);max-width:11rem}
+select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid rgba(0,0,0,.2);border-radius:4px;background:var(--card);color:var(--ink);max-width:11rem}
+/* Mörk bakgrundskarta: OSM inverterad och dämpad, lätt genomskinlig mot mörkgrön botten (#map-bakgrund) */
+.osm-mork{filter:invert(.86) hue-rotate(180deg) saturate(.6) brightness(.9) contrast(1.15)}
+/* Leaflet i mörkt läge */
+[data-theme=dark] .leaflet-popup-content-wrapper,[data-theme=dark] .leaflet-popup-tip,[data-theme=dark] .leaflet-control-layers,
+[data-theme=dark] .leaflet-bar a{background:var(--card);color:var(--ink);border-color:var(--line)}
+[data-theme=dark] .leaflet-control-attribution{background:rgba(28,38,33,.85);color:var(--mute)}
+[data-theme=dark] .leaflet-control-attribution a,[data-theme=dark] .leaflet-popup-content a{color:var(--moss)}
+/* Inställningar */
+.gear{margin-left:auto;background:none;border:0;padding:.25rem;color:#fff;line-height:0}
+.gear svg{width:1.5rem;height:1.5rem}
+#settings{position:fixed;top:3.4rem;right:.75rem;z-index:1200;width:min(22rem,calc(100vw - 1.5rem));background:var(--card);color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);padding:1rem 1.1rem 1.1rem}
+#settings h2{margin:0 0 .6rem}
+#settings h3{margin:1rem 0 .4rem}
+#settings .stang{position:absolute;top:.6rem;right:.6rem}
+.val{display:flex;gap:.5rem}
+.val label{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;margin:0;padding:.55rem;border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer}
+.val input{width:auto;margin:0;accent-color:var(--moss)}
+.val label:has(input:checked){border-color:var(--moss);box-shadow:inset 0 0 0 1px var(--moss)}
+#acct{color:var(--mute);margin:.2rem 0 .6rem;overflow-wrap:anywhere}
 h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
@@ -59,18 +84,33 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <header class="topbar">
   <svg class="flag" viewBox="0 0 16 10" aria-hidden="true"><rect width="16" height="10" fill="#006aa7"/><rect x="5" width="2" height="10" fill="#fecc02"/><rect y="4" width="16" height="2" fill="#fecc02"/></svg>
   <h1>Hit och Dit<span>: Utforska Sverige</span></h1>
+  <button id="gear" class="gear" aria-label="Inställningar" aria-expanded="false" aria-controls="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
 </header>
+<div id="settings" role="dialog" aria-label="Inställningar" hidden>
+  <button class="ghost small stang" id="stang" aria-label="Stäng">✕</button>
+  <h2>Inställningar</h2>
+  <h3>Konto</h3>
+  <p id="acct">Inte inloggad.</p>
+  <form id="nameform" hidden>
+    <label for="uname">Användarnamn <span style="color:var(--mute)">(visas i appen och i framtida topplistor)</span></label>
+    <div class="row"><input id="uname" maxlength="30" autocomplete="nickname" required placeholder="t.ex. Reservatsjägaren"><button>Spara</button></div>
+  </form>
+  <div class="btns" id="acctbtns" hidden><button id="rename" class="ghost small">Byt namn</button><button id="logout" class="ghost small">Logga ut</button></div>
+  <h3>Utseende</h3>
+  <div class="val" role="radiogroup" aria-label="Tema">
+    <label><input type="radio" name="tema" value="light"> Ljust</label>
+    <label><input type="radio" name="tema" value="dark"> Mörkt</label>
+  </div>
+</div>
 <main>
 <section id="auth">
   <form id="login" hidden>
     <label for="email">Logga in med e-post</label>
     <div class="row"><input id="email" type="email" autocomplete="email" required placeholder="namn@exempel.se"><button>Skicka länk</button></div>
   </form>
-  <p id="who" hidden><span></span> <span class="btns"><button id="rename" class="ghost small">Byt namn</button><button id="logout" class="ghost small">Logga ut</button></span></p>
-  <form id="nameform" hidden>
-    <label for="uname">Användarnamn <span style="color:var(--mute)">(visas i appen och i framtida topplistor)</span></label>
-    <div class="row"><input id="uname" maxlength="30" autocomplete="nickname" required placeholder="t.ex. Reservatsjägaren"><button>Spara</button></div>
-  </form>
+  <p id="who" hidden><span></span></p>
 </section>
 <button id="find">Var är jag?</button>
 <p id="status" aria-live="polite"></p>
@@ -107,12 +147,15 @@ function setUser(u){
   if ((u?.id || null) === (user?.id || null)) return;
   user = u ? { id: u.id, email: u.email } : null;
   visits = user ? store.get("visits:" + user.id, []) : [];
-  $("#login").hidden = !!user; $("#who").hidden = !user; $("#nameform").hidden = true;
+  $("#login").hidden = !!user; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user;
   showWho();
   if (pins) pins.clearLayers();
   render(); sync(); if (user) loadProfile();
 }
-function showWho(){ if (user) $("#who > span").textContent = "Inloggad som " + (user.namn || user.email); }
+function showWho(){
+  if (user) $("#who > span").textContent = "Inloggad som " + (user.namn || user.email);
+  $("#acct").textContent = user ? `${user.namn || "(inget användarnamn)"} · ${user.email}` : "Inte inloggad. Logga in med e-post på startsidan.";
+}
 
 async function loadProfile(){
   const u = user.id;
@@ -122,7 +165,7 @@ async function loadProfile(){
   if (u !== user?.id) return;
   user.namn = data?.namn || "";
   showWho();
-  if (!user.namn) { $("#nameform").hidden = false; setStatus("Välj ett användarnamn."); }
+  if (!user.namn) { visaInst(true); $("#nameform").hidden = false; $("#uname").focus(); setStatus("Välj ett användarnamn."); }
 }
 async function saveName(e){
   e.preventDefault();
@@ -191,7 +234,27 @@ const hitHtml = h => {
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
-let map, meL = [], pins, overlays = {};
+let map, meL = [], pins, overlays = {}, BAS = {}, basNamn = "", basSel;
+function bytBas(n){
+  if (!map || !BAS[n] || n === basNamn) return;
+  map.removeLayer(BAS[basNamn]); basNamn = n; BAS[n].addTo(map); store.set("bas", n);
+  if (basSel) basSel.value = n;
+}
+
+// ---- Tema (ljust är förval) ----
+const tema = () => document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+function setTema(t){
+  if (t === "dark") document.documentElement.dataset.theme = "dark"; else delete document.documentElement.dataset.theme;
+  store.set("tema", t);
+  document.querySelectorAll("input[name=tema]").forEach(r => r.checked = r.value === t);
+  // Byt till passande bakgrundskarta om man har en av standardkartorna
+  if (t === "dark" && ["Nedtonad (OSM)", "Ljusgrå (Esri)"].includes(basNamn)) bytBas("Mörk (OSM)");
+  if (t === "light" && basNamn === "Mörk (OSM)") bytBas("Nedtonad (OSM)");
+}
+function visaInst(vis){
+  const p = $("#settings"); p.hidden = vis === undefined ? !p.hidden : !vis;
+  $("#gear").setAttribute("aria-expanded", String(!p.hidden));
+}
 function initMap(){
   if (!window.L) { $("#map").textContent = "Kartan kunde inte laddas."; return; }
   // Kartan ska inte fånga sidans scroll: på mobil flyttas den med två fingrar, på dator zoomar hjulet först efter klick i kartan.
@@ -223,9 +286,11 @@ function initMap(){
   }});
   new StorCtl({ position: "topleft" }).addTo(map);
   // Bakgrundskartor – den första är förvald
-  const BAS = {
+  BAS = {
     // OSM:s standardkarta, nedtonad med CSS-filter (klassen osm-nedtonad). Ingen nyckel behövs.
     "Nedtonad (OSM)": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "osm-nedtonad",
+      attribution: "Kartdata © OpenStreetMap-bidragsgivare" }),
+    "Mörk (OSM)": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "osm-mork", opacity: .85,
       attribution: "Kartdata © OpenStreetMap-bidragsgivare" }),
     "Ljusgrå (Esri)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 19, maxNativeZoom: 16, attribution: "Karta © Esri, HERE, Garmin, OpenStreetMap-bidragsgivare" }),
@@ -235,19 +300,17 @@ function initMap(){
       maxZoom: 18, maxNativeZoom: 17, attribution: "Bilder © Esri, Maxar, Earthstar Geographics m.fl." })
   };
   Object.values(BAS).forEach(l => l.setZIndex(1));   // bakgrund alltid underst, oavsett när den läggs till
-  let basNamn = store.get("bas", "");
-  if (!BAS[basNamn]) basNamn = Object.keys(BAS)[0];
+  basNamn = store.get("bas", "");
+  if (!BAS[basNamn]) basNamn = tema() === "dark" ? "Mörk (OSM)" : "Nedtonad (OSM)";
   BAS[basNamn].addTo(map);
   // Kompakt väljare för bakgrundskarta (rullgardin) i stället för en lång lista
   const BasCtl = L.Control.extend({
     onAdd(){
-      const el = L.DomUtil.create("select", "basval");
+      const el = basSel = L.DomUtil.create("select", "basval");
       el.setAttribute("aria-label", "Bakgrundskarta");
       el.innerHTML = Object.keys(BAS).map(n => `<option${n === basNamn ? " selected" : ""}>${n}</option>`).join("");
       L.DomEvent.disableClickPropagation(el);
-      el.addEventListener("change", () => {
-        map.removeLayer(BAS[basNamn]); basNamn = el.value; BAS[basNamn].addTo(map); store.set("bas", basNamn);
-      });
+      el.addEventListener("change", () => bytBas(el.value));
       return el;
     }
   });
@@ -524,8 +587,14 @@ $("#find").addEventListener("click", find);
 $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
 $("#login").addEventListener("submit", sendLink);
 $("#nameform").addEventListener("submit", saveName);
+$("#gear").addEventListener("click", () => visaInst());
+$("#stang").addEventListener("click", () => visaInst(false));
+document.addEventListener("keydown", e => { if (e.key === "Escape") visaInst(false); });
+document.addEventListener("click", e => { if (!$("#settings").hidden && !e.target.closest("#settings, #gear")) visaInst(false); });
+document.querySelectorAll("input[name=tema]").forEach(r => r.addEventListener("change", () => setTema(r.value)));
+document.querySelectorAll("input[name=tema]").forEach(r => r.checked = r.value === tema());
 $("#rename").addEventListener("click", () => { $("#uname").value = user?.namn || ""; $("#nameform").hidden = !$("#nameform").hidden; if (!$("#nameform").hidden) $("#uname").focus(); });
-$("#logout").addEventListener("click", async () => { await sb.auth.signOut(); setStatus("Utloggad."); });
+$("#logout").addEventListener("click", async () => { await sb.auth.signOut(); visaInst(false); setStatus("Utloggad."); });
 $("#vb").addEventListener("click", async () => {
   const d = $("#visits"); d.hidden = !d.hidden;
   if (!d.hidden) await sync();
