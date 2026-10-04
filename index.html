@@ -21,6 +21,7 @@ main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
 h1{font:600 1.9rem/1.15 "Iowan Old Style",Charter,Georgia,serif;margin:.2rem 0 1rem}
 h2{font:600 1.15rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:2rem 0 .5rem}
 label{display:block;color:var(--mute);font-size:.9rem;margin-bottom:.25rem}
+textarea{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--card);font:inherit;color:inherit;resize:vertical}
 input{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--card);font:inherit;color:inherit}
 button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--btn);padding:.65rem 1rem;background:var(--btn);color:#fff}
 button.ghost{border-color:var(--moss)}
@@ -114,7 +115,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </div>
   <div id="minadata" hidden>
     <h3>Mina uppgifter</h3>
-    <div class="btns"><button id="export" class="ghost small">Ladda ner mina data</button><button id="radera" class="ghost small farlig">Radera mitt konto</button></div>
+    <div class="btns"><button id="export" class="ghost small">Ladda ner (JSON)</button><button id="exportcsv" class="ghost small">Besök som CSV</button><button id="radera" class="ghost small farlig">Radera mitt konto</button></div>
     <p class="liten">Radering tar bort konto, användarnamn och alla besök direkt och går inte att ångra.</p>
   </div>
 </div>
@@ -136,7 +137,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <p>Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> öppna geodata. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
-  <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Ett kontaktformulär för frågor om dina uppgifter kommer snart här i appen.</p>
+  <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
   <p><strong>Vad som sparas:</strong></p>
   <ul>
     <li>Din e-postadress – för att du ska kunna logga in.</li>
@@ -147,9 +148,21 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst för att ta reda på vilket område du står i. Positionen sparas bara om du loggar ett besök.</p>
   <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
+  <p><strong>Kontaktformuläret:</strong> ditt meddelande och den e-postadress du eventuellt anger sparas i Supabase tills ärendet är hanterat. Jag får bara en avisering om att ett meddelande har kommit – innehållet stannar i databasen.</p>
   <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
   <p><strong>Dina rättigheter:</strong> du kan när som helst ladda ner dina uppgifter, ta bort enskilda besök, byta användarnamn och radera hela ditt konto under ⚙ Inställningar. Du har också rätt att begära rättelse och att klaga hos <a href="https://www.imy.se/" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a>.</p>
   <p class="liten">Senast uppdaterad 2026-10-04.</p>
+
+  <h3 id="kontakt">Kontakt</h3>
+  <form id="kontaktform">
+    <label for="kmedd">Meddelande</label>
+    <textarea id="kmedd" rows="4" maxlength="3000" required placeholder="Frågor, idéer eller fel du har hittat"></textarea>
+    <label for="kepost" style="margin-top:.5rem">Din e-post <span style="color:var(--mute)">(frivilligt – om du vill ha svar)</span></label>
+    <input id="kepost" type="email" maxlength="200" autocomplete="email">
+    <input id="kwebb" name="webbplats" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+    <button style="margin-top:.6rem">Skicka</button>
+    <p id="kstatus" class="liten" aria-live="polite"></p>
+  </form>
 </div>
 <main>
 <section id="auth">
@@ -634,6 +647,34 @@ async function exportera(){
   a.download = `hitochdit-mina-data-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
+async function skickaKontakt(e){
+  e.preventDefault();
+  const st = $("#kstatus"), btn = $("#kontaktform button");
+  if ($("#kwebb").value) return;   // fälla för spam-robotar
+  const meddelande = $("#kmedd").value.trim(), epost = $("#kepost").value.trim() || null;
+  if (meddelande.length < 2) { st.textContent = "Skriv ett meddelande först."; return; }
+  if (!sb) { st.textContent = "Kunde inte nå servern just nu."; return; }
+  btn.disabled = true; st.textContent = "Skickar…";
+  const { error } = await sb.from("meddelanden").insert({ meddelande, epost });
+  btn.disabled = false;
+  if (error) { console.error(error); st.textContent = "Meddelandet kunde inte skickas: " + error.message; return; }
+  $("#kmedd").value = ""; st.textContent = "Tack! Meddelandet är skickat.";
+}
+function laddaNer(innehall, typ, namn){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([innehall], { type: typ }));
+  a.download = namn;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function exporteraCsv(){
+  if (!user) return;
+  const { data, error } = await sb.from("besok").select("*").order("datum", { ascending: false });
+  if (error) { setStatus("Kunde inte hämta dina besök: " + error.message, true); return; }
+  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc"];
+  const cell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  const csv = [kol.join(","), ...data.map(r => kol.map(k => cell(r[k])).join(","))].join("\r\n");
+  laddaNer("\ufeff" + csv, "text/csv;charset=utf-8", `hitochdit-besok-${new Date().toISOString().slice(0, 10)}.csv`);
+}
 async function raderaKonto(){
   if (!user) return;
   if (!confirm("Vill du radera ditt konto? Ditt användarnamn och alla dina besök tas bort för alltid.")) return;
@@ -689,6 +730,9 @@ document.querySelectorAll(".panel .stang").forEach(b => b.addEventListener("clic
 document.addEventListener("keydown", e => { if (e.key === "Escape") visaPanel(null); });
 document.addEventListener("click", e => { if (!e.target.closest(".panel, .gear")) visaPanel(null); });
 $("#export").addEventListener("click", exportera);
+$("#kontaktform").addEventListener("submit", skickaKontakt);
+$("#infoknapp").addEventListener("click", () => { if (user && !$("#kepost").value) $("#kepost").value = user.email; });
+$("#exportcsv").addEventListener("click", exporteraCsv);
 $("#radera").addEventListener("click", raderaKonto);
 document.querySelectorAll("input[name=tema]").forEach(r => r.addEventListener("change", () => setTema(r.value)));
 document.querySelectorAll("input[name=tema]").forEach(r => r.checked = r.value === tema());
