@@ -67,11 +67,17 @@ select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid
 /* Inställningar */
 .gear{margin-left:auto;background:none;border:0;padding:.25rem;color:#fff;line-height:0}
 .gear svg{width:1.5rem;height:1.5rem}
-#settings{position:fixed;top:3.4rem;right:.75rem;z-index:1200;width:min(22rem,calc(100vw - 1.5rem));background:var(--card);color:var(--ink);
-  border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);padding:1rem 1.1rem 1.1rem}
-#settings h2{margin:0 0 .6rem}
-#settings h3{margin:1rem 0 .4rem}
-#settings .stang{position:absolute;top:.6rem;right:.6rem}
+.gear + .gear{margin-left:.15rem}
+.panel{position:fixed;top:3.4rem;right:.75rem;z-index:1200;width:min(24rem,calc(100vw - 1.5rem));max-height:calc(100vh - 4.4rem);overflow:auto;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);padding:1rem 1.1rem 1.1rem}
+.panel h2{margin:0 0 .6rem;padding-right:2.5rem}
+.panel h3{margin:1.1rem 0 .3rem}
+.panel .stang{position:absolute;top:.6rem;right:.6rem}
+.panel p,.panel li{font-size:.95rem}
+.panel ul{padding-left:1.2rem;margin:.3rem 0}
+.panel a{color:var(--moss)}
+.panel .liten{color:var(--mute);font-size:.85rem}
+.farlig{color:var(--warn);border-color:var(--warn)}
 .val{display:flex;gap:.5rem}
 .val label{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;margin:0;padding:.55rem;border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer}
 .val input{width:auto;margin:0;accent-color:var(--moss)}
@@ -84,11 +90,14 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <header class="topbar">
   <svg class="flag" viewBox="0 0 16 10" aria-hidden="true"><rect width="16" height="10" fill="#006aa7"/><rect x="5" width="2" height="10" fill="#fecc02"/><rect y="4" width="16" height="2" fill="#fecc02"/></svg>
   <h1>Hit och Dit<span>: Utforska Sverige</span></h1>
+  <button id="infoknapp" class="gear" aria-label="Om appen och integritet" aria-expanded="false" aria-controls="info">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor"/></svg>
+  </button>
   <button id="gear" class="gear" aria-label="Inställningar" aria-expanded="false" aria-controls="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
   </button>
 </header>
-<div id="settings" role="dialog" aria-label="Inställningar" hidden>
+<div id="settings" class="panel" role="dialog" aria-label="Inställningar" hidden>
   <button class="ghost small stang" id="stang" aria-label="Stäng">✕</button>
   <h2>Inställningar</h2>
   <h3>Konto</h3>
@@ -103,6 +112,44 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <label><input type="radio" name="tema" value="light"> Ljust</label>
     <label><input type="radio" name="tema" value="dark"> Mörkt</label>
   </div>
+  <div id="minadata" hidden>
+    <h3>Mina uppgifter</h3>
+    <div class="btns"><button id="export" class="ghost small">Ladda ner mina data</button><button id="radera" class="ghost small farlig">Radera mitt konto</button></div>
+    <p class="liten">Radering tar bort konto, användarnamn och alla besök direkt och går inte att ångra.</p>
+  </div>
+</div>
+<div id="info" class="panel" role="dialog" aria-label="Om Hit och Dit" hidden>
+  <button class="ghost small stang" aria-label="Stäng">✕</button>
+  <h2>Om Hit och Dit</h2>
+  <p>Hit och Dit hjälper dig att upptäcka och samla Sveriges skyddade natur. Tryck på <strong>Var är jag?</strong> när du är ute, så visar appen vilka naturreservat, nationalparker och andra skyddade områden du står i. Logga besöket och bygg upp din egen lista och karta över platser du har varit på.</p>
+  <p>Appen är ett hobbyprojekt under utveckling. Fler typer av platser, statistik och topplistor kommer efter hand.</p>
+
+  <h3>Så använder du appen</h3>
+  <ul>
+    <li><strong>Var är jag?</strong> – hämtar din position och visar skyddade områden där du står.</li>
+    <li><strong>Logga besök</strong> – sparar besöket på ditt konto. Samma område kan loggas en gång per dag.</li>
+    <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med två fingrar på mobilen, eller tryck ⤢ för stor karta.</li>
+    <li><strong>Mina besök</strong> – dina platser grupperade per typ. Klicka på ett namn för att visa platsen, ▾ för enskilda besök.</li>
+  </ul>
+
+  <h3>Data och källor</h3>
+  <p>Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> öppna geodata. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+
+  <h3>Integritet och personuppgifter</h3>
+  <p><strong>Personuppgiftsansvarig:</strong> [NAMN], [E-POST]. Kontakta mig om du har frågor om dina uppgifter.</p>
+  <p><strong>Vad som sparas:</strong></p>
+  <ul>
+    <li>Din e-postadress – för att du ska kunna logga in.</li>
+    <li>Ditt användarnamn – visas i appen och kan i framtiden visas i topplistor.</li>
+    <li>Dina loggade besök – område, datum och tid samt din position och dess noggrannhet när du loggade besöket.</li>
+  </ul>
+  <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
+  <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst för att ta reda på vilket område du står i. Positionen sparas bara om du loggar ett besök.</p>
+  <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
+  <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
+  <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
+  <p><strong>Dina rättigheter:</strong> du kan när som helst ladda ner dina uppgifter, ta bort enskilda besök, byta användarnamn och radera hela ditt konto under ⚙ Inställningar. Du har också rätt att begära rättelse och att klaga hos <a href="https://www.imy.se/" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a>.</p>
+  <p class="liten">Senast uppdaterad 2026-10-04.</p>
 </div>
 <main>
 <section id="auth">
@@ -147,7 +194,7 @@ function setUser(u){
   if ((u?.id || null) === (user?.id || null)) return;
   user = u ? { id: u.id, email: u.email } : null;
   visits = user ? store.get("visits:" + user.id, []) : [];
-  $("#login").hidden = !!user; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user;
+  $("#login").hidden = !!user; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user;
   showWho();
   if (pins) pins.clearLayers();
   render(); sync(); if (user) loadProfile();
@@ -266,10 +313,14 @@ function setTema(t){
   if (t === "light" && basNamn === "Mörk (OSM)") bytBas("Nedtonad (OSM)");
   nvUppdatera();
 }
-function visaInst(vis){
-  const p = $("#settings"); p.hidden = vis === undefined ? !p.hidden : !vis;
-  $("#gear").setAttribute("aria-expanded", String(!p.hidden));
+const PANELER = { settings: "#gear", info: "#infoknapp" };
+function visaPanel(id, vis){
+  Object.entries(PANELER).forEach(([pid, knapp]) => {
+    const p = $("#" + pid), visa = pid === id && (vis === undefined ? p.hidden : vis);
+    p.hidden = !visa; $(knapp).setAttribute("aria-expanded", String(visa));
+  });
 }
+const visaInst = vis => visaPanel("settings", vis);
 function initMap(){
   if (!window.L) { $("#map").textContent = "Kartan kunde inte laddas."; return; }
   // Kartan ska inte fånga sidans scroll: på mobil flyttas den med två fingrar, på dator zoomar hjulet först efter klick i kartan.
@@ -569,6 +620,33 @@ async function sync(){
   visits = data.map(fromDb); store.set("visits:" + u, visits); render();
 }
 
+// ---- GDPR: export och radering ----
+async function exportera(){
+  if (!user) return;
+  const [{ data: profil }, { data: besok, error }] = await Promise.all([
+    sb.from("profiler").select("*").eq("id", user.id).maybeSingle(),
+    sb.from("besok").select("*").order("datum", { ascending: false })
+  ]);
+  if (error) { setStatus("Kunde inte hämta dina data: " + error.message, true); return; }
+  const data = { exporterad: new Date().toISOString(), konto: { id: user.id, epost: user.email, ...profil }, besok };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  a.download = `hitochdit-mina-data-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function raderaKonto(){
+  if (!user) return;
+  if (!confirm("Vill du radera ditt konto? Ditt användarnamn och alla dina besök tas bort för alltid.")) return;
+  const svar = prompt('Skriv RADERA för att bekräfta.');
+  if ((svar || "").trim().toUpperCase() !== "RADERA") { setStatus("Kontot raderades inte."); return; }
+  const id = user.id;
+  const { error } = await sb.rpc("radera_mitt_konto");
+  if (error) { setStatus("Kunde inte radera kontot: " + error.message, true); return; }
+  try { localStorage.removeItem("visits:" + id); } catch {}
+  await sb.auth.signOut({ scope: "local" });   // kontot finns inte längre på servern
+  visaPanel(null); setStatus("Ditt konto och alla dina besök är raderade.");
+}
+
 async function sendLink(e){
   e.preventDefault();
   const email = $("#email").value.trim(); if (!email) return;
@@ -605,10 +683,13 @@ $("#find").addEventListener("click", find);
 $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").hidden; render(); });
 $("#login").addEventListener("submit", sendLink);
 $("#nameform").addEventListener("submit", saveName);
-$("#gear").addEventListener("click", () => visaInst());
-$("#stang").addEventListener("click", () => visaInst(false));
-document.addEventListener("keydown", e => { if (e.key === "Escape") visaInst(false); });
-document.addEventListener("click", e => { if (!$("#settings").hidden && !e.target.closest("#settings, #gear")) visaInst(false); });
+$("#gear").addEventListener("click", () => visaPanel("settings"));
+$("#infoknapp").addEventListener("click", () => visaPanel("info"));
+document.querySelectorAll(".panel .stang").forEach(b => b.addEventListener("click", () => visaPanel(null)));
+document.addEventListener("keydown", e => { if (e.key === "Escape") visaPanel(null); });
+document.addEventListener("click", e => { if (!e.target.closest(".panel, .gear")) visaPanel(null); });
+$("#export").addEventListener("click", exportera);
+$("#radera").addEventListener("click", raderaKonto);
 document.querySelectorAll("input[name=tema]").forEach(r => r.addEventListener("change", () => setTema(r.value)));
 document.querySelectorAll("input[name=tema]").forEach(r => r.checked = r.value === tema());
 $("#rename").addEventListener("click", () => { $("#uname").value = user?.namn || ""; $("#nameform").hidden = !$("#nameform").hidden; if (!$("#nameform").hidden) $("#uname").focus(); });

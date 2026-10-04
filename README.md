@@ -10,6 +10,8 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 | --- | --- |
 | `index.html` | Hela appen (HTML, CSS, JS). Publiceras via GitHub Pages. |
 | `supabase/01_schema.sql` | Tabeller och Row Level Security i Supabase. Körs i SQL Editor. |
+| `supabase/02_profiler.sql` | Automatisk profil vid registrering, unika användarnamn. |
+| `supabase/03_radera_konto.sql` | Funktion så att användare kan radera sitt eget konto. |
 | `apps-script/Code.gs` | Gamla Google Sheets-lagringen (ersatt av Supabase 2026-10, tas bort). |
 
 ## Datakällor
