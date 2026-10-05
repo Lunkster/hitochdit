@@ -149,7 +149,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner och län kommer från Lantmäteriet. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -157,7 +157,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <ul>
     <li>Din e-postadress – för att du ska kunna logga in.</li>
     <li>Ditt användarnamn – visas i appen och kan i framtiden visas i topplistor.</li>
-    <li>Dina loggade besök – område, datum och tid samt din position och dess noggrannhet när du loggade besöket.</li>
+    <li>Dina loggade besök – område, datum och tid, kommun och län samt din position och dess noggrannhet när du loggade besöket.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
@@ -203,7 +203,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.16.1", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.17.0", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
@@ -299,11 +299,13 @@ function find(){
       const j = await r.json(), seen = new Set();
       // Naturreservat och nationalparker kommer från egen databas; NV:s WFS används bara för övriga skyddsformer (Natura 2000 m.fl.)
       hits = (j.features || []).map(flat).filter(h => h.scheme !== "IUCN" && !seen.has(h.key) && seen.add(h.key)).map(h => ({ ...h, skydd: false }));
-      const egna = await objektVid(pos.lat, pos.lon, 25);
+      const [egna, ind] = await Promise.all([objektVid(pos.lat, pos.lon, 25), indelningVid(pos.lat, pos.lon)]);
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
         nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
-      setStatus((hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
+      const kommun = ind.find(i => i.typ === "kommun"), lan = ind.find(i => i.typ === "lan");
+      const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}. ` : "";
+      setStatus(var_ + (hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
     } catch (e) {
       setStatus(`Kunde inte hämta träffar (${e.message}).`, true);
@@ -594,6 +596,12 @@ const sldBM = () => {
 };
 const lankRaa = url => url ? `<br><a href="${esc(url)}" target="_blank" rel="noopener">${url.includes("openstreetmap") ? "Visa i OpenStreetMap" : "Läs mer" + (url.includes("unesco") ? " hos UNESCO" : " hos RAÄ")} ↗</a>` : "";
 const EGNA_KALLOR = new Set(Object.values(SKIKT_KALLA).flatMap(kallorFor));
+async function indelningVid(lat, lon){
+  if (!sb) return [];
+  const { data, error } = await sb.rpc("indelning_vid", { lat, lon });
+  if (error) { console.warn("indelning_vid", error); return []; }
+  return data || [];
+}
 async function objektVid(lat, lon, radie = 25, kallor = null){
   if (!sb) return [];
   const { data, error } = await sb.rpc("objekt_vid", { lat, lon, radie_m: radie, kallor });
@@ -813,7 +821,7 @@ async function exporteraCsv(){
   if (!user) return;
   const { data, error } = await sb.from("besok").select("*").order("datum", { ascending: false });
   if (error) { setStatus("Kunde inte hämta dina besök: " + error.message, true); return; }
-  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc", "pa_plats"];
+  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc", "pa_plats", "kommunkod", "lanskod"];
   const cell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   const csv = [kol.join(","), ...data.map(r => kol.map(k => cell(r[k])).join(","))].join("\r\n");
   laddaNer("\ufeff" + csv, "text/csv;charset=utf-8", `hitochdit-besok-${new Date().toISOString().slice(0, 10)}.csv`);
