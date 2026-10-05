@@ -35,6 +35,8 @@ button:disabled{opacity:.5;cursor:default}
 .hit.other{border-left-color:var(--line)}
 .hit div{flex:1;min-width:0}
 .hit strong{display:block;overflow-wrap:anywhere}
+.hit button.traff{display:block;text-decoration:none;color:inherit}
+.hit button.traff strong{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .hit span,.v span{color:var(--mute);font-size:.9rem}
 .hit.done{border-left-color:var(--bark)}
 .v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
@@ -201,7 +203,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.16.0", VERSION_DATUM = "2026-10-05";
+const VERSION = "0.16.1", VERSION_DATUM = "2026-10-05";
 
 // ---- Inställningar ----
 const CFG = {
@@ -315,7 +317,7 @@ function find(){
 
 const hitHtml = h => {
   const done = visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0,10) === new Date().toISOString().slice(0,10));
-  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><strong>${esc(h.name)}</strong><span>${esc(h.typ)}${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Läs mer ↗</a>` : ""}</span></div>
+  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><button class="goto traff" data-fokus="${esc(h.key)}" data-namn="${esc(h.name)}" title="Visa i kartan"><strong>${esc(h.name)}</strong></button><span>${esc(h.typ)}${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Läs mer ↗</a>` : ""}</span></div>
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
@@ -841,6 +843,7 @@ async function sendLink(e){
 
 document.addEventListener("click", e => {
   const k = e.target.dataset?.k; if (k) logVisit(k);
+  const f = e.target.closest?.("[data-fokus]"); if (f) { visaTraff(f.dataset.fokus, f.dataset.namn); return; }
   const g = e.target.closest?.(".goto"); if (g) gotoVisit(+g.dataset.lat, +g.dataset.lon, g.dataset.namn, g.dataset.id, g.dataset.key);
   const o = e.target.dataset?.open; if (o) { oppna.has(o) ? oppna.delete(o) : oppna.add(o); render(); }
   const d = e.target.dataset?.del; if (d) delVisit(+d);
@@ -853,6 +856,31 @@ async function delVisit(dbid){
   visits = visits.filter(x => x.dbid !== dbid); store.set("visits:" + user.id, visits);
   render(); setStatus(`Besöket i ${v.namn} är borttaget.`);
 }
+// Klick på en träff efter "Var är jag?": visa objektets hela yta (streckad) och zooma dit.
+let fokusLager = null;
+const fokusCache = {};
+async function visaTraff(key, namn){
+  if (!map) return;
+  $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
+  let lager = fokusCache[key];
+  if (!lager && EGNA_KALLOR.has(key.split(":")[0]) && sb) {
+    const { data } = await sb.rpc("objekt_geom", { nycklar: [key] });
+    if (data && data[0]) lager = L.geoJSON(data[0].geojson, {
+      style: { color: "#2b6cb0", weight: 3, dashArray: "6 4", fillOpacity: .08, interactive: false },
+      pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 10, color: "#2b6cb0", weight: 3, fillOpacity: .1, interactive: false }) });
+  }
+  if (!lager && pos) {   // övriga skyddsformer (Natura 2000 m.fl.) från NV
+    const y = await nvYtaVidPunkt(pos.lat, pos.lon, key);
+    if (y) lager = L.geoJSON(y.toGeoJSON(), { style: { color: "#2b6cb0", weight: 3, dashArray: "6 4", fillOpacity: .08, interactive: false } });
+  }
+  if (!lager) { setStatus("Kunde inte hämta ytan för " + namn + "."); return; }
+  fokusCache[key] = lager;
+  if (fokusLager) map.removeLayer(fokusLager);
+  fokusLager = lager.addTo(map);
+  map.fitBounds(lager.getBounds(), { padding: [20, 20], maxZoom: 17 });
+  L.popup().setLatLng(lager.getBounds().getCenter()).setContent(`<strong>${esc(namn)}</strong>`).openOn(map);
+}
+
 // Zooma till platsens hela utbredning. Om ytan inte hunnit laddas hämtas den först.
 async function gotoVisit(lat, lon, namn, id, key){
   if (!map) return;
