@@ -149,7 +149,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Kommuner och län kommer från Lantmäteriet. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner och län kommer från Lantmäteriet, tätorter från SCB och sjöar från SMHI (Svenskt vattenarkiv). Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -203,7 +203,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.17.0", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.18.0", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
@@ -301,7 +301,7 @@ function find(){
       hits = (j.features || []).map(flat).filter(h => h.scheme !== "IUCN" && !seen.has(h.key) && seen.add(h.key)).map(h => ({ ...h, skydd: false }));
       const [egna, ind] = await Promise.all([objektVid(pos.lat, pos.lon, 25), indelningVid(pos.lat, pos.lon)]);
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
-        nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url })));
+        nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url, rang: o.rang, lista: o.lista })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       const kommun = ind.find(i => i.typ === "kommun"), lan = ind.find(i => i.typ === "lan");
       const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}. ` : "";
@@ -319,7 +319,7 @@ function find(){
 
 const hitHtml = h => {
   const done = visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0,10) === new Date().toISOString().slice(0,10));
-  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><button class="goto traff" data-fokus="${esc(h.key)}" data-namn="${esc(h.name)}" title="Visa i kartan"><strong>${esc(h.name)}</strong></button><span>${esc(h.typ)}${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Läs mer ↗</a>` : ""}</span></div>
+  return `<div class="hit ${h.skydd ? "" : "other"} ${done ? "done" : ""}"><div><button class="goto traff" data-fokus="${esc(h.key)}" data-namn="${esc(h.name)}" title="Visa i kartan"><strong>${esc(h.name)}</strong></button><span>${esc(h.typ)}${rangText(h)}${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Läs mer ↗</a>` : ""}</span></div>
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
@@ -441,8 +441,12 @@ function initMap(){
       attribution: "Riksantikvarieämbetet" }),
     // Kyrkor och fyrar ritas av appen som symboler (från egen databas) när man zoomat in till ungefär länsnivå
     "Kyrkor": symbolSkikt.KY.addTo(map),
-    "Fyrar": symbolSkikt.FY.addTo(map) };
+    "Fyrar": symbolSkikt.FY.addTo(map),
+    // Geografi (300-listorna): ytor från egen databas, avstängda som förval. Klick går via infoklick (ytorna fångar inte klick).
+    "Tätorter (300)": ytSkikt.TA,
+    "Sjöar (300)": ytSkikt.SJ };
   map.on("moveend overlayadd", ritaSymboler);
+  map.on("moveend overlayadd", ritaYtor);
   ritaSymboler();
   const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Kulturreservat": "PS.ProtectedSites.KR", "Nationalparker": "PS.ProtectedSites.NP" };
   nvUppdatera = () => {
@@ -549,7 +553,30 @@ async function loadShapes(){
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
 const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Världsarv": "VA", "Byggnadsminnen": "BM",
-  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY" };
+  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ" };
+// Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
+const rangText = o => o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
+// ---- Geografi: tätorter och sjöar ritas som ytor från egen databas (förenklade efter zoom, klippta mot kartutsnittet) ----
+const YT_STIL = {
+  TA: { color: "#5b6f9a", weight: 1.5, dashArray: "4 3", fillColor: "#5b6f9a", fillOpacity: .08, interactive: false },
+  SJ: { color: "#2f7fc1", weight: 1.5, fillColor: "#2f7fc1", fillOpacity: .18, interactive: false }
+};
+const ytSkikt = window.L ? { TA: L.layerGroup(), SJ: L.layerGroup() } : {};
+let ytTimer, ytAnrop = 0;
+function ritaYtor(){
+  clearTimeout(ytTimer);
+  if (!map || !sb) return;
+  ytTimer = setTimeout(async () => {
+    const aktiva = Object.keys(ytSkikt).filter(k => map.hasLayer(ytSkikt[k]));
+    if (!aktiva.length) return;
+    const b = map.getBounds(), tolerans = (b.getEast() - b.getWest()) / map.getSize().x, nr = ++ytAnrop;
+    const { data, error } = await sb.rpc("objekt_ytor_i_ruta", { kallor: aktiva, vast: b.getWest(), syd: b.getSouth(), ost: b.getEast(), norr: b.getNorth(), tolerans });
+    if (error) { console.warn("objekt_ytor_i_ruta", error); return; }
+    if (nr !== ytAnrop) return;   // ett nyare anrop är på väg
+    aktiva.forEach(k => ytSkikt[k].clearLayers());
+    (data || []).forEach(o => { if (o.geojson) L.geoJSON(o.geojson, { style: YT_STIL[o.kalla], interactive: false }).addTo(ytSkikt[o.kalla]); });
+  }, 300);
+}
 // ---- Kyrkor och fyrar som symboler ----
 const SYMBOL = {
   KY: `<svg viewBox="0 0 20 24" width="18" height="22"><path d="M10 1v5M7.5 3.5h5" stroke="currentColor" stroke-width="1.8"/><path d="M4 12l6-5 6 5v10H4z" fill="currentColor"/><rect x="8.3" y="16" width="3.4" height="6" fill="#fff"/></svg>`,
@@ -685,7 +712,7 @@ async function infoClick(e){
   if (!res.length) { map.closePopup(popup); return; }
   popup.setContent(res.map(o => {
     const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
-    return `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}${nvrid ? " · NVR-id " + esc(nvrid) : ""}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}` +
+    return `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}${rangText(o)}${nvrid ? " · NVR-id " + esc(nvrid) : ""}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}` +
       efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ });
   }).join("<hr>"));
 }
@@ -716,7 +743,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {
