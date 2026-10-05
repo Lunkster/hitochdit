@@ -8,6 +8,7 @@ Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
 ## Filer
 | Fil | Vad |
 | --- | --- |
+| `CLAUDE.md` | Instruktioner och projektregler för Claude (läses automatiskt). |
 | `index.html` | Hela appen (HTML, CSS, JS). Publiceras via GitHub Pages. |
 | `supabase/01_schema.sql` | Tabeller och Row Level Security i Supabase. Körs i SQL Editor. |
 | `supabase/02_profiler.sql` | Automatisk profil vid registrering, unika användarnamn. |
