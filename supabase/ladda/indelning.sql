@@ -19,7 +19,8 @@ on conflict (typ, kod) do update
   set namn = excluded.namn, kortnamn = excluded.kortnamn, lanskod = excluded.lanskod,
       lansbokstav = excluded.lansbokstav, geom = excluded.geom, uppdaterad = now();
 
-delete from public.indelning i where not exists (select 1 from ny where ny.typ = i.typ and ny.kod = i.kod);
+delete from public.indelning i
+where i.typ in ('kommun', 'lan') and not exists (select 1 from ny where ny.typ = i.typ and ny.kod = i.kod);
 
 drop table import.lm_kommun, import.lm_lan;
 
