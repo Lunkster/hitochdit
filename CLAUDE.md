@@ -19,7 +19,7 @@ Efter varje ändring: uppdatera tågordningen (bocka av / *ska testas*) och läg
 - **Frontend:** en enda fil, `index.html` (HTML + CSS + vanilla JS, Leaflet 1.9.4 via cdnjs, supabase-js v2 via jsDelivr). Inget byggsteg, inga npm-paket.
 - **Drift:** GitHub Pages, `https://lunkster.github.io/hitochdit/` (repo `Lunkster/hitochdit`).
 - **Backend:** Supabase (Postgres + PostGIS + Auth med e-postlänk). Tabeller `besok`, `profiler`, `meddelanden`, `objekt`. Row Level Security på allt.
-- **Geodata:** visning från källornas WMS (Naturvårdsverket, RAÄ); positionsmatchning mot egen tabell `objekt` via RPC `objekt_vid`, `objekt_geom`, `objekt_i_ruta`, `objekt_ytor_i_ruta`. Källkoder i `objekt.kalla`: NR, NP, KR, NM, VA, BM, FL, KY, KO, FY (natur/kultur), TA, SJ (geografi, 300-listor med `egenskaper.rang`).
+- **Geodata:** visning från källornas WMS (Naturvårdsverket, RAÄ); positionsmatchning mot egen tabell `objekt` via RPC `objekt_vid`, `objekt_geom`, `objekt_i_ruta`, `objekt_ytor_i_ruta`. Källkoder i `objekt.kalla`: NR, NP, KR, NM, VA, BM, FL, KY, KO, FY (natur/kultur), TA, SJ, OE, TO (geografi, 300-listor med `egenskaper.rang`; toppar även `lanrang` och `rangtext`).
 - **Uppdatering av objekt:** upsert på `(kalla, ext_id)`; borttagna rensas med `public.objekt_stada()` – besökta objekt ligger kvar med `egenskaper.utgatt` och ger inga nya träffar.
 - **Laddning av geodata:** `tools/ladda_*.sh` (ogr2ogr + psql) körs av Henrik på hans dator. Varje skript kör sin `supabase/ladda/*.sql` automatiskt.
 

@@ -95,6 +95,10 @@ select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid
 .symbol.nm{color:#3f6b35}
 [data-theme=dark] .symbol.nm{color:#a7c99c}
 .symbol.nm.besokt{color:#c2410c}
+.symbol.to{color:#2f5f8a}
+[data-theme=dark] .symbol.to{color:#9cc3e6}
+.symbol.to.besokt{color:#c2410c}
+[data-theme=dark] .symbol.to.besokt{color:#f08a4b}
 [data-theme=dark] .symbol.nm.besokt{color:#f08a4b}
 .farlig{color:var(--warn);border-color:var(--warn)}
 .val{display:flex;gap:.5rem}
@@ -153,7 +157,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Kommuner, län och socknar kommer från Lantmäteriet, tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv) och öar från OpenStreetMap. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner, län och socknar kommer från Lantmäteriet, tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv), öar från OpenStreetMap och toppar ur Lantmäteriets höjddata. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -207,7 +211,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.21.1", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.22.0", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
@@ -307,7 +311,7 @@ function find(){
       // Samma NV-objekt (t.ex. naturminne) ska inte visas två gånger – egen databas går före NV:s WFS
       hits = hits.filter(h => !h.nvrid || !egna.some(o => NV_KALLOR.has(o.kalla) && o.ext_id === h.nvrid));
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
-        nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url, rang: o.rang, lista: o.lista })));
+        nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url, rang: o.rang, lista: o.lista, rangtext: o.rangtext })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
       const kommun = ind.find(i => i.typ === "kommun"), lan = ind.find(i => i.typ === "lan"), socken = ind.find(i => i.typ === "socken");
       const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}${socken ? " (" + socken.namn + ")" : ""}. ` : "";
@@ -451,6 +455,8 @@ function initMap(){
     "Fyrar": symbolSkikt.FY.addTo(map),
     // Naturminnen är oftast enskilda träd (ytor på några m²) – ritas som ek-symboler från zoom 9 i stället för NV:s kartbild
     "Naturminnen": symbolSkikt.NM.addTo(map),
+    // Toppar: 300 högsta + 5 högsta per län, bergssymboler från zoom 5
+    "Toppar": symbolSkikt.TO.addTo(map),
     // Geografi (300-listorna): ytor från egen databas, avstängda som förval. Klick går via infoklick (ytorna fångar inte klick).
     "Tätorter (300)": ytSkikt.TA,
     "Sjöar (300)": ytSkikt.SJ,
@@ -563,9 +569,9 @@ async function loadShapes(){
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
 const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Naturminnen": "NM", "Världsarv": "VA", "Byggnadsminnen": "BM",
-  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE" };
+  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE", "Toppar": "TO" };
 // Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
-const rangText = o => o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
+const rangText = o => o.rangtext ? " · " + esc(o.rangtext) : o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
 // ---- Geografi: tätorter och sjöar ritas som ytor från egen databas (förenklade efter zoom, klippta mot kartutsnittet) ----
 const YT_STIL = {
   TA: { color: "#5b6f9a", weight: 1.5, dashArray: "4 3", fillColor: "#5b6f9a", fillOpacity: .08, interactive: false },
@@ -595,15 +601,21 @@ const SYMBOL = {
 };
 // Ek för naturminnen: bred, flikig krona och kraftig stam med två grenar som syns genom luckor i kronan (mask)
 SYMBOL.NM = `<svg viewBox="0 0 24 24" width="22" height="22"><defs><mask id="ekmask"><rect width="24" height="24" fill="#fff"/><ellipse cx="8.4" cy="14.6" rx="1.7" ry="1"/><ellipse cx="15.6" cy="14.6" rx="1.7" ry="1"/></mask></defs><g fill="currentColor" mask="url(#ekmask)"><circle cx="5" cy="11.2" r="3.5"/><circle cx="9" cy="8" r="4.2"/><circle cx="15" cy="8" r="4.2"/><circle cx="19" cy="11.2" r="3.5"/><circle cx="12" cy="6.4" r="4.4"/><circle cx="7.6" cy="12.6" r="3.1"/><circle cx="16.4" cy="12.6" r="3.1"/><circle cx="12" cy="11.2" r="3.8"/><circle cx="2.9" cy="13.6" r="2.1"/><circle cx="21.1" cy="13.6" r="2.1"/><circle cx="5.6" cy="6.9" r="2.3"/><circle cx="18.4" cy="6.9" r="2.3"/><circle cx="8.2" cy="3.6" r="2.2"/><circle cx="15.8" cy="3.6" r="2.2"/><circle cx="12" cy="2.5" r="2"/></g><path fill="currentColor" d="M10 23.4c.8-2.4 1-4.4.6-6.4-1-1-2.2-1.7-3.6-2.4l.4-.6c1.4.5 2.6 1 3.6 1.8l.4-2.8h1.2l.4 2.8c1-.8 2.2-1.3 3.6-1.8l.4.6c-1.4.7-2.6 1.4-3.6 2.4-.4 2-.2 4 .6 6.4z"/><path d="M8.6 23.5h6.8" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`;
-const symbolSkikt = window.L ? { KY: L.layerGroup(), FY: L.layerGroup(), NM: L.layerGroup() } : {};
+// Topp: berg med snötäckt topp (300 högsta + 5 högsta per län)
+SYMBOL.TO = `<svg viewBox="0 0 24 22" width="20" height="18"><path d="M1 21L9.5 5.5l3.2 5 3-4.5L23 21z" fill="currentColor"/><path d="M9.5 5.5l-2.6 4.8 1.6-.9 1.2 1.3 1.3-1.4 1.7.7z" fill="#fff" opacity=".9"/></svg>`;
+const symbolSkikt = window.L ? { KY: L.layerGroup(), FY: L.layerGroup(), NM: L.layerGroup(), TO: L.layerGroup() } : {};
+// Från vilken zoomnivå symbolerna ritas (toppar är få och syns från ungefär landskapsnivå)
+const SYMBOL_ZOOM = { KY: 9, FY: 9, NM: 9, TO: 5 };
 let symbolTimer;
 function ritaSymboler(){
   clearTimeout(symbolTimer);
   if (!map || !sb) return;
   symbolTimer = setTimeout(async () => {
-    const aktiva = Object.keys(symbolSkikt).filter(k => map.hasLayer(symbolSkikt[k]));
+    let aktiva = Object.keys(symbolSkikt).filter(k => map.hasLayer(symbolSkikt[k]));
     if (!aktiva.length) return;
-    if (map.getZoom() < 9) { aktiva.forEach(k => symbolSkikt[k].clearLayers()); return; }
+    aktiva.filter(k => map.getZoom() < SYMBOL_ZOOM[k]).forEach(k => symbolSkikt[k].clearLayers());
+    aktiva = aktiva.filter(k => map.getZoom() >= SYMBOL_ZOOM[k]);
+    if (!aktiva.length) return;
     const b = map.getBounds();
     const { data, error } = await sb.rpc("objekt_i_ruta", { kallor: aktiva.flatMap(kallorFor), vast: b.getWest(), syd: b.getSouth(), ost: b.getEast(), norr: b.getNorth() });
     if (error) { console.warn("objekt_i_ruta", error); return; }
@@ -612,10 +624,10 @@ function ritaSymboler(){
       const besokt = visits.some(v => v.scheme === o.kalla && v.id === o.ext_id);
       const grupp = o.kalla === "KO" ? "KY" : o.kalla;
       const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
-      const stor = grupp === "NM" ? [22, 22] : [18, 22];
-      L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "symbol" + (grupp === "NM" ? " nm" : "") + (besokt ? " besokt" : ""), html: SYMBOL[grupp], iconSize: stor, iconAnchor: [stor[0] / 2, 22], popupAnchor: [0, -20] }),
+      const stor = grupp === "NM" ? [22, 22] : grupp === "TO" ? [20, 18] : [18, 22];
+      L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "symbol" + (grupp === "NM" ? " nm" : grupp === "TO" ? " to" : "") + (besokt ? " besokt" : ""), html: SYMBOL[grupp], iconSize: stor, iconAnchor: [stor[0] / 2, stor[1]], popupAnchor: [0, -stor[1] + 2] }),
         title: o.namn, bubblingMouseEvents: false })
-        .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ })}`)
+        .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}${rangText(o)}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ })}`)
         .addTo(symbolSkikt[grupp]);
     });
   }, 250);
@@ -758,7 +770,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Naturminne", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Ö", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Naturminne", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Topp", "Tätort", "Sjö", "Ö", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {
