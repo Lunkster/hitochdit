@@ -153,7 +153,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Kommuner, län och socknar kommer från Lantmäteriet, tätorter från SCB och sjöar från SMHI (Svenskt vattenarkiv). Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner, län och socknar kommer från Lantmäteriet, tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv) och öar från OpenStreetMap. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -207,7 +207,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.20.1", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.21.0", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
@@ -453,7 +453,8 @@ function initMap(){
     "Naturminnen": symbolSkikt.NM.addTo(map),
     // Geografi (300-listorna): ytor från egen databas, avstängda som förval. Klick går via infoklick (ytorna fångar inte klick).
     "Tätorter (300)": ytSkikt.TA,
-    "Sjöar (300)": ytSkikt.SJ };
+    "Sjöar (300)": ytSkikt.SJ,
+    "Öar (300)": ytSkikt.OE };
   map.on("moveend overlayadd", ritaSymboler);
   map.on("moveend overlayadd", ritaYtor);
   ritaSymboler();
@@ -562,15 +563,16 @@ async function loadShapes(){
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
 const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Naturminnen": "NM", "Världsarv": "VA", "Byggnadsminnen": "BM",
-  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ" };
+  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE" };
 // Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
 const rangText = o => o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
 // ---- Geografi: tätorter och sjöar ritas som ytor från egen databas (förenklade efter zoom, klippta mot kartutsnittet) ----
 const YT_STIL = {
   TA: { color: "#5b6f9a", weight: 1.5, dashArray: "4 3", fillColor: "#5b6f9a", fillOpacity: .08, interactive: false },
-  SJ: { color: "#2f7fc1", weight: 1.5, fillColor: "#2f7fc1", fillOpacity: .18, interactive: false }
+  SJ: { color: "#2f7fc1", weight: 1.5, fillColor: "#2f7fc1", fillOpacity: .18, interactive: false },
+  OE: { color: "#3b7d8c", weight: 1.5, dashArray: "2 3", fillColor: "#3b7d8c", fillOpacity: .12, interactive: false }
 };
-const ytSkikt = window.L ? { TA: L.layerGroup(), SJ: L.layerGroup() } : {};
+const ytSkikt = window.L ? { TA: L.layerGroup(), SJ: L.layerGroup(), OE: L.layerGroup() } : {};
 let ytTimer, ytAnrop = 0;
 function ritaYtor(){
   clearTimeout(ytTimer);
@@ -756,7 +758,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Naturminne", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Naturminne", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Ö", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {

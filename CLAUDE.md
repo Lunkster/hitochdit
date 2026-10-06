@@ -9,6 +9,7 @@ Valvet: `~/Dropbox/Projekt/Obsidian/Projekt/Hit och Dit/`
 - `Naturapp.md` – status, **önskelista (inkorg)**, **tågordning**, logg. Läs önskelistan i början av varje arbetspass och sortera in i tågordningen.
 - `Hit och Dit - Geodata.md` – geodatabasen: datamängder, laddkommandon, storlek, felsökning
 - `Naturapp - Supabase.md` – databas, inloggning, SQL-filer, ntfy
+- `Hit och Dit - Backup.md` – säkerhetskopior (`tools/backup.sh`) och återställning (`tools/aterstall.sh`)
 - `Hit och Dit - Infotext.md` – texten under ⓘ (måste stämma med `index.html`)
 - `Appidé_ Turf möter Artportalen.md`, `Myndighetsgamification.md` – idé och vision
 
