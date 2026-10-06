@@ -41,8 +41,8 @@ button:disabled{opacity:.5;cursor:default}
 .hit.done{border-left-color:var(--bark)}
 .v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
 #more{margin-top:.5rem}
-#map{position:relative;height:38vh;min-height:240px;max-height:440px;border:1px solid var(--line);border-radius:6px;margin-top:.6rem;background:var(--card);color:var(--mute)}
-#map.stor{height:78vh;max-height:none}
+#map{position:relative;aspect-ratio:1/1;height:auto;min-height:300px;max-height:75vh;border:1px solid var(--line);border-radius:6px;margin-top:.6rem;background:var(--card);color:var(--mute)}
+#map.stor{aspect-ratio:auto;height:85vh;max-height:none}
 .karthint{position:absolute;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;
   background:rgba(34,48,43,.55);color:#fff;font-weight:600;pointer-events:none;opacity:0;transition:opacity .2s}
 .karthint.visa{opacity:1}
@@ -207,7 +207,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.21.0", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.21.1", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
