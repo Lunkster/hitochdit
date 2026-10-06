@@ -172,7 +172,13 @@ button.tiny{padding:.1rem .5rem;font-size:.85rem;margin-left:.4rem}
 .vd{padding:.2rem 0 .6rem 1rem;border-bottom:1px solid var(--line)}
 .vd div{display:flex;justify-content:space-between;align-items:center;padding:.2rem 0;color:var(--mute);font-size:.9rem}
 .osm-nedtonad{filter:saturate(.3) brightness(1.06) contrast(.92)}
-select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid rgba(0,0,0,.2);border-radius:4px;background:var(--card);color:var(--ink);max-width:11rem}
+/* Bakgrundskarta: egen knapp (kartikon) skild från skiktmenyn */
+.baskarta .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z'/%3E%3Cpath d='M9 4v14M15 6v14'/%3E%3C/svg%3E");background-size:24px}
+[data-theme=dark] .baskarta .leaflet-control-layers-toggle{filter:invert(1)}
+/* Kartans popupfönster: mindre text så att de får plats på mobilen */
+.leaflet-popup-content{font-size:.82rem;line-height:1.35;margin:.55rem .8rem}
+.leaflet-popup-content hr{margin:.45rem 0;border:0;border-top:1px solid var(--line)}
+button.efterknapp{display:block;margin-top:.35rem;padding:.2rem .55rem;font-size:.78rem}
 /* Mörk bakgrundskarta: OSM inverterad och dämpad, lätt genomskinlig mot mörkgrön botten (#map-bakgrund) */
 .osm-mork{filter:invert(.86) hue-rotate(180deg) saturate(.6) brightness(.9) contrast(1.15)}
 /* Leaflet i mörkt läge */
@@ -195,8 +201,8 @@ select.basval{font:inherit;font-size:.85rem;padding:.3rem .4rem;border:2px solid
 .panel .liten{color:var(--mute);font-size:.85rem}
 .tagg{display:inline-block;margin-left:.35rem;padding:0 .4rem;border:1px solid var(--line);border-radius:999px;color:var(--mute);font-size:.75rem;vertical-align:1px}
 .v.efterhand .goto{font-style:italic}
-.efterform{display:flex;gap:.4rem;align-items:center;margin-top:.4rem}
-.efterform input{padding:.3rem .4rem;font-size:.9rem;width:auto}
+.efterform input{padding:.4rem .5rem;width:auto;margin:.2rem 0 .8rem}
+.efterform .btns{display:flex;gap:.5rem}
 /* Skiktmenyn: kryssruta och namn på samma rad (appens globala input/label-stil får inte slå igenom) */
 .leaflet-control-layers label{display:block;margin:0;color:var(--ink);font-size:.9rem}
 .leaflet-control-layers label > span,.leaflet-control-layers label > div{display:flex;align-items:center;gap:.4rem}
@@ -261,6 +267,16 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <p class="liten">Radering tar bort konto, användarnamn och alla besök direkt och går inte att ångra.</p>
   </div>
   <p class="liten" style="margin-top:1rem">Hit och Dit version <span class="appver"></span></p>
+</div>
+<div id="efterpanel" class="panel" role="dialog" aria-label="Logga tidigare besök" hidden>
+  <button class="ghost small stang" aria-label="Stäng">✕</button>
+  <h2>Logga tidigare besök</h2>
+  <p><strong class="ep-namn"></strong><br><span class="liten ep-typ"></span></p>
+  <form class="efterform">
+    <label>Datum för besöket<br><input type="date" required></label>
+    <div class="btns"><button type="submit">Spara</button><button type="button" class="ghost avbryt">Avbryt</button></div>
+  </form>
+  <p class="liten">Besöket sparas utan positionskontroll och märks som efterhandsloggat.</p>
 </div>
 <div id="info" class="panel" role="dialog" aria-label="Om Hit och Dit" hidden>
   <button class="ghost small stang" aria-label="Stäng">✕</button>
@@ -347,7 +363,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.27.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.28.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -470,11 +486,10 @@ const hitHtml = h => {
   <button data-k="${esc(h.key)}" ${done ? "disabled" : ""}>${done ? "Loggat idag" : "Logga besök"}</button></div>`;
 };
 
-let map, meL = [], pins, overlays = {}, BAS = {}, basNamn = "", basSel;
+let map, meL = [], pins, overlays = {}, BAS = {}, basNamn = "";
 function bytBas(n){
   if (!map || !BAS[n] || n === basNamn) return;
   map.removeLayer(BAS[basNamn]); basNamn = n; BAS[n].addTo(map); store.set("bas", n);
-  if (basSel) basSel.value = n;
 }
 
 // NV-skiktens stil i mörkt läge. Ordningen i SLD:n = ritordning (reservat först, nationalparker överst).
@@ -505,11 +520,11 @@ function setTema(t){
   nvUppdatera();
   bmSkikt?.setParams({ sld_body: sldBM() });
 }
-const PANELER = { settings: "#gear", info: "#infoknapp" };
+const PANELER = { settings: "#gear", info: "#infoknapp", efterpanel: null };
 function visaPanel(id, vis){
   Object.entries(PANELER).forEach(([pid, knapp]) => {
     const p = $("#" + pid), visa = pid === id && (vis === undefined ? p.hidden : vis);
-    p.hidden = !visa; $(knapp).setAttribute("aria-expanded", String(visa));
+    p.hidden = !visa; if (knapp) $(knapp).setAttribute("aria-expanded", String(visa));
   });
 }
 const visaInst = vis => visaPanel("settings", vis);
@@ -561,18 +576,11 @@ function initMap(){
   basNamn = store.get("bas", "");
   if (!BAS[basNamn]) basNamn = tema() === "dark" ? "Mörk (OSM)" : "Nedtonad (OSM)";
   BAS[basNamn].addTo(map);
-  // Kompakt väljare för bakgrundskarta (rullgardin) i stället för en lång lista
-  const BasCtl = L.Control.extend({
-    onAdd(){
-      const el = basSel = L.DomUtil.create("select", "basval");
-      el.setAttribute("aria-label", "Bakgrundskarta");
-      el.innerHTML = Object.keys(BAS).map(n => `<option${n === basNamn ? " selected" : ""}>${n}</option>`).join("");
-      L.DomEvent.disableClickPropagation(el);
-      el.addEventListener("change", () => bytBas(el.value));
-      return el;
-    }
-  });
-  new BasCtl({ position: "topright" }).addTo(map);
+  // Bakgrundskarta: egen knapp (kartikon) med radioknappar – hålls skild från skiktmenyn så att den inte blir för lång
+  const basCtl = L.control.layers(BAS, null, { collapsed: true }).addTo(map);
+  basCtl.getContainer().classList.add("baskarta");
+  basCtl.getContainer().querySelector(".leaflet-control-layers-toggle").title = "Bakgrundskarta";
+  map.on("baselayerchange", e => { basNamn = e.name; store.set("bas", e.name); });
   // NV-skikten hämtas som EN bild där servern lägger nationalparker ovanpå reservat.
   // Kryssrutorna styr bara vilka skikt som ingår (layers-parametern), så två bildlager kan inte skymma varandra.
   const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.KR,PS.ProtectedSites.NP", format: "image/png", transparent: true,
@@ -664,7 +672,7 @@ function besokStatus(id, namn, typ){
   const dat = t => new Date(t).toLocaleDateString("sv-SE");
   const mine = visits.filter(v => (id && String(v.nvrid) === String(id)) || (v.typ === typ && v.namn === namn));
   return mine.length
-    ? `Besökt ${mine.length} ${mine.length > 1 ? "gånger" : "gång"}, senast ${dat(Math.max(...mine.map(v => new Date(v.datum).getTime())))}`
+    ? `Besökt ${mine.length} ${mine.length > 1 ? "gånger" : "gång"},<br>senast ${dat(Math.max(...mine.map(v => new Date(v.datum).getTime())))}`
     : "Inte besökt än";
 }
 
@@ -883,11 +891,20 @@ async function infoClick(e){
 
 function efterForm({ oid, scheme, nvrid = "", namn, typ }){
   if (!user || !oid) return "";
-  const idag = new Date().toLocaleDateString("sv-SE");
-  return `<form class="efterform" data-oid="${esc(oid)}" data-scheme="${esc(scheme)}" data-nvrid="${esc(nvrid)}" data-namn="${esc(namn)}" data-typ="${esc(typ)}">
-    <input type="date" required max="${idag}" value="${idag}" aria-label="Datum för besöket">
-    <button class="small">Logga tidigare besök</button></form>`;
+  return `<button type="button" class="small ghost efterknapp" data-oid="${esc(oid)}" data-scheme="${esc(scheme)}" data-nvrid="${esc(nvrid)}" data-namn="${esc(namn)}" data-typ="${esc(typ)}">Logga tidigare besök…</button>`;
 }
+// Knappen i popupen öppnar en egen ruta med datumväljare. Lyssnar i capture-fas eftersom Leaflet stoppar klick i popupen.
+document.addEventListener("click", e => {
+  const b = e.target.closest?.(".efterknapp"); if (!b) return;
+  e.stopPropagation();
+  const p = $("#efterpanel"), f = p.querySelector(".efterform"), inp = f.querySelector("input"), idag = new Date().toLocaleDateString("sv-SE");
+  Object.assign(f.dataset, b.dataset);
+  p.querySelector(".ep-namn").textContent = b.dataset.namn;
+  p.querySelector(".ep-typ").textContent = b.dataset.typ;
+  inp.max = idag; inp.value = idag;
+  visaPanel("efterpanel", true);
+}, true);
+$("#efterpanel .avbryt").addEventListener("click", () => visaPanel(null));
 // Efterhandsloggning: besök man gjort tidigare, utan GPS-kontroll. Taggas pa_plats = false.
 document.addEventListener("submit", async e => {
   const f = e.target.closest?.(".efterform"); if (!f) return;
@@ -904,7 +921,7 @@ document.addEventListener("submit", async e => {
     kommunkod: ny.kommunkod || "", lanskod: ny.lanskod || "", sockenkod: ny.sockenkod || "", landskap: ny.landskap || "" });
   visits.sort((a, b) => new Date(b.datum) - new Date(a.datum));
   store.set("visits:" + user.id, visits); render();
-  map.closePopup();
+  map.closePopup(); visaPanel(null);
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
