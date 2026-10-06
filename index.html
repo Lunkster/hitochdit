@@ -7,9 +7,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script>try { if (JSON.parse(localStorage.getItem("tema")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>
 <style>
-:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;color-scheme:light}
+:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;color-scheme:light}
 /* Mörkt läge: samma mossgröna familj, mörka ytor */
-:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;color-scheme:dark}
+:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -48,6 +48,39 @@ button:disabled{opacity:.5;cursor:default}
 .karthint.visa{opacity:1}
 .leaflet-bar a.storknapp{font-size:1.1rem;line-height:30px}
 #loc{width:100%}
+/* ---- I närheten (radar standard, lista valbar) ---- */
+#nara{margin-top:1.2rem}
+#nara .nh{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
+#nara .nh h2{margin:0}
+#nara .nh small{color:var(--mute);font-size:.8rem;margin-left:auto}
+#nara button{background:none;border:0;color:inherit;padding:0;border-radius:0}
+#nara .vy{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+#nara .vy button{padding:.12rem .55rem;font-size:.8rem;border-right:1px solid var(--line)}
+#nara .vy button:last-child{border-right:0}
+#nara .vy button[aria-pressed="true"]{background:var(--btn);color:#fff}
+#nara .chips{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0 .4rem}
+#nara .chip{border:1px solid var(--line);border-radius:999px;padding:.12rem .6rem;font-size:.8rem}
+#nara .chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+#nara .ikon{width:1.15rem;height:1.15rem;flex:none;display:block}
+#nara .pil{width:.9rem;height:.9rem;flex:none;display:inline-block;vertical-align:-2px}
+#nara .vs{display:inline-block;min-width:1.6rem;font-size:.78rem;color:var(--mute);font-weight:600}
+#nara .flagga{color:var(--besokt);font-size:.75rem;font-weight:600}
+#nara .nl{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+#nara .nl li{border-bottom:1px solid var(--line)}
+#nara .nl button{width:100%;display:grid;grid-template-columns:1.15rem minmax(0,1fr) auto;gap:.55rem;align-items:center;padding:.35rem .15rem;text-align:left}
+#nara .nl .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.94rem}
+#nara .nl .nm small{color:var(--mute);font-size:.78rem;margin-left:.3rem}
+#nara .nl .av{display:flex;align-items:center;gap:.3rem;font-size:.88rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+#nara .nl li.sel button{background:color-mix(in srgb,var(--moss) 14%,transparent)}
+#nara .mer{color:var(--moss);font-size:.85rem;padding:.35rem 0;text-decoration:underline;text-underline-offset:3px}
+#nara .radar{display:grid;grid-template-columns:minmax(0,10.5rem) minmax(0,1fr);gap:.6rem;align-items:center}
+#nara .radarbild svg{width:100%;height:auto;display:block}
+#nara .radarbild circle.p{cursor:pointer}
+#nara .radar .nl button{grid-template-columns:.6rem minmax(0,1fr);gap:.1rem .45rem;padding:.2rem .1rem;line-height:1.25}
+#nara .radar .nl .nm{font-size:.84rem}
+#nara .radar .nl .av{grid-column:2;font-size:.76rem;color:var(--mute)}
+#nara .dot{width:.6rem;height:.6rem;border-radius:50%;display:block}
+#nara .tom{color:var(--mute);font-size:.9rem;margin:.3rem 0}
 h3{font:600 1rem/1.3 "Iowan Old Style",Charter,Georgia,serif;margin:1.3rem 0 .1rem}
 button.goto{background:none;border:0;padding:0;color:var(--moss);text-align:left;font:inherit;text-decoration:underline;text-underline-offset:3px}
 .row{display:flex;gap:.5rem}.row input{flex:1}
@@ -201,6 +234,11 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <div id="hits"></div>
 <button id="more" class="ghost" hidden></button>
 <div id="other" hidden></div>
+<section id="nara" aria-label="I närheten" hidden>
+  <div class="nh"><h2>I närheten</h2><small>inom 10 km</small>
+    <span class="vy"><button data-naravy="b" aria-pressed="true">Radar</button><button data-naravy="a" aria-pressed="false">Lista</button></span></div>
+  <div id="narainnehall"></div>
+</section>
 <h2>Karta</h2>
 <button id="loc" class="ghost">Centrera på min position</button>
 <div id="map" role="region" aria-label="Karta"></div>
@@ -211,7 +249,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.23.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.24.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -317,6 +355,7 @@ function find(){
       const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}${landskap || socken ? " (" + [landskap?.namn, socken?.namn].filter(Boolean).join(", ") + ")" : ""}. ` : "";
       setStatus(var_ + (hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
+      laddaNara(pos.lat, pos.lon);
     } catch (e) {
       setStatus(`Kunde inte hämta träffar (${e.message}).`, true);
     }
@@ -806,7 +845,86 @@ function render(){
   drawPins();
   updateHighlight();
   ritaSymboler();   // besökta kyrkor/fyrar byter färg
+  ritaNara();
 }
+
+// ---- I närheten: platser inom 10 km som radar (standard) eller lista. Avstånd till närmaste kant, pil + väderstreck. ----
+const NARA = { lista: [], vy: store.get("naraVy", "b"), kat: "alla", obes: false, alla: false, sel: null };
+const VADERSTRECK = ["N", "NO", "O", "SO", "S", "SV", "V", "NV"];
+const KATFARG = { natur: "var(--natur)", kultur: "var(--kultur)", geo: "var(--geo)" };
+const KATIKON = {
+  natur: `<path d="M10 2 4.5 10h3L4 15h12l-3.5-5h3Z"/><rect x="9" y="15" width="2" height="3"/>`,
+  kultur: `<path d="M10 2 2.5 6.5h15Z"/><rect x="4" y="8" width="2" height="7"/><rect x="9" y="8" width="2" height="7"/><rect x="14" y="8" width="2" height="7"/><rect x="2.5" y="15.5" width="15" height="2"/>`,
+  geo: `<path d="M2 17 8 6l3 5 2-3 5 9Z"/>`
+};
+async function laddaNara(lat, lon){
+  if (!sb) return;
+  const { data, error } = await sb.rpc("objekt_nara", { lat, lon, radie_m: 10000 });
+  if (error) { console.warn("objekt_nara", error); $("#nara").hidden = true; return; }
+  NARA.lista = (data || []).map((o, i) => ({ ...o, i, key: o.kalla + ":" + o.ext_id,
+    k: o.kategori === "natur" ? "natur" : o.kategori === "kultur" ? "kultur" : "geo",
+    km: o.avstand_m / 1000, brg: o.riktning || 0, vs: VADERSTRECK[Math.round((o.riktning || 0) / 45) % 8] }));
+  NARA.sel = null; NARA.alla = false;
+  $("#nara").hidden = false;
+  ritaNara();
+}
+const naraBesokt = o => visits.some(v => (v.scheme === o.kalla && v.id === o.ext_id) || (NV_KALLOR.has(o.kalla) && v.nvrid && String(v.nvrid) === o.ext_id));
+const naraKm = d => d < 1 ? Math.round(d * 100) * 10 + " m" : (d < 10 ? d.toFixed(1).replace(".", ",") : Math.round(d)) + " km";
+const naraPil = b => `<svg class="pil" viewBox="0 0 16 16" aria-hidden="true"><g transform="rotate(${Math.round(b)} 8 8)"><path d="M8 1 13.5 7.5H9.6V15H6.4V7.5H2.5Z" fill="currentColor"/></g></svg>`;
+const naraIkon = k => `<svg class="ikon" viewBox="0 0 20 20" fill="${KATFARG[k]}" aria-hidden="true">${KATIKON[k]}</svg>`;
+const naraUrval = () => NARA.lista.filter(o => (NARA.kat === "alla" || o.k === NARA.kat) && (!NARA.obes || !naraBesokt(o)));
+function naraChips(){
+  return `<div class="chips">${[["alla", "Alla"], ["natur", "Natur"], ["kultur", "Kultur"], ["geo", "Geografi"]].map(([k, n]) =>
+    `<button class="chip" data-narakat="${k}" aria-pressed="${NARA.kat === k}">${n}</button>`).join("")}` +
+    `<button class="chip" data-naraobes="1" aria-pressed="${NARA.obes}">Bara obesökta</button></div>`;
+}
+function naraRad(o, kort){
+  const b = naraBesokt(o);
+  return `<li class="${NARA.sel === o.i ? "sel" : ""}"><button data-narap="${o.i}" title="Visa i kartan">${kort ? `<i class="dot" style="background:${KATFARG[o.k]}"></i>` : naraIkon(o.k)}
+    <span class="nm">${esc(o.namn)}${b ? ' <span class="flagga" title="Besökt">⚑</span>' : ""}${kort ? "" : `<small>${esc(o.typ)}${rangText(o)}</small>`}</span>
+    <span class="av">${naraKm(o.km)} ${naraPil(o.brg)}<span class="vs">${o.vs}</span></span></button></li>`;
+}
+function ritaNara(){
+  const ruta = $("#narainnehall"); if (!ruta || $("#nara").hidden) return;
+  document.querySelectorAll("[data-naravy]").forEach(b => b.setAttribute("aria-pressed", b.dataset.naravy === NARA.vy));
+  const u = naraUrval();
+  if (!u.length) { ruta.innerHTML = naraChips() + `<p class="tom">Inga platser inom 10 km${NARA.kat !== "alla" || NARA.obes ? " med det filtret" : ""}.</p>`; return; }
+  if (NARA.vy === "a") {
+    const n = NARA.alla ? u.length : 6;
+    ruta.innerHTML = naraChips() + `<ul class="nl">${u.slice(0, n).map(o => naraRad(o)).join("")}</ul>` +
+      (u.length > n ? `<button class="mer" data-naramer="1">Visa ${u.length - n} till</button>` : "");
+    return;
+  }
+  // Radar: norr uppåt, ringar 1/3/10 km, avståndet komprimerat (kvadratrot) så att det närmaste inte klumpar ihop sig
+  const MAX = 10, C = 100, RR = 90, sk = d => Math.sqrt(Math.min(d, MAX) / MAX) * RR, rad = x => x * Math.PI / 180;
+  let svg = `<svg viewBox="0 0 200 200" role="img" aria-label="Platser runt dig efter väderstreck och avstånd">`;
+  // ringetiketter snett uppåt höger (NO), så att de inte krockar med N eller med prickarna nära mitten
+  [1, 3, 10].forEach(r => svg += `<circle cx="${C}" cy="${C}" r="${sk(r)}" fill="none" stroke="var(--line)"/><text x="${(C + sk(r) * .71 + 2).toFixed(1)}" y="${(C - sk(r) * .71 - 2).toFixed(1)}" font-size="10" fill="var(--mute)">${r} km</text>`);
+  svg += `<line x1="${C}" y1="${C - RR - 4}" x2="${C}" y2="${C + RR + 4}" stroke="var(--line)" stroke-width=".6"/><line x1="${C - RR - 4}" y1="${C}" x2="${C + RR + 4}" y2="${C}" stroke="var(--line)" stroke-width=".6"/>`;
+  [["N", C, 11], ["S", C, 199], ["V", 6, C + 4], ["O", 194, C + 4]].forEach(([t, x, y]) => svg += `<text x="${x}" y="${y}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--mute)">${t}</text>`);
+  [...u].reverse().forEach(o => {   // närmast ritas sist (överst)
+    const r = sk(o.km), x = C + r * Math.sin(rad(o.brg)), y = C - r * Math.cos(rad(o.brg)), b = naraBesokt(o);
+    svg += `<circle class="p" data-narap="${o.i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${NARA.sel === o.i ? 8 : 5.5}" fill="${KATFARG[o.k]}" stroke="${b ? "var(--besokt)" : "var(--card)"}" stroke-width="${b ? 2 : 1.2}"><title>${esc(o.namn)}, ${naraKm(o.km)} ${o.vs}</title></circle>`;
+  });
+  svg += `<circle cx="${C}" cy="${C}" r="4" fill="#2b6cb0" stroke="#fff" stroke-width="1.5"/></svg>`;
+  const vald = u.find(o => o.i === NARA.sel), kort = (vald ? [vald, ...u.filter(o => o !== vald)] : u).slice(0, 5);
+  ruta.innerHTML = naraChips() + `<div class="radar"><div class="radarbild">${svg}</div><ul class="nl">${kort.map(o => naraRad(o, true)).join("")}</ul></div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest?.("[data-naravy],[data-narakat],[data-naraobes],[data-naramer],[data-narap]"); if (!b) return;
+  const d = b.dataset;
+  if (d.naravy) { NARA.vy = d.naravy; NARA.sel = null; store.set("naraVy", NARA.vy); }
+  else if (d.narakat) NARA.kat = d.narakat;
+  else if (d.naraobes) NARA.obes = !NARA.obes;
+  else if (d.naramer) NARA.alla = true;
+  else if (d.narap) {
+    const o = NARA.lista.find(x => x.i === +d.narap); if (!o) return;
+    const radarprick = b.tagName.toLowerCase() === "circle";
+    NARA.sel = radarprick && NARA.sel === o.i ? null : o.i;
+    if (!radarprick) visaTraff(o.key, o.namn);   // rad i listan: zooma kartan dit
+  }
+  ritaNara();
+});
 
 // Databasrad <-> appens format
 const fromDb = r => ({ dbid: r.id, datum: r.datum, id: r.objekt_id, scheme: r.scheme, namn: r.namn, typ: r.typ, lat: r.lat, lon: r.lon, acc: r.acc, nvrid: r.nvrid || "", pa_plats: r.pa_plats !== false });
