@@ -157,7 +157,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Kommuner, län och socknar kommer från Lantmäteriet, tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv), öar från OpenStreetMap och toppar ur Lantmäteriets höjddata. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner, län och socknar kommer från Lantmäteriet, landskap från Lantmäteriets distriktskarta (via Per Liedmans <em>svenska-landskap</em>), tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv), öar från OpenStreetMap och toppar ur Lantmäteriets höjddata. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -165,7 +165,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <ul>
     <li>Din e-postadress – för att du ska kunna logga in.</li>
     <li>Ditt användarnamn – visas i appen och kan i framtiden visas i topplistor.</li>
-    <li>Dina loggade besök – område, datum och tid, kommun, län och socken samt din position och dess noggrannhet när du loggade besöket.</li>
+    <li>Dina loggade besök – område, datum och tid, kommun, län, socken och landskap samt din position och dess noggrannhet när du loggade besöket.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
@@ -211,7 +211,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.22.0", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.23.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -313,8 +313,8 @@ function find(){
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
         nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url, rang: o.rang, lista: o.lista, rangtext: o.rangtext })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
-      const kommun = ind.find(i => i.typ === "kommun"), lan = ind.find(i => i.typ === "lan"), socken = ind.find(i => i.typ === "socken");
-      const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}${socken ? " (" + socken.namn + ")" : ""}. ` : "";
+      const kommun = ind.find(i => i.typ === "kommun"), lan = ind.find(i => i.typ === "lan"), socken = ind.find(i => i.typ === "socken"), landskap = ind.find(i => i.typ === "landskap");
+      const var_ = kommun ? `Du är i ${kommun.namn}${lan ? ", " + lan.namn : ""}${landskap || socken ? " (" + [landskap?.namn, socken?.namn].filter(Boolean).join(", ") + ")" : ""}. ` : "";
       setStatus(var_ + (hits.length ? "" : "Du står inte inom något skyddat område.") + acc, pos.acc > 50);
       render();
     } catch (e) {
@@ -875,7 +875,7 @@ async function exporteraCsv(){
   if (!user) return;
   const { data, error } = await sb.from("besok").select("*").order("datum", { ascending: false });
   if (error) { setStatus("Kunde inte hämta dina besök: " + error.message, true); return; }
-  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc", "pa_plats", "kommunkod", "lanskod", "sockenkod"];
+  const kol = ["datum", "namn", "typ", "nvrid", "objekt_id", "scheme", "lat", "lon", "acc", "pa_plats", "kommunkod", "lanskod", "sockenkod", "landskap"];
   const cell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   const csv = [kol.join(","), ...data.map(r => kol.map(k => cell(r[k])).join(","))].join("\r\n");
   laddaNer("\ufeff" + csv, "text/csv;charset=utf-8", `hitochdit-besok-${new Date().toISOString().slice(0, 10)}.csv`);
