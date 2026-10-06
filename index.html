@@ -14,7 +14,13 @@
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
-.topbar{background:var(--top);color:#fff;display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;position:sticky;top:0;z-index:1000;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toppen{position:sticky;top:0;z-index:1000;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.topbar{background:var(--top);color:#fff;display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem}
+/* Flikar: Utforska (hitta, i närheten, karta) | Besök | Statistik */
+.flikar{display:flex;justify-content:center;background:var(--card);border-bottom:1px solid var(--line)}
+.flikar a{flex:1;max-width:11rem;text-align:center;padding:.6rem .5rem .5rem;color:var(--mute);font-weight:600;text-decoration:none;border-bottom:3px solid transparent}
+.flikar a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--moss)}
+.flikar a:focus-visible{outline-offset:-3px}
 .topbar .flag{width:1.9rem;height:1.2rem;border-radius:2px;flex:none}
 .topbar h1{margin:0;font:600 1.05rem/1.2 "Iowan Old Style",Charter,Georgia,serif;letter-spacing:.06em;text-transform:uppercase;color:#fff}
 @media (max-width:360px){.topbar h1 span{display:none}}
@@ -202,6 +208,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
+<div class="toppen">
 <header class="topbar">
   <svg class="flag" viewBox="0 0 16 10" aria-hidden="true"><rect width="16" height="10" fill="#006aa7"/><rect x="5" width="2" height="10" fill="#fecc02"/><rect y="4" width="16" height="2" fill="#fecc02"/></svg>
   <h1>Hit och Dit<span>: Utforska Sverige</span></h1>
@@ -212,6 +219,12 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
   </button>
 </header>
+<nav class="flikar" aria-label="Delar av appen">
+  <a href="#utforska" data-flik="utforska" aria-current="page">Utforska</a>
+  <a href="#besok" data-flik="besok">Besök</a>
+  <a href="#statistik" data-flik="statistik">Statistik</a>
+</nav>
+</div>
 <div id="settings" class="panel" role="dialog" aria-label="Inställningar" hidden>
   <button class="ghost small stang" id="stang" aria-label="Stäng">✕</button>
   <h2>Inställningar</h2>
@@ -288,6 +301,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </form>
   <p id="who" hidden><span></span></p>
 </section>
+<div id="flik-utforska" class="flik">
 <button id="find">Var är jag?</button>
 <p id="status" aria-live="polite"></p>
 <div id="hits"></div>
@@ -301,20 +315,24 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <h2>Karta</h2>
 <button id="loc" class="ghost">Centrera på min position</button>
 <div id="map" role="region" aria-label="Karta"></div>
-<button id="vb" class="ghost" style="width:100%;margin-top:1.5rem">Mina besök</button>
-<div id="visits" hidden></div>
-<button id="statknapp" class="ghost" style="width:100%;margin-top:.8rem">Min statistik</button>
-<section id="stat" aria-label="Min statistik" hidden>
+</div>
+<div id="flik-besok" class="flik" hidden>
+<h2 id="vb">Mina besök</h2>
+<div id="visits"></div>
+</div>
+<div id="flik-statistik" class="flik" hidden>
+<section id="stat" aria-label="Min statistik">
   <h2>Min statistik</h2>
   <p class="lead">Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.</p>
   <div id="statvy"></div>
 </section>
+</div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.25.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.26.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -900,7 +918,7 @@ function render(){
   const m = $("#more"); m.hidden = !rest.length;
   m.textContent = ($("#other").hidden ? "Visa " : "Dölj ") + rest.length + " andra skyddsformer";
   const seen = new Set(visits.map(platsNyckel));
-  $("#vb").textContent = `${$("#visits").hidden ? "Visa" : "Dölj"} mina besök (${seen.size} platser)`;
+  $("#vb").textContent = `Mina besök (${seen.size} ${seen.size === 1 ? "plats" : "platser"})`;
   const dat = t => new Date(t).toLocaleDateString("sv-SE");
   $("#visits").innerHTML = visits.length ? grouped().map(([typ, list]) =>
     `<h3>${esc(typ)} <span>(${list.length})</span></h3>` +
@@ -1036,7 +1054,7 @@ function statPeriodNamn(){ return STAT.t === "a" ? "Alla år" : STAT.t === "y" ?
 function statOmrNamn(){ return STAT.niva === "r" ? "hela Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom) + " kommun"; }
 
 function ritaStat(){
-  const ruta = $("#statvy"); if (!ruta || $("#stat").hidden) return;
+  const ruta = $("#statvy"); if (!ruta || $("#flik-statistik").hidden) return;
   const bas = statBas();
   if (!bas.length) { ruta.innerHTML = `<p class="tom">Inga besök än. Logga en plats så börjar statistiken.</p>`; return; }
   const ar = bas.map(b => b.d.getFullYear()), minAr = Math.min(...ar), nu = new Date();
@@ -1254,6 +1272,7 @@ let fokusLager = null;
 const fokusCache = {};
 async function visaTraff(key, namn){
   if (!map) return;
+  tillKartan();
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
   let lager = fokusCache[key];
   if (!lager && EGNA_KALLOR.has(key.split(":")[0]) && sb) {
@@ -1277,6 +1296,7 @@ async function visaTraff(key, namn){
 // Zooma till platsens hela utbredning. Om ytan inte hunnit laddas hämtas den först.
 async function gotoVisit(lat, lon, namn, id, key){
   if (!map) return;
+  tillKartan();
   $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
   let yta = (id && shapes[id]) || geoShapes[key];
   if (!yta && key && EGNA_KALLOR.has(key.split(":")[0])) { await loadGeoShapes(); yta = geoShapes[key]; }
@@ -1313,18 +1333,23 @@ document.querySelectorAll("input[name=tema]").forEach(r => r.addEventListener("c
 document.querySelectorAll("input[name=tema]").forEach(r => r.checked = r.value === tema());
 $("#rename").addEventListener("click", () => { $("#uname").value = user?.namn || ""; $("#nameform").hidden = !$("#nameform").hidden; if (!$("#nameform").hidden) $("#uname").focus(); });
 $("#logout").addEventListener("click", async () => { await sb.auth.signOut(); visaInst(false); setStatus("Utloggad."); });
-$("#vb").addEventListener("click", async () => {
-  const d = $("#visits"); d.hidden = !d.hidden;
-  if (!d.hidden) await sync();
-  render();
-});
-$("#statknapp").addEventListener("click", async () => {
-  const s = $("#stat"); s.hidden = !s.hidden;
-  $("#statknapp").textContent = s.hidden ? "Min statistik" : "Dölj min statistik";
-  if (!s.hidden) { await Promise.all([statNamn(), sync()]); ritaStat(); s.scrollIntoView({ behavior: "smooth", block: "start" }); }
-});
+// ---- Flikar: adressen (#besok, #statistik) styr vilken flik som visas, så att bakåtknappen och länkar fungerar ----
+const FLIKAR = ["utforska", "besok", "statistik"];
+async function visaFlik(namn){
+  if (!FLIKAR.includes(namn)) namn = "utforska";
+  FLIKAR.forEach(f => $("#flik-" + f).hidden = f !== namn);
+  document.querySelectorAll("[data-flik]").forEach(a => a.dataset.flik === namn ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  if (namn === "utforska" && map) map.invalidateSize();   // kartan måste räkna om sin storlek när den blir synlig igen
+  if (namn === "besok") { render(); await sync(); }
+  if (namn === "statistik") { ritaStat(); await Promise.all([statNamn(), sync()]); ritaStat(); }
+}
+const flikIAdressen = () => (location.hash || "").replace("#", "");
+window.addEventListener("hashchange", () => { visaFlik(flikIAdressen()); window.scrollTo({ top: 0 }); });
+// Till kartan från andra flikar (t.ex. "Visa på kartan" i Besök)
+function tillKartan(){ if ($("#flik-utforska").hidden) { history.pushState(null, "", "#utforska"); visaFlik("utforska"); } }
 $("#loc").addEventListener("click", locate);
 initMap(); render();
+visaFlik(flikIAdressen());
 if (!sb) { setStatus("Kunde inte ladda Supabase – kontrollera nätet och ladda om sidan.", true); }
 else {
   $("#login").hidden = false;
