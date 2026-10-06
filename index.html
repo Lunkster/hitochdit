@@ -203,7 +203,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.19.0", VERSION_DATUM = "2026-10-06";
+const VERSION = "0.20.0", VERSION_DATUM = "2026-10-06";
 
 // ---- Inställningar ----
 const CFG = {
@@ -300,6 +300,8 @@ function find(){
       // Naturreservat och nationalparker kommer från egen databas; NV:s WFS används bara för övriga skyddsformer (Natura 2000 m.fl.)
       hits = (j.features || []).map(flat).filter(h => h.scheme !== "IUCN" && !seen.has(h.key) && seen.add(h.key)).map(h => ({ ...h, skydd: false }));
       const [egna, ind] = await Promise.all([objektVid(pos.lat, pos.lon, 25), indelningVid(pos.lat, pos.lon)]);
+      // Samma NV-objekt (t.ex. naturminne) ska inte visas två gånger – egen databas går före NV:s WFS
+      hits = hits.filter(h => !h.nvrid || !egna.some(o => NV_KALLOR.has(o.kalla) && o.ext_id === h.nvrid));
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
         nvrid: NV_KALLOR.has(o.kalla) ? o.ext_id : "", url: o.url, rang: o.rang, lista: o.lista })));
       const acc = pos.acc > 50 ? ` Osäker position (±${pos.acc} m), vänta gärna en stund och försök igen.` : ` Noggrannhet ±${pos.acc} m.`;
@@ -333,6 +335,8 @@ function bytBas(n){
 // NV-skiktens stil i mörkt läge. Ordningen i SLD:n = ritordning (reservat först, nationalparker överst).
 let nvUppdatera = () => {};
 const SLD_NV = {
+  "PS.ProtectedSites.NM": `<PolygonSymbolizer><Fill><CssParameter name="fill">#a7c99c</CssParameter><CssParameter name="fill-opacity">0.5</CssParameter></Fill>
+    <Stroke><CssParameter name="stroke">#cfe3c6</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer>`,
   "PS.ProtectedSites.NR": `<PolygonSymbolizer><Fill><CssParameter name="fill">#7fa276</CssParameter><CssParameter name="fill-opacity">0.22</CssParameter></Fill>
     <Stroke><CssParameter name="stroke">#8fb285</CssParameter><CssParameter name="stroke-width">1.5</CssParameter></Stroke></PolygonSymbolizer>`,
   "PS.ProtectedSites.KR": `<PolygonSymbolizer><Fill><CssParameter name="fill">#e0b884</CssParameter><CssParameter name="fill-opacity">0.18</CssParameter></Fill>
@@ -428,9 +432,10 @@ function initMap(){
   new BasCtl({ position: "topright" }).addTo(map);
   // NV-skikten hämtas som EN bild där servern lägger nationalparker ovanpå reservat.
   // Kryssrutorna styr bara vilka skikt som ingår (layers-parametern), så två bildlager kan inte skymma varandra.
-  const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.KR,PS.ProtectedSites.NP", format: "image/png", transparent: true,
+  const nvSkikt = L.tileLayer.wms(CFG.wms, { layers: "PS.ProtectedSites.NR,PS.ProtectedSites.KR,PS.ProtectedSites.NP,PS.ProtectedSites.NM", format: "image/png", transparent: true,
     opacity: 1, zIndex: 10, attribution: "Naturvårdsverket" }).addTo(map);
   const over = overlays = { "Naturreservat": L.layerGroup().addTo(map), "Kulturreservat": L.layerGroup().addTo(map), "Nationalparker": L.layerGroup().addTo(map),
+    "Naturminnen": L.layerGroup().addTo(map),
     "Världsarv": L.tileLayer.wms(CFG.vaWms, { layers: "PS.ProtectedSite", format: "image/png", transparent: true, zIndex: 12,
       attribution: "Riksantikvarieämbetet" }).addTo(map),
     // Byggnadsminnen visas först från ungefär länsnivå (zoom 8) – utzoomat blir det bara prickar över hela landet
@@ -448,7 +453,8 @@ function initMap(){
   map.on("moveend overlayadd", ritaSymboler);
   map.on("moveend overlayadd", ritaYtor);
   ritaSymboler();
-  const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Kulturreservat": "PS.ProtectedSites.KR", "Nationalparker": "PS.ProtectedSites.NP" };
+  const NV_NAMN = { "Naturreservat": "PS.ProtectedSites.NR", "Kulturreservat": "PS.ProtectedSites.KR", "Nationalparker": "PS.ProtectedSites.NP",
+    "Naturminnen": "PS.ProtectedSites.NM" };
   nvUppdatera = () => {
     const l = Object.keys(over).filter(n => NV_NAMN[n] && map.hasLayer(over[n])).map(n => NV_NAMN[n]);
     if (!l.length) { map.removeLayer(nvSkikt); return; }
@@ -552,7 +558,7 @@ async function loadShapes(){
 
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
-const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Världsarv": "VA", "Byggnadsminnen": "BM",
+const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Naturminnen": "NM", "Världsarv": "VA", "Byggnadsminnen": "BM",
   "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Tätorter (300)": "TA", "Sjöar (300)": "SJ" };
 // Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
 const rangText = o => o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
@@ -605,7 +611,7 @@ function ritaSymboler(){
     });
   }, 250);
 }
-const NV_KALLOR = new Set(["NR", "NP", "KR"]);   // NV-objekt: ext_id = NVR-id
+const NV_KALLOR = new Set(["NR", "NP", "KR", "NM"]);   // NV-objekt: ext_id = NVR-id
 // Ett kartskikt kan omfatta flera källor: kyrkor = RAÄ (KY) + komplement från OpenStreetMap (KO)
 const EXTRA_KALLOR = { KY: ["KO"] };
 const kallorFor = k => [k, ...(EXTRA_KALLOR[k] || [])];
@@ -743,7 +749,7 @@ document.addEventListener("submit", async e => {
   setStatus(`Tidigare besök i ${namn} (${dag}) sparat.`);
 });
 
-const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Natura 2000", "Ramsar", "Biosfärområde"];
+const ORDER = ["Världsarv", "Nationalpark", "Naturreservat", "Naturminne", "Kulturreservat", "Byggnadsminne", "Kyrka", "Fyr", "Fornlämning", "Tätort", "Sjö", "Natura 2000", "Ramsar", "Biosfärområde"];
 function grouped(){
   const m = new Map();
   visits.forEach(v => {
