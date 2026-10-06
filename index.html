@@ -48,10 +48,15 @@ button:disabled{opacity:.5;cursor:default}
 .v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
 #more{margin-top:.5rem}
 #map{position:relative;aspect-ratio:1/1;height:auto;min-height:300px;max-height:75vh;border:1px solid var(--line);border-radius:6px;margin-top:.6rem;background:var(--card);color:var(--mute)}
-#map.stor{aspect-ratio:auto;height:85vh;max-height:none}
-.karthint{position:absolute;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;
-  background:rgba(34,48,43,.55);color:#fff;font-weight:600;pointer-events:none;opacity:0;transition:opacity .2s}
-.karthint.visa{opacity:1}
+/* Mobil: kartan tar 60 % av skärmhöjden (resten går att scrolla på) */
+@media (pointer: coarse){#map{aspect-ratio:auto;height:60vh;height:60dvh;min-height:260px;max-height:none}}
+#map.stor{aspect-ratio:auto;height:85vh;height:85dvh;max-height:none}
+/* Kartknappar i samma storlek (30 px, som zoomknapparna) */
+.leaflet-control-layers-toggle,.leaflet-touch .leaflet-control-layers-toggle{width:30px;height:30px;background-size:20px}
+.leaflet-bar a.minpos{display:flex;align-items:center;justify-content:center}
+.leaflet-bar a.minpos svg{width:18px;height:18px}
+.leaflet-bar a.minpos.laddar svg{animation:puls 1s ease-in-out infinite}
+@keyframes puls{50%{opacity:.3}}
 .leaflet-bar a.storknapp{font-size:1.1rem;line-height:30px}
 #loc{width:100%}
 /* ---- I närheten (radar standard, lista valbar) ---- */
@@ -171,16 +176,16 @@ button.small{padding:.35rem .7rem;font-size:.9rem}
 button.tiny{padding:.1rem .5rem;font-size:.85rem;margin-left:.4rem}
 .vd{padding:.2rem 0 .6rem 1rem;border-bottom:1px solid var(--line)}
 .vd div{display:flex;justify-content:space-between;align-items:center;padding:.2rem 0;color:var(--mute);font-size:.9rem}
-.osm-nedtonad{filter:saturate(.3) brightness(1.06) contrast(.92)}
+.osm-nedtonad .leaflet-tile{filter:saturate(.3) brightness(1.06) contrast(.92)}
 /* Bakgrundskarta: egen knapp (kartikon) skild från skiktmenyn */
-.baskarta .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z'/%3E%3Cpath d='M9 4v14M15 6v14'/%3E%3C/svg%3E");background-size:24px}
+.baskarta .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z'/%3E%3Cpath d='M9 4v14M15 6v14'/%3E%3C/svg%3E");background-size:20px}
 [data-theme=dark] .baskarta .leaflet-control-layers-toggle{filter:invert(1)}
 /* Kartans popupfönster: mindre text så att de får plats på mobilen */
 .leaflet-popup-content{font-size:.82rem;line-height:1.35;margin:.55rem .8rem}
 .leaflet-popup-content hr{margin:.45rem 0;border:0;border-top:1px solid var(--line)}
 button.efterknapp{display:block;margin-top:.35rem;padding:.2rem .55rem;font-size:.78rem}
 /* Mörk bakgrundskarta: OSM inverterad och dämpad, lätt genomskinlig mot mörkgrön botten (#map-bakgrund) */
-.osm-mork{filter:invert(.86) hue-rotate(180deg) saturate(.6) brightness(.9) contrast(1.15)}
+.osm-mork .leaflet-tile{filter:invert(.86) hue-rotate(180deg) saturate(.6) brightness(.9) contrast(1.15)}
 /* Leaflet i mörkt läge */
 [data-theme=dark] .leaflet-popup-content-wrapper,[data-theme=dark] .leaflet-popup-tip,[data-theme=dark] .leaflet-control-layers,
 [data-theme=dark] .leaflet-bar a{background:var(--card);color:var(--ink);border-color:var(--line)}
@@ -288,7 +293,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <ul>
     <li><strong>Var är jag?</strong> – hämtar din position och visar skyddade områden där du står.</li>
     <li><strong>Logga besök</strong> – sparar besöket på ditt konto. Samma område kan loggas en gång per dag.</li>
-    <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med två fingrar på mobilen, eller tryck ⤢ för stor karta.</li>
+    <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med ett finger och zooma med två. Tryck ⤢ för stor karta och ⌖ för att centrera på din position. Bakgrundskartan väljs med kartikonen uppe till höger, skikten med knappen under.</li>
     <li><strong>Mina besök</strong> – dina platser grupperade per typ. Klicka på ett namn för att visa platsen, ▾ för enskilda besök.</li>
   </ul>
 
@@ -363,7 +368,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.28.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.29.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -531,18 +536,10 @@ const visaInst = vis => visaPanel("settings", vis);
 function initMap(){
   if (!window.L) { $("#map").textContent = "Kartan kunde inte laddas."; return; }
   // Kartan ska inte fånga sidans scroll: på mobil flyttas den med två fingrar, på dator zoomar hjulet först efter klick i kartan.
-  const touch = L.Browser.mobile || matchMedia("(pointer: coarse)").matches;
-  map = L.map("map", { dragging: !touch, tap: false, scrollWheelZoom: false }).setView([62, 15], 5);
+  // Ett finger flyttar kartan (även på mobil). Två fingrar zoomar.
+  map = L.map("map", { tap: false, scrollWheelZoom: false }).setView([62, 15], 5);
   map.on("click focus", () => map.scrollWheelZoom.enable());
   map.on("mouseout blur", () => map.scrollWheelZoom.disable());
-  const hint = L.DomUtil.create("div", "karthint", map.getContainer());
-  hint.textContent = "Använd två fingrar för att flytta kartan";
-  let hintT;
-  map.getContainer().addEventListener("touchmove", e => {
-    if (map.dragging.enabled()) return;
-    if (e.touches.length > 1) { hint.classList.remove("visa"); return; }   // två fingrar: Leaflets pinch flyttar och zoomar
-    hint.classList.add("visa"); clearTimeout(hintT); hintT = setTimeout(() => hint.classList.remove("visa"), 1200);
-  }, { passive: true });
   // Knapp för större/mindre karta. I stort läge flyttas kartan med ett finger.
   const StorCtl = L.Control.extend({ onAdd(){
     const bar = L.DomUtil.create("div", "leaflet-bar"), a = L.DomUtil.create("a", "storknapp", bar);
@@ -552,12 +549,21 @@ function initMap(){
       L.DomEvent.preventDefault(e);
       const stor = $("#map").classList.toggle("stor");
       a.title = stor ? "Mindre karta" : "Större karta"; a.textContent = stor ? "⤡" : "⤢";
-      if (touch) stor ? map.dragging.enable() : map.dragging.disable();
       setTimeout(() => { map.invalidateSize(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); }, 50);
     });
     return bar;
   }});
   new StorCtl({ position: "topleft" }).addTo(map);
+  // Centrera på min position (under ⤢)
+  const PosCtl = L.Control.extend({ onAdd(){
+    const bar = L.DomUtil.create("div", "leaflet-bar"), a = L.DomUtil.create("a", "minpos", bar);
+    a.href = "#"; a.setAttribute("role", "button"); a.title = "Centrera på min position"; a.setAttribute("aria-label", a.title);
+    a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`;
+    L.DomEvent.disableClickPropagation(bar);
+    L.DomEvent.on(a, "click", e => { L.DomEvent.preventDefault(e); a.classList.add("laddar"); locate(() => a.classList.remove("laddar")); });
+    return bar;
+  }});
+  new PosCtl({ position: "topleft" }).addTo(map);
   // Bakgrundskartor – den första är förvald
   BAS = {
     // OSM:s standardkarta, nedtonad med CSS-filter (klassen osm-nedtonad). Ingen nyckel behövs.
@@ -572,7 +578,8 @@ function initMap(){
     "Satellit (Esri)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 18, maxNativeZoom: 17, attribution: "Bilder © Esri, Maxar, Earthstar Geographics m.fl." })
   };
-  Object.values(BAS).forEach(l => l.setZIndex(1));   // bakgrund alltid underst, oavsett när den läggs till
+  // Ladda rutor medan kartan dras och behåll fler rutor runtom – mindre tomma kanter/blinkningar vid panorering
+  Object.values(BAS).forEach(l => { l.setZIndex(1); L.setOptions(l, { updateWhenIdle: false, keepBuffer: 4 }); });   // bakgrund alltid underst, oavsett när den läggs till
   basNamn = store.get("bas", "");
   if (!BAS[basNamn]) basNamn = tema() === "dark" ? "Mörk (OSM)" : "Nedtonad (OSM)";
   BAS[basNamn].addTo(map);
@@ -633,12 +640,12 @@ function showMe(lat, lon, acc){
          L.circleMarker(ll, { radius: 8, color: "#fff", weight: 2, fillColor: "#2b6cb0", fillOpacity: 1, interactive: false }).addTo(map)];
   map.setView(ll, Math.max(map.getZoom(), 14));
 }
-function locate(){
+function locate(klar = () => {}){
   const q = new URLSearchParams(location.search), tl = parseFloat(q.get("lat")), tn = parseFloat(q.get("lon"));
-  if (!isNaN(tl) && !isNaN(tn)) return showMe(tl, tn, 5);
-  if (!navigator.geolocation) return setStatus("Webbläsaren saknar stöd för position.", true);
-  navigator.geolocation.getCurrentPosition(g => showMe(g.coords.latitude, g.coords.longitude, g.coords.accuracy),
-    e => setStatus("Ingen position: " + e.message, true), { enableHighAccuracy: true, timeout: 20000 });
+  if (!isNaN(tl) && !isNaN(tn)) { klar(); return showMe(tl, tn, 5); }
+  if (!navigator.geolocation) { klar(); return setStatus("Webbläsaren saknar stöd för position.", true); }
+  navigator.geolocation.getCurrentPosition(g => { klar(); showMe(g.coords.latitude, g.coords.longitude, g.coords.accuracy); },
+    e => { klar(); setStatus("Ingen position: " + e.message, true); }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 30000 });
 }
 function drawPins(){
   if (!pins) return;
