@@ -7,9 +7,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script>try { if (JSON.parse(localStorage.getItem("tema")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>
 <style>
-:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;--omr:#55707a;--las:#c9cec5;color-scheme:light}
+:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;--omr:#55707a;--las:#c9cec5;--orange:#d9733f;--orange2:#e9a27a;--salvia:#9db58f;--salvia2:#c4d3b9;--sand:#e6d5ad;color-scheme:light}
 /* Mörkt läge: samma mossgröna familj, mörka ytor */
-:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;--omr:#5f7c86;--las:#3a463f;color-scheme:dark}
+:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;--omr:#5f7c86;--las:#3a463f;--orange:#d97a4a;--orange2:#a85a35;--salvia:#5f7a57;--salvia2:#34463a;--sand:#5a5038;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -109,6 +109,77 @@ details.fall > summary h2{margin:0}
 #nara .fot{color:var(--mute);font-size:.78rem;margin:.3rem 0 0}
 #nara .tom{color:var(--mute);font-size:.9rem;margin:.3rem 0}
 /* ---- Min statistik ---- */
+/* ---- Välkomstsida (bara för den som inte är inloggad, eller saknar användarnamn) ---- */
+body.utloggad .flikar,body.utloggad #gear,body.utloggad main > section#auth,body.utloggad .flik{display:none!important}
+body:not(.utloggad) #valkommen,body:not(.utloggad) #toppinlogg{display:none!important}
+.toppinlogg{color:#fff;font-size:.88rem;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+#valkommen{--display:"Iowan Old Style",Charter,Georgia,serif}
+#valkommen section{padding-block:2.2rem 0;scroll-margin-top:4.5rem}
+#valkommen h2{font:600 1.75rem/1.15 var(--display);margin:0 0 .5rem;text-wrap:balance}
+#valkommen .eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin:0 0 .3rem}
+#valkommen p{margin:.4rem 0}
+#valkommen .mute{color:var(--mute)}
+#valkommen .hero{padding-top:.4rem}
+#valkommen .hero h2{font:700 clamp(2.5rem,12vw,3.3rem)/1 var(--display);display:flex;align-items:flex-start;gap:.15rem;margin:0}
+#valkommen .hero h2 svg{width:2.3rem;height:2.3rem;flex:none;margin-top:-.35rem}
+#valkommen .sub{font:500 1.15rem/1.35 var(--display);margin:.6rem 0 0;max-width:22rem}
+#valkommen .heroart{margin:1.2rem -1rem 0}
+#valkommen .heroart svg{display:block;width:100%;height:auto}
+#valkommen .cta{display:flex;flex-direction:column;gap:.6rem;margin-top:1rem}
+#valkommen .vbtn{display:flex;align-items:center;justify-content:center;gap:.5rem;border-radius:999px;padding:.85rem 1.2rem;font-weight:650;letter-spacing:.04em;text-transform:uppercase;font-size:.95rem;border:0;background:var(--btn);color:#fff;width:100%;box-shadow:0 2px 0 color-mix(in srgb,var(--ink) 25%,transparent)}
+#valkommen .vbtn.ghost{background:transparent;color:var(--moss);box-shadow:none;border:1px solid var(--moss);text-transform:none;letter-spacing:0;font-weight:600}
+#valkommen .vbtn:disabled{opacity:.6}
+#valkommen .steg{list-style:none;margin:1rem 0 0;padding:0;display:grid;gap:.9rem;counter-reset:s}
+#valkommen .steg li{display:grid;grid-template-columns:4.6rem 1fr;gap:.9rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.8rem .9rem .8rem .7rem;position:relative}
+#valkommen .steg li svg{width:4.6rem;height:4.6rem;display:block}
+#valkommen .steg li::before{counter-increment:s;content:counter(s);position:absolute;left:-.55rem;top:-.55rem;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--orange);color:#fff;font:700 .9rem/1.6rem var(--display);text-align:center}
+#valkommen .steg b{font:600 1.08rem/1.25 var(--display);display:block}
+#valkommen .steg span{color:var(--mute);font-size:.9rem;display:block;margin-top:.15rem}
+#valkommen .stor{font:700 clamp(2.8rem,14vw,3.8rem)/1 var(--display);margin:.6rem 0 .1rem;font-variant-numeric:tabular-nums}
+#valkommen .typer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin-top:1rem}
+#valkommen .typ{display:grid;grid-template-columns:2rem 1fr;gap:.1rem .55rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.55rem .6rem;min-width:0}
+#valkommen .typ svg{width:2rem;height:2rem;grid-row:span 2}
+#valkommen .typ b{font:600 1.1rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+#valkommen .typ span{font-size:.8rem;color:var(--mute);line-height:1.2}
+#valkommen .typ.snart{border-style:dashed;background:transparent}
+#valkommen .typ.snart b{font-size:.95rem}
+#valkommen .prop{margin-top:1rem;display:flex;height:.9rem;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+#valkommen .prop i{display:block;height:100%}
+#valkommen .propleg{display:flex;justify-content:space-between;font-size:.76rem;color:var(--mute);margin-top:.25rem;gap:.5rem}
+#valkommen .spel{display:grid;gap:.7rem;margin-top:1rem}
+#valkommen .ruta{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.8rem .9rem}
+#valkommen .ruta h3{margin:0 0 .4rem;font:600 1.02rem/1.3 var(--display)}
+#valkommen .mini{display:grid;grid-template-columns:1.4rem 1fr auto;gap:.5rem;align-items:center;font-size:.88rem;padding:.15rem .2rem}
+#valkommen .mini .pl{width:1.4rem;height:1.4rem;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700}
+#valkommen .mini.du{background:color-mix(in srgb,var(--moss) 14%,transparent);border-radius:6px}
+#valkommen .vmarken{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:space-between}
+#valkommen .vmarken div{display:flex;flex-direction:column;align-items:center;gap:.2rem;width:4.3rem;text-align:center;font-size:.72rem;line-height:1.2;color:var(--mute)}
+#valkommen .vmarken svg{width:3rem;height:auto}
+#valkommen .lofte{list-style:none;padding:0;margin:.8rem 0 0;display:grid;gap:.5rem}
+#valkommen .lofte li{display:grid;grid-template-columns:1.6rem 1fr;gap:.6rem;align-items:start;font-size:.95rem}
+#valkommen .lofte svg{width:1.4rem;height:1.4rem;margin-top:.1rem}
+#valkommen .reg{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.1rem 1rem 1.2rem;margin-top:1rem;box-shadow:0 8px 24px -16px color-mix(in srgb,var(--ink) 50%,transparent)}
+#valkommen .prick{display:flex;gap:.35rem;margin-bottom:.8rem}
+#valkommen .prick i{height:.3rem;flex:1;border-radius:999px;background:var(--line)}
+#valkommen .prick i.pa{background:var(--orange)}
+#valkommen .reg h3{font:600 1.25rem/1.25 var(--display);margin:0 0 .3rem}
+#valkommen .reg label{display:block;font-size:.88rem;color:var(--mute);margin:.8rem 0 .25rem}
+#valkommen .reg input{width:100%;padding:.75rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:1rem}
+#valkommen .reg .vbtn{margin-top:.8rem}
+#valkommen .tips{font-size:.84rem;color:var(--mute);margin-top:.5rem}
+#valkommen .fel{color:var(--warn);font-size:.9rem;margin-top:.5rem}
+#valkommen .namnforslag{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.5rem}
+#valkommen .namnforslag button{border:1px dashed var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:.2rem .65rem;font-size:.84rem;font-weight:400;width:auto;box-shadow:none}
+#valkommen .kuvert{display:flex;justify-content:center;margin:.4rem 0 .2rem}
+#valkommen .kuvert svg{width:5.5rem;height:5.5rem}
+#valkommen .fot{text-align:center;font-size:.82rem;color:var(--mute);margin-top:2.2rem}
+#valkommen .fot button{color:var(--moss);background:none;border:0;box-shadow:none;width:auto;text-decoration:underline;text-underline-offset:3px;padding:0;font:inherit;font-size:inherit}
+@media (prefers-reduced-motion:no-preference){
+  #valkommen .puls{animation:vpuls 2.4s ease-out infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes vpuls{0%{opacity:.6;transform:scale(.6)}100%{opacity:0;transform:scale(1.8)}}
+  #valkommen .rutt{stroke-dasharray:5 6;animation:vga 18s linear infinite}
+  @keyframes vga{to{stroke-dashoffset:-220}}
+}
 #stat .stattabs{display:flex;border-bottom:1px solid var(--line);margin:-.3rem 0 .6rem}
 #stat .stattabs button{flex:1;padding:.55rem .5rem .45rem;border-bottom:3px solid transparent;color:var(--mute);font-weight:600}
 #stat .stattabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--moss)}
@@ -326,10 +397,24 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="m-tra" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b98a5a"/><stop offset=".45" stop-color="#8b5e34"/><stop offset=".55" stop-color="#a0703f"/><stop offset="1" stop-color="#6b4424"/></linearGradient>
+    <linearGradient id="m-jarn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a8f93"/><stop offset=".5" stop-color="#4d5357"/><stop offset="1" stop-color="#2f3437"/></linearGradient>
+    <linearGradient id="m-koppar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a77a"/><stop offset=".5" stop-color="#b8653a"/><stop offset="1" stop-color="#7d3f20"/></linearGradient>
+    <linearGradient id="m-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f7"/><stop offset=".5" stop-color="#aeb6bb"/><stop offset="1" stop-color="#7d868c"/></linearGradient>
+    <linearGradient id="m-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#e2b53a"/><stop offset="1" stop-color="#9c7414"/></linearGradient>
+    <linearGradient id="md-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#e7bb3c"/><stop offset=".75" stop-color="#b88a17"/><stop offset="1" stop-color="#f2d36b"/></linearGradient>
+    <linearGradient id="md-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#c3cacf"/><stop offset=".75" stop-color="#848d93"/><stop offset="1" stop-color="#dfe4e7"/></linearGradient>
+    <linearGradient id="md-brons" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3bf8f"/><stop offset=".4" stop-color="#b8743f"/><stop offset=".75" stop-color="#7f4720"/><stop offset="1" stop-color="#d69a63"/></linearGradient>
+    <linearGradient id="m-platina" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#d9e6ee"/><stop offset=".6" stop-color="#b5c7d3"/><stop offset="1" stop-color="#e9f1f6"/></linearGradient>
+  </defs>
+</svg>
 <div class="toppen">
 <header class="topbar">
   <svg class="flag" viewBox="0 0 16 10" aria-hidden="true"><rect width="16" height="10" fill="#006aa7"/><rect x="5" width="2" height="10" fill="#fecc02"/><rect y="4" width="16" height="2" fill="#fecc02"/></svg>
   <h1>Hit och Dit<span>: Utforska Sverige</span></h1>
+  <a href="#registrera" id="toppinlogg" class="toppinlogg" data-vhopp="loggain">Logga in</a>
   <button id="infoknapp" class="gear" aria-label="Om appen och integritet" aria-expanded="false" aria-controls="info">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor"/></svg>
   </button>
@@ -349,7 +434,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <h3>Konto</h3>
   <p id="acct">Inte inloggad.</p>
   <form id="nameform" hidden>
-    <label for="uname">Användarnamn <span style="color:var(--mute)">(visas i appen och i framtida topplistor)</span></label>
+    <label for="uname">Användarnamn <span style="color:var(--mute)">(visas i appen och i topplistorna)</span></label>
     <div class="row"><input id="uname" maxlength="30" autocomplete="nickname" required placeholder="t.ex. Reservatsjägaren"><button>Spara</button></div>
   </form>
   <div class="btns" id="acctbtns" hidden><button id="rename" class="ghost small">Byt namn</button><button id="logout" class="ghost small">Logga ut</button></div>
@@ -424,6 +509,102 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   </form>
 </div>
 <main>
+<div id="valkommen">
+  <section class="hero">
+    <h2>Hit och Dit
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="var(--moss)" stroke-width="1.4"/><circle cx="20" cy="20" r="9" fill="none" stroke="var(--moss)" stroke-width=".8" stroke-dasharray="1.5 2"/><path d="M20 2 23 17 20 20 17 17Z" fill="var(--moss)"/><path d="M20 38 17 23 20 20 23 23Z" fill="none" stroke="var(--moss)" stroke-width="1"/><path d="M38 20 23 23 20 20 23 17Z" fill="var(--moss)" opacity=".6"/></svg>
+    </h2>
+    <p class="sub">Samla Sveriges naturreservat, fornlämningar, fyrar, toppar och kyrkor. På riktigt, på plats.</p>
+    <div class="heroart">
+      <svg viewBox="0 0 400 230" role="img" aria-label="Illustrerad karta med besökta och obesökta platser längs en vandringsrutt">
+        <defs><filter id="mjuk"><feGaussianBlur stdDeviation=".4"/></filter></defs>
+        <path d="M250 10 330 0 400 30 400 120 340 140 290 110 260 60Z" fill="var(--salvia)" opacity=".75"/>
+        <path d="M300 60 370 70 395 130 350 175 290 160 270 110Z" fill="var(--salvia2)" opacity=".9"/>
+        <path d="M60 110 130 95 175 130 165 195 105 220 45 190 35 140Z" fill="var(--orange)" opacity=".85"/>
+        <path d="M95 140 150 120 190 150 175 205 120 225 80 195Z" fill="var(--orange2)" opacity=".7"/>
+        <path d="M210 40 275 30 315 70 300 125 245 135 200 95Z" fill="var(--orange)" opacity=".8"/>
+        <path d="M175 150 235 140 255 185 225 225 170 222 150 190Z" fill="var(--salvia)" opacity=".8"/>
+        <path d="M190 165 225 160 238 190 218 210 192 205Z" fill="none" stroke="var(--card)" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="214" y="190" text-anchor="middle" font-size="9" font-family="system-ui,sans-serif" fill="var(--ink)">Natura</text>
+        <text x="214" y="200" text-anchor="middle" font-size="9" font-family="system-ui,sans-serif" fill="var(--ink)">2000</text>
+        <path class="rutt" d="M105 170 C150 200 170 205 205 180 S250 120 262 85 S320 60 350 95" fill="none" stroke="var(--bark)" stroke-width="2.4" stroke-linecap="round"/>
+        <!-- pins -->
+        <g transform="translate(105 170)"><circle class="puls" r="16" fill="var(--besokt)" opacity=".4"/><path d="M0 0c-9-12-14-18-14-25a14 14 0 0 1 28 0c0 7-5 13-14 25Z" fill="var(--card)" stroke="var(--bark)" stroke-width="2.5"/><path d="M-4-31v12M-4-31h10l-3 4 3 4h-10" fill="var(--besokt)" stroke="var(--besokt)" stroke-width="1.6" stroke-linejoin="round"/></g>
+        <g transform="translate(262 85)"><path d="M0 0c-9-12-14-18-14-25a14 14 0 0 1 28 0c0 7-5 13-14 25Z" fill="var(--card)" stroke="var(--bark)" stroke-width="2.5"/><path d="M-4-31v12M-4-31h10l-3 4 3 4h-10" fill="var(--besokt)" stroke="var(--besokt)" stroke-width="1.6" stroke-linejoin="round"/></g>
+        <g transform="translate(205 180)"><path d="M0 0c-6-8-9-12-9-17a9 9 0 0 1 18 0c0 5-3 9-9 17Z" fill="var(--bark)"/><circle cy="-17" r="3.5" fill="var(--card)"/></g>
+        <g transform="translate(350 95)"><path d="M0 0c-6-8-9-12-9-17a9 9 0 0 1 18 0c0 5-3 9-9 17Z" fill="var(--bark)"/><circle cy="-17" r="3.5" fill="var(--card)"/></g>
+        <g transform="translate(300 25)"><path d="M0 0c-6-8-9-12-9-17a9 9 0 0 1 18 0c0 5-3 9-9 17Z" fill="var(--bark)"/><circle cy="-17" r="3.5" fill="var(--card)"/></g>
+        <!-- fyr och gran -->
+        <g transform="translate(30 60)" fill="var(--ink)" opacity=".8"><path d="M-5 40 -3 8h6L5 40Z"/><rect x="-5" y="2" width="10" height="6" rx="1"/><path d="M-7 2h14L0-5Z"/><path d="M6 4 26-2v12Z" fill="var(--sand)" opacity=".9"/></g>
+        <g transform="translate(375 175)" fill="var(--moss)"><path d="M0-34 10-16H5L13-4H6L15 9H-15L-6-4H-13L-5-16H-10Z"/><rect x="-2" y="9" width="4" height="7" fill="var(--bark)"/></g>
+      </svg>
+    </div>
+    <div class="cta">
+      <button class="vbtn" data-vhopp="registrera">Starta äventyret <span aria-hidden="true">›</span></button>
+      <button class="vbtn ghost" data-vhopp="sa">Hur funkar det?</button>
+    </div>
+  </section>
+  <section id="sa">
+    <p class="eyebrow">Så funkar det</p>
+    <h2>Gå dit. Logga. Samla.</h2>
+    <ol class="steg">
+      <li>
+        <svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="32" fill="var(--salvia2)"/><rect x="22" y="12" width="26" height="46" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><circle class="puls" cx="35" cy="34" r="9" fill="#2b6cb0" opacity=".35"/><circle cx="35" cy="34" r="4.5" fill="#2b6cb0" stroke="#fff" stroke-width="1.5"/></svg>
+        <div><b>Ta dig till en plats</b><span>Ett naturreservat, en runsten, en fyr. Tryck <i>Var är jag?</i> så ser appen vad du står i.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="32" fill="color-mix(in srgb,var(--orange) 30%,var(--card))"/><path d="M35 60c-12-15-18-23-18-31a18 18 0 0 1 36 0c0 8-6 16-18 31Z" fill="var(--card)" stroke="var(--bark)" stroke-width="3"/><path d="M30 20v16M30 20h13l-4 5 4 5H30" fill="var(--besokt)" stroke="var(--besokt)" stroke-width="2" stroke-linejoin="round"/></svg>
+        <div><b>Logga besöket</b><span>Ett tryck och platsen är din, med datum. Den blir orange på kartan.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="32" fill="var(--sand)"/><rect x="12" y="38" width="15" height="16" fill="var(--salvia)"/><rect x="27.5" y="28" width="15" height="26" fill="var(--moss)"/><rect x="43" y="44" width="15" height="10" fill="var(--orange)"/><path d="M35 12l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8Z" fill="var(--orange)"/></svg>
+        <div><b>Samla och klättra</b><span>Se din samling växa, ta märken och tävla på topplistor för månaden, året och totalt.</span></div>
+      </li>
+    </ol>
+  </section>
+  <section>
+    <p class="eyebrow">Vad finns att hitta</p>
+    <h2>Hela Sverige är spelplanen</h2>
+    <p class="stor" id="vantal">ca 345 000</p>
+    <p class="mute">platser att besöka, från öppna data hos Naturvårdsverket, Riksantikvarieämbetet, Lantmäteriet, SCB, SMHI och OpenStreetMap.</p>
+    <div class="typer" id="vtyper"></div>
+    <div class="prop" id="vprop" aria-hidden="true"></div>
+    <div class="propleg"><span id="vpropleg">Fornlämningar är de flesta platserna</span><span>resten</span></div>
+  </section>
+  <section>
+    <p class="eyebrow">Spelet</p>
+    <h2>Alla kan vinna någonstans</h2>
+    <p class="mute">Topplistor finns för hela Sverige, varje län och varje kommun, och för natur, kultur och geografi var för sig. Du kanske inte leder i landet, men kanske på kultur i ditt län i oktober.</p>
+    <div class="spel">
+      <div class="ruta">
+        <h3>Kultur · Uppsala län · oktober <span class="mute" style="font:400 .8rem system-ui">(exempel)</span></h3>
+        <div class="mini"><span class="pl" style="border-color:#b8901c">1</span><span>Runristaren</span><b>14</b></div>
+        <div class="mini du"><span class="pl" style="border-color:#8d979c">2</span><span>Du?</span><b>11</b></div>
+        <div class="mini"><span class="pl" style="border-color:#a8643a">3</span><span>Kyrkråtta_kalle</span><b>9</b></div>
+      </div>
+      <div class="ruta">
+        <h3>Märken och medaljer</h3>
+        <div class="vmarken" id="vmarken"></div>
+        <p class="mute" style="font-size:.84rem;margin:.5rem 0 0">Märken i sex nivåer, från trä till platina, för varje sorts plats. Medaljer till de tre bästa i Sverige varje månad och år.</p>
+      </div>
+    </div>
+  </section>
+  <section>
+    <p class="eyebrow">Ditt konto</p>
+    <h2>Bara ditt namn syns</h2>
+    <ul class="lofte">
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--salvia2)"/><path d="m7 12.5 3.2 3 6.8-7" fill="none" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Andra ser bara ditt användarnamn och hur många platser du har, aldrig din e-post eller var du har varit.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--salvia2)"/><path d="m7 12.5 3.2 3 6.8-7" fill="none" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Inget lösenord. Du loggar in med en länk som skickas till din e-post.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--salvia2)"/><path d="m7 12.5 3.2 3 6.8-7" fill="none" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Hoppa av topplistorna, ladda ner allt eller radera kontot när du vill.</span></li>
+    </ul>
+  </section>
+  <section id="registrera">
+    <p class="eyebrow">Kom igång</p>
+    <h2 id="regrubrik">Skapa konto eller logga in</h2>
+    <div class="reg" id="reg"></div>
+    <p class="fot">Hobbyprojekt med öppna data. <button data-vhopp="sa">Hur funkar det?</button> · <button data-vinfo="1">Om appen och integritet</button></p>
+  </section>
+</div>
 <section id="auth">
   <form id="login" hidden>
     <label for="email">Logga in med e-post</label>
@@ -452,19 +633,6 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <div id="visits"></div>
 </div>
 <div id="flik-statistik" class="flik" hidden>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <linearGradient id="m-tra" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b98a5a"/><stop offset=".45" stop-color="#8b5e34"/><stop offset=".55" stop-color="#a0703f"/><stop offset="1" stop-color="#6b4424"/></linearGradient>
-    <linearGradient id="m-jarn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a8f93"/><stop offset=".5" stop-color="#4d5357"/><stop offset="1" stop-color="#2f3437"/></linearGradient>
-    <linearGradient id="m-koppar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a77a"/><stop offset=".5" stop-color="#b8653a"/><stop offset="1" stop-color="#7d3f20"/></linearGradient>
-    <linearGradient id="m-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f7"/><stop offset=".5" stop-color="#aeb6bb"/><stop offset="1" stop-color="#7d868c"/></linearGradient>
-    <linearGradient id="m-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#e2b53a"/><stop offset="1" stop-color="#9c7414"/></linearGradient>
-    <linearGradient id="md-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#e7bb3c"/><stop offset=".75" stop-color="#b88a17"/><stop offset="1" stop-color="#f2d36b"/></linearGradient>
-    <linearGradient id="md-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#c3cacf"/><stop offset=".75" stop-color="#848d93"/><stop offset="1" stop-color="#dfe4e7"/></linearGradient>
-    <linearGradient id="md-brons" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3bf8f"/><stop offset=".4" stop-color="#b8743f"/><stop offset=".75" stop-color="#7f4720"/><stop offset="1" stop-color="#d69a63"/></linearGradient>
-    <linearGradient id="m-platina" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#d9e6ee"/><stop offset=".6" stop-color="#b5c7d3"/><stop offset="1" stop-color="#e9f1f6"/></linearGradient>
-  </defs>
-</svg>
 <section id="stat" aria-label="Statistik">
   <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button><button data-statsida="marken" aria-pressed="false">Märken</button></nav>
   <h2 id="statrubrik">Min statistik</h2>
@@ -477,7 +645,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.34.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.35.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -505,9 +673,10 @@ function setUser(u){
   if ((u?.id || null) === (user?.id || null)) return;
   user = u ? { id: u.id, email: u.email } : null;
   visits = user ? store.get("visits:" + user.id, []) : [];
-  $("#login").hidden = !!user; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user;
+  $("#login").hidden = true; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user;
   showWho();
   if (pins) pins.clearLayers();
+  uppdateraLage();
   render(); sync(); if (user) loadProfile();
 }
 function showWho(){
@@ -521,9 +690,9 @@ async function loadProfile(){
   if (!error && !data) ({ error } = await sb.from("profiler").insert({ id: u }));   // om triggern saknas
   if (error) { console.error("Profil", error); return; }
   if (u !== user?.id) return;
-  user.namn = data?.namn || ""; user.topp = data?.i_topplistor !== false;
+  user.namn = data?.namn || ""; user.topp = data?.i_topplistor !== false; user.profilLast = true;
   showWho();
-  if (!user.namn) { visaInst(true); $("#nameform").hidden = false; $("#uname").focus(); setStatus("Välj ett användarnamn."); }
+  uppdateraLage();   // utan användarnamn: välkomstsidans steg 3
 }
 async function saveName(e){
   e.preventDefault();
@@ -1576,6 +1745,117 @@ async function ritaMarken(ruta){
   ruta.innerHTML = h;
 }
 
+
+// ---- Välkomstsida: visas för den som inte är inloggad (och steg 3 för den som saknar användarnamn) ----
+const VR = { steg: 1, epost: "", loggain: false, fel: "", skickar: false };
+const VFORSLAG = ["Mossmagnus", "Fyrjägaren", "Runristaren", "Ljungtrampare", "Stigfinnaren", "Toppturisten", "Kyrkråttan", "Ödrottningen"];
+// Visas appen eller välkomstsidan? Under tiden inloggningen läses in: gissa på sparad session, så att inloggade slipper ett blink.
+function harSparadSession(){ try { return Object.keys(localStorage).some(k => k.startsWith("sb-") && k.endsWith("-auth-token")); } catch { return false; } }
+function uppdateraLage(){
+  const ut = !user || (user.profilLast && !user.namn);
+  document.body.classList.toggle("utloggad", ut);
+  $("#toppinlogg").hidden = !!user;
+  if (user && !user.namn && user.profilLast) VR.steg = 3;
+  else if (!user && VR.steg === 3) VR.steg = 1;
+  if (ut) ritaReg();
+}
+const VTYPIK = {
+  natur: `<path d="M16 4 9 15h4L7 24h18l-6-9h4Z" fill="var(--moss)"/><rect x="15" y="24" width="2" height="4" fill="var(--bark)"/>`,
+  np: `<path d="M3 26 12 10l5 8 4-5 8 13Z" fill="var(--moss)"/><path d="m12 10 2.5 4.5-2.5-1-2.5 1Z" fill="var(--card)"/>`,
+  ek: `<circle cx="11" cy="13" r="5" fill="var(--moss)"/><circle cx="21" cy="13" r="5" fill="var(--moss)"/><circle cx="16" cy="9" r="5.5" fill="var(--moss)"/><circle cx="16" cy="16" r="5" fill="var(--moss)"/><path d="M14.5 18h3l1 10h-5Z" fill="var(--bark)"/>`,
+  va: `<circle cx="16" cy="16" r="11" fill="none" stroke="var(--bark)" stroke-width="2"/><path d="M8 20h16L16 9Z" fill="var(--bark)"/>`,
+  kr: `<path d="M5 15 16 6l11 9v12H5Z" fill="var(--bark)"/><rect x="13" y="19" width="6" height="8" fill="var(--card)"/>`,
+  bm: `<path d="M16 4 4 11h24Z" fill="var(--bark)"/><rect x="7" y="13" width="3" height="10" fill="var(--bark)"/><rect x="14.5" y="13" width="3" height="10" fill="var(--bark)"/><rect x="22" y="13" width="3" height="10" fill="var(--bark)"/><rect x="4" y="24" width="24" height="3" fill="var(--bark)"/>`,
+  ky: `<path d="M16 3v6M13 6h6" stroke="var(--bark)" stroke-width="2"/><path d="M16 9 10 15v13h12V15Z" fill="var(--bark)"/><path d="M14 28v-5a2 2 0 0 1 4 0v5Z" fill="var(--card)"/>`,
+  fy: `<path d="M12 28 13.5 11h5L20 28Z" fill="var(--bark)"/><rect x="12" y="6" width="8" height="5" rx="1" fill="var(--bark)"/><path d="M20 7 29 4v8Z" fill="var(--orange)" opacity=".7"/>`,
+  fl: `<path d="M11 28V11a5 5 0 0 1 10 0v17Z" fill="var(--bark)"/><path d="M14 13v10M14 15l4 3M18 13v10" stroke="var(--card)" stroke-width="1.3"/>`,
+  geo: `<path d="M3 26 12 10l5 8 4-5 8 13Z" fill="var(--geo)"/><path d="m12 10 2.5 4.5-2.5-1-2.5 1Z" fill="var(--card)"/>`,
+  oe: `<path d="M5 21c3-5 19-5 22 0Z" fill="var(--geo)"/><path d="M4 26c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0" fill="none" stroke="var(--geo)" stroke-width="1.6"/>`,
+  sj: `<path d="M4 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0M4 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0M4 24c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0" fill="none" stroke="var(--geo)" stroke-width="2" stroke-linecap="round"/>`,
+  ta: `<rect x="5" y="14" width="6" height="14" fill="var(--geo)"/><rect x="13" y="6" width="6" height="22" fill="var(--geo)"/><rect x="21" y="11" width="6" height="17" fill="var(--geo)"/>`
+};
+// [namn, märkesgrupper (summeras), ikon, kategori]
+const VTYPER = [["Naturreservat", ["NR"], "natur", "natur"], ["Nationalparker", ["NP"], "np", "natur"], ["Naturminnen", ["NM"], "ek", "natur"],
+  ["Världsarv", ["VA"], "va", "kultur"], ["Kulturreservat", ["KR"], "kr", "kultur"], ["Byggnadsminnen", ["BM"], "bm", "kultur"], ["Kyrkor", ["KY"], "ky", "kultur"],
+  ["Fyrar", ["FY"], "fy", "kultur"], ["Fornlämningar", ["FL:sten", "FL:bopl", "FL:hall", "FL:rune", "FL:borg", "FL:ovr"], "fl", "kultur"],
+  ["Toppar", ["TO"], "geo", "geo"], ["Största öarna", ["OE"], "oe", "geo"], ["Största sjöarna", ["SJ"], "sj", "geo"], ["Största tätorterna", ["TA"], "ta", "geo"]];
+// Reservsiffror (oktober 2026) om databasen inte svarar
+const VRESERV = { NR: 6020, NP: 31, NM: 1352, VA: 15, KR: 52, BM: 2174, KY: 3631, FY: 189, "FL:sten": 62683, "FL:bopl": 30353, "FL:hall": 19445, "FL:rune": 1874,
+  "FL:borg": 1227, "FL:ovr": 203324, TO: 390, OE: 300, SJ: 300, TA: 300 };
+async function ritaValkommenSiffror(){
+  let tot = VRESERV;
+  if (sb) { const { data } = await sb.from("marke_totaler").select("grupp,totalt"); if (data?.length) tot = Object.fromEntries(data.map(r => [r.grupp, r.totalt])); }
+  const rader = VTYPER.map(([n, g, ik, k]) => [n, g.reduce((s, x) => s + (tot[x] || 0), 0), ik, k]).filter(r => r[1]);
+  const sum = rader.reduce((s, r) => s + r[1], 0), fl = rader.find(r => r[0] === "Fornlämningar")?.[1] || 0;
+  $("#vantal").textContent = statFmt(sum);
+  $("#vtyper").innerHTML = rader.map(([n, a, ik]) => `<div class="typ"><svg viewBox="0 0 32 32" aria-hidden="true">${VTYPIK[ik]}</svg><b>${statFmt(a)}</b><span>${n}</span></div>`).join("")
+    + `<div class="typ snart"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 4h14l3 8-3 16H9L6 12Z" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="2 2"/></svg><b>På köpet</b><span>Län, kommuner, landskap och socknar kryssas automatiskt</span></div>`;
+  $("#vprop").innerHTML = rader.slice().reverse().map(([n, a, , k]) => `<i title="${n}" style="width:${a / sum * 100}%;background:${n === "Fornlämningar" ? "var(--bark)" : k === "natur" ? "var(--moss)" : k === "geo" ? "var(--geo)" : "var(--orange)"}"></i>`).join("");
+  $("#vpropleg").textContent = `Fornlämningar är ${Math.round(fl / sum * 100)} % av alla platser`;
+  $("#vmarken").innerHTML = [[marke("silver", "natur", "mountain"), "Nationalparker, silver"], [marke("koppar", "kultur", "lighthouse"), "Fyrar, koppar"],
+    [marke("jarn", "omr", "shield"), "Län, järn"], [medalj("guld", "alla"), "Guld i totalcupen"]].map(([svg, t]) => `<div>${svg}${t}</div>`).join("");
+}
+function ritaReg(){
+  const ruta = $("#reg"); if (!ruta) return;
+  let h = `<div class="prick" aria-label="Steg ${VR.steg} av 3">${[1, 2, 3].map(i => `<i class="${i <= VR.steg ? "pa" : ""}"></i>`).join("")}</div>`;
+  if (VR.steg === 1) h += `<h3>${VR.loggain ? "Välkommen tillbaka" : "Börja med din e-post"}</h3>
+    <p class="mute" style="font-size:.92rem">Vi skickar en länk. Klicka på den så är du inloggad, inget lösenord behövs.</p>
+    <form id="vf1"><label for="vepost">E-post</label><input id="vepost" type="email" autocomplete="email" required placeholder="namn@exempel.se" value="${esc(VR.epost)}">
+    <button class="vbtn" ${VR.skickar ? "disabled" : ""}>${VR.skickar ? "Skickar…" : "Skicka länk"}</button></form>
+    ${VR.fel ? `<p class="fel">${esc(VR.fel)}</p>` : ""}<p class="tips">Samma knapp för nytt konto och för inloggning. E-posten syns aldrig för andra.</p>`;
+  else if (VR.steg === 2) h += `KUVERT
+    <h3 style="text-align:center">Kolla din e-post</h3>
+    <p class="mute" style="text-align:center;font-size:.92rem">Vi har skickat en länk till <b>${esc(VR.epost)}</b>. Öppna den på den här enheten, så loggas du in. Kolla skräpposten om den dröjer.</p>
+    <button class="vbtn ghost" data-vr="1">Fel adress? Ändra</button>`;
+  else h += `<h3>Välj ett användarnamn</h3>
+    <p class="mute" style="font-size:.92rem">Det här är namnet andra ser i topplistorna. Välj något som inte går att koppla till dig. Du kan byta när du vill under ⚙.</p>
+    <form id="vf3"><label for="vnamn">Användarnamn</label><input id="vnamn" required minlength="2" maxlength="30" autocomplete="nickname" placeholder="t.ex. Fyrjägaren">
+    <div class="namnforslag">${VFORSLAG.map(n => `<button type="button" data-vnamn="${n}">${n}</button>`).join("")}</div>
+    <button class="vbtn" ${VR.skickar ? "disabled" : ""}>Klart, till kartan <span aria-hidden="true">›</span></button></form>
+    ${VR.fel ? `<p class="fel">${esc(VR.fel)}</p>` : ""}<p class="tips">Inloggad som ${esc(user?.email || "")}. <button type="button" class="ghost small" data-vlogout="1">Logga ut</button></p>`;
+  ruta.innerHTML = h.replace("KUVERT", VKUVERT);
+  $("#regrubrik").textContent = VR.steg === 3 ? "Nästan klart" : VR.loggain ? "Logga in" : "Skapa konto eller logga in";
+}
+const VKUVERT = `<div class="kuvert"><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="38" fill="var(--salvia2)"/><rect x="16" y="24" width="48" height="34" rx="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><path d="m17 26 23 17 23-17" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="60" cy="24" r="8" fill="var(--orange)"/></svg></div>`;
+document.addEventListener("submit", async e => {
+  if (e.target.id === "vf1") {
+    e.preventDefault(); if (!sb || VR.skickar) return;
+    VR.epost = $("#vepost").value.trim(); VR.fel = ""; VR.skickar = true; ritaReg();
+    const { error } = await sb.auth.signInWithOtp({ email: VR.epost, options: { emailRedirectTo: location.origin + location.pathname } });
+    VR.skickar = false;
+    if (error) VR.fel = /rate|limit|security/i.test(error.message) ? "Det har skickats för många länkar just nu. Vänta en stund och försök igen." : "Kunde inte skicka länken: " + error.message;
+    else VR.steg = 2;
+    ritaReg();
+  } else if (e.target.id === "vf3") {
+    e.preventDefault(); if (!user || VR.skickar) return;
+    const namn = $("#vnamn").value.trim();
+    if (namn.length < 2) { VR.fel = "Namnet behöver minst två tecken."; ritaReg(); return; }
+    VR.fel = ""; VR.skickar = true; ritaReg();
+    const { error } = await sb.from("profiler").update({ namn }).eq("id", user.id);
+    VR.skickar = false;
+    if (error) { VR.fel = error.code === "23505" ? `Namnet ”${namn}” är redan upptaget – välj ett annat.` : "Kunde inte spara namnet: " + error.message; ritaReg(); $("#vnamn").value = namn; return; }
+    user.namn = namn; showWho(); VR.steg = 1;
+    history.replaceState(null, "", "#utforska"); uppdateraLage(); visaFlik("utforska"); window.scrollTo({ top: 0 });
+    setStatus(`Välkommen, ${namn}! Tryck på Var är jag? när du är ute.`);
+  }
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-vhopp],[data-vr],[data-vnamn],[data-vinfo],[data-vlogout]"); if (!b) return;
+  const d = b.dataset;
+  if (d.vr) { VR.steg = +d.vr; VR.fel = ""; ritaReg(); }
+  else if (d.vnamn) { $("#vnamn").value = d.vnamn; $("#vnamn").focus(); }
+  else if (d.vinfo) visaPanel("info", true);
+  else if (d.vlogout) sb?.auth.signOut();
+  else if (d.vhopp) {
+    e.preventDefault();
+    if (d.vhopp === "loggain") { VR.loggain = true; if (VR.steg !== 3) VR.steg = 1; ritaReg(); }
+    else if (d.vhopp === "registrera") { VR.loggain = false; ritaReg(); }
+    const mal = d.vhopp === "sa" ? "#sa" : "#registrera";
+    $(mal).scrollIntoView({ behavior: "smooth", block: "start" });
+    if (mal === "#registrera") setTimeout(() => { const i = $("#vepost") || $("#vnamn"); if (i) i.focus({ preventScroll: true }); }, 450);
+  }
+});
+
 // ---- Topplistor (databasfunktionerna topplista och mina_placeringar, 21_topplistor.sql) ----
 const TOPP = { cache: {}, basta: null, alla: false };
 const ordtal = p => p + ((p % 10 === 1 || p % 10 === 2) && p % 100 !== 11 && p % 100 !== 12 ? ":a" : ":e");
@@ -1856,11 +2136,12 @@ document.addEventListener("toggle", e => { if (e.target.id === "kartblock" && e.
 $("#nara summary").addEventListener("click", e => { if (e.target.closest(".vy")) e.preventDefault(); });
 function tillKartan(){ if ($("#flik-utforska").hidden) { history.pushState(null, "", "#utforska"); visaFlik("utforska"); } }
 initMap(); render();
+document.body.classList.toggle("utloggad", !harSparadSession());   // rättas när inloggningen lästs in
+ritaReg(); ritaValkommenSiffror();
 visaFlik(flikIAdressen());
 if (!sb) { setStatus("Kunde inte ladda Supabase – kontrollera nätet och ladda om sidan.", true); }
 else {
-  $("#login").hidden = false;
-  sb.auth.onAuthStateChange((_ev, session) => setTimeout(() => setUser(session?.user || null), 0));
+  sb.auth.onAuthStateChange((_ev, session) => setTimeout(() => { setUser(session?.user || null); uppdateraLage(); }, 0));
 }
 </script>
 </body>
