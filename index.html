@@ -374,7 +374,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.30.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.31.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -1152,6 +1152,12 @@ function ritaStat(){
   const klass = n => [...KLASS].reverse().find(k => n >= k[0]);
   const farg = n => n ? `color-mix(in srgb,var(--moss) ${klass(n)[2]}%,var(--card))` : "var(--card)";
   const antal = k => perLan[k] ? perLan[k].size : 0;
+  // Områden som kryssas automatiskt
+  const ant = [[new Set(alla.map(b => b.l).filter(Boolean)).size, 21, "län"], [new Set(alla.map(b => b.k).filter(Boolean)).size, 290, "kommuner"],
+               [new Set(alla.map(b => b.ls).filter(Boolean)).size, 25, "landskap", 1], [new Set(alla.map(b => b.s).filter(Boolean)).size, 2473, "socknar och städer", 1]];
+  h += sekt("omraden", "Områden du varit i", "kryssas automatiskt") + `<div class="prog">${ant.map(([n, tot, namn, egen]) =>
+    `<div class="${egen ? "egen" : ""}"><strong>${statFmt(n)}</strong> <span>av ${statFmt(tot)} ${namn}</span><span class="bar"><i style="width:${Math.max(n / tot * 100, n ? 1 : 0)}%;background:var(--moss)"></i></span></div>`).join("")}</div>
+    <p class="note">${STAT.t === "a" ? "Totalt" : statPeriodNamn()}${STAT.kat === "alla" ? "" : ", " + STAT_KAT[STAT.kat].n.toLowerCase()}. Län och kommuner kommer att ingå i topplistorna. Landskap och socknar har andra gränser och visas bara här.</p></details>`;
   h += sekt("lan", "Län", `${Object.keys(perLan).length} av 21`) + `<div class="vyval"><span class="seg"><button data-statcvis="karta" aria-pressed="${STAT.cvis === "karta"}">Karta</button><button data-statcvis="rutor" aria-pressed="${STAT.cvis === "rutor"}">Rutor</button></span></div>`;
   if (STAT.cvis === "karta") {
     const ord = Object.keys(LANGEO.lan).sort((a, b) => antal(b) - antal(a) || lanKort(a).localeCompare(lanKort(b), "sv"));
@@ -1173,12 +1179,6 @@ function ritaStat(){
     h += `</div>`;
   }
   h += `<div class="scale">${KLASS.map(k => `<span><i style="background:color-mix(in srgb,var(--moss) ${k[2]}%,var(--card))"></i>${k[1]}</span>`).join("")}</div><p class="note" style="text-align:center;margin-top:.2rem">platser per län · tryck på ett län för att välja det</p></details>`;
-  // Områden som kryssas automatiskt
-  const ant = [[new Set(alla.map(b => b.l).filter(Boolean)).size, 21, "län"], [new Set(alla.map(b => b.k).filter(Boolean)).size, 290, "kommuner"],
-               [new Set(alla.map(b => b.ls).filter(Boolean)).size, 25, "landskap", 1], [new Set(alla.map(b => b.s).filter(Boolean)).size, 2473, "socknar och städer", 1]];
-  h += sekt("omraden", "Områden du varit i", "kryssas automatiskt") + `<div class="prog">${ant.map(([n, tot, namn, egen]) =>
-    `<div class="${egen ? "egen" : ""}"><strong>${statFmt(n)}</strong> <span>av ${statFmt(tot)} ${namn}</span><span class="bar"><i style="width:${Math.max(n / tot * 100, n ? 1 : 0)}%;background:var(--moss)"></i></span></div>`).join("")}</div>
-    <p class="note">${STAT.t === "a" ? "Totalt" : statPeriodNamn()}${STAT.kat === "alla" ? "" : ", " + STAT_KAT[STAT.kat].n.toLowerCase()}. Län och kommuner kommer att ingå i topplistorna. Landskap och socknar har andra gränser och visas bara här.</p></details>`;
   // Kommuner
   const kLista = STAT.niva === "r" ? alla : alla.filter(b => b.l === valtLan), perKom = {};
   kLista.forEach(b => { if (!b.k) return; (perKom[b.k] = perKom[b.k] || { s: new Set(), b: 0 }).s.add(b.key); perKom[b.k].b++; });
