@@ -37,7 +37,8 @@ button:disabled{opacity:.5;cursor:default}
 #find{width:100%;margin:1rem 0 .5rem;padding:.9rem;font-size:1.05rem}
 #status{color:var(--mute);min-height:1.5rem;margin:.25rem 0}
 #status.warn,.err{color:var(--warn)}
-.hit{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--moss);border-radius:6px;padding:.8rem 1rem;margin:.6rem 0;display:flex;gap:.75rem;align-items:center}
+.hit{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--moss);border-radius:6px;padding:.45rem .8rem;margin:.4rem 0;display:flex;gap:.6rem;align-items:center;line-height:1.3}
+.hit > button{padding:.4rem .8rem;font-size:.92rem}
 .hit.other{border-left-color:var(--line)}
 .hit div{flex:1;min-width:0}
 .hit strong{display:block;overflow-wrap:anywhere}
@@ -48,8 +49,8 @@ button:disabled{opacity:.5;cursor:default}
 .v{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line)}
 #more{margin-top:.5rem}
 #map{position:relative;aspect-ratio:1/1;height:auto;min-height:300px;max-height:75vh;border:1px solid var(--line);border-radius:6px;margin-top:.6rem;background:var(--card);color:var(--mute)}
-/* Mobil: kartan tar 60 % av skärmhöjden (resten går att scrolla på) */
-@media (pointer: coarse){#map{aspect-ratio:auto;height:60vh;height:60dvh;min-height:260px;max-height:none}}
+/* Mobil: kartan tar 55 % av skärmhöjden (resten går att scrolla på) */
+@media (pointer: coarse){#map{aspect-ratio:auto;height:55vh;height:55dvh;min-height:260px;max-height:none}}
 #map.stor{aspect-ratio:auto;height:85vh;height:85dvh;max-height:none}
 /* Kartknappar i samma storlek (30 px, som zoomknapparna) */
 .leaflet-control-layers-toggle,.leaflet-touch .leaflet-control-layers-toggle{width:30px;height:30px;background-size:20px}
@@ -58,7 +59,11 @@ button:disabled{opacity:.5;cursor:default}
 .leaflet-bar a.minpos.laddar svg{animation:puls 1s ease-in-out infinite}
 @keyframes puls{50%{opacity:.3}}
 .leaflet-bar a.storknapp{font-size:1.1rem;line-height:30px}
-#loc{width:100%}
+/* Hopfällbara I närheten och Karta */
+details.fall > summary h2{margin:0}
+#kartblock{margin-top:2rem}
+#kartblock > summary h2{flex:1}
+#nara details:not([open]) .vy,#nara details:not([open]) .nh small{display:none}
 /* ---- I närheten (radar standard, lista valbar) ---- */
 #nara{margin-top:1.2rem}
 #nara .nh{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
@@ -344,13 +349,14 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <button id="more" class="ghost" hidden></button>
 <div id="other" hidden></div>
 <section id="nara" aria-label="I närheten" hidden>
-  <div class="nh"><h2>I närheten</h2><small>inom 10 km</small>
-    <span class="vy"><button data-naravy="b" aria-pressed="true">Radar</button><button data-naravy="a" aria-pressed="false">Lista</button></span></div>
+  <details class="fall" data-sekt="nara" open><summary class="nh"><h2>I närheten</h2><small>inom 10 km</small>
+    <span class="vy"><button data-naravy="b" aria-pressed="true">Radar</button><button data-naravy="a" aria-pressed="false">Lista</button></span></summary>
   <div id="narainnehall"></div>
+  </details>
 </section>
-<h2>Karta</h2>
-<button id="loc" class="ghost">Centrera på min position</button>
+<details class="fall" id="kartblock" data-sekt="karta" open><summary><h2>Karta</h2></summary>
 <div id="map" role="region" aria-label="Karta"></div>
+</details>
 </div>
 <div id="flik-besok" class="flik" hidden>
 <h2 id="vb">Mina besök</h2>
@@ -368,7 +374,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.29.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.30.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -549,7 +555,7 @@ function initMap(){
       L.DomEvent.preventDefault(e);
       const stor = $("#map").classList.toggle("stor");
       a.title = stor ? "Mindre karta" : "Större karta"; a.textContent = stor ? "⤡" : "⤢";
-      setTimeout(() => { map.invalidateSize(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); }, 50);
+      setTimeout(() => { map.invalidateSize(); visaKarta(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); }, 50);
     });
     return bar;
   }});
@@ -1046,7 +1052,7 @@ document.addEventListener("click", e => {
     const radarprick = b.tagName.toLowerCase() === "circle";
     NARA.sel = radarprick && NARA.sel === o.i ? null : o.i;
     if (!radarprick) {   // rad i listan: flytta kartan dit direkt, ytan ritas när den hämtats
-      if (map && o.nara_lat != null) { $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); map.setView([o.nara_lat, o.nara_lon], Math.max(map.getZoom(), 15)); }
+      if (map && o.nara_lat != null) { visaKarta(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); map.setView([o.nara_lat, o.nara_lon], Math.max(map.getZoom(), 15)); }
       visaTraff(o.key, o.namn);
     }
   }
@@ -1066,6 +1072,8 @@ document.addEventListener("toggle", e => {
   if (d.dataset?.grupp !== undefined) { d.open ? OPPNA_GRUPPER.add(d.dataset.grupp) : OPPNA_GRUPPER.delete(d.dataset.grupp); store.set("oppnaGrupper", [...OPPNA_GRUPPER]); }
   else if (d.dataset?.sekt) { d.open ? STAT_STANGDA.delete(d.dataset.sekt) : STAT_STANGDA.add(d.dataset.sekt); store.set("statStangda", [...STAT_STANGDA]); }
 }, true);
+// I närheten och Karta: öppna som förval, men kom ihåg om man fällt ihop dem
+["nara", "karta"].forEach(k => { if (STAT_STANGDA.has(k)) document.querySelector(`details[data-sekt="${k}"]`).open = false; });
 
 // ---- Min statistik (variant C "Sverige" ur mockupen): egna besök per tid, kategori och område ----
 const STAT_KAT = { natur: { n: "Natur", c: "var(--natur)" }, kultur: { n: "Kultur", c: "var(--kultur)" }, geo: { n: "Geografi", c: "var(--geo)" } };
@@ -1323,7 +1331,7 @@ const fokusCache = {};
 async function visaTraff(key, namn){
   if (!map) return;
   tillKartan();
-  $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
+  visaKarta(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
   let lager = fokusCache[key];
   if (!lager && EGNA_KALLOR.has(key.split(":")[0]) && sb) {
     const { data } = await sb.rpc("objekt_geom", { nycklar: [key] });
@@ -1347,7 +1355,7 @@ async function visaTraff(key, namn){
 async function gotoVisit(lat, lon, namn, id, key){
   if (!map) return;
   tillKartan();
-  $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
+  visaKarta(); $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
   let yta = (id && shapes[id]) || geoShapes[key];
   if (!yta && key && EGNA_KALLOR.has(key.split(":")[0])) { await loadGeoShapes(); yta = geoShapes[key]; }
   if (!yta && id) { await loadShapes(); yta = shapes[id]; }
@@ -1396,8 +1404,12 @@ async function visaFlik(namn){
 const flikIAdressen = () => (location.hash || "").replace("#", "");
 window.addEventListener("hashchange", () => { visaFlik(flikIAdressen()); window.scrollTo({ top: 0 }); });
 // Till kartan från andra flikar (t.ex. "Visa på kartan" i Besök)
+// Öppna kartblocket om det är hopfällt (Leaflet behöver då räkna om storleken)
+function visaKarta(){ const d = $("#kartblock"); if (d && !d.open) { d.open = true; map?.invalidateSize(); } }
+document.addEventListener("toggle", e => { if (e.target.id === "kartblock" && e.target.open) map?.invalidateSize(); }, true);
+// Radar/Lista-knapparna sitter i rubriken – de ska inte fälla ihop blocket
+$("#nara summary").addEventListener("click", e => { if (e.target.closest(".vy")) e.preventDefault(); });
 function tillKartan(){ if ($("#flik-utforska").hidden) { history.pushState(null, "", "#utforska"); visaFlik("utforska"); } }
-$("#loc").addEventListener("click", locate);
 initMap(); render();
 visaFlik(flikIAdressen());
 if (!sb) { setStatus("Kunde inte ladda Supabase – kontrollera nätet och ladda om sidan.", true); }
