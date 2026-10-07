@@ -1,5 +1,6 @@
 -- Används av tools/aterstall.sh (körs inom en transaktion som skriptet avslutar med commit eller rollback).
--- Förutsätter tillfälliga tabeller s_konton, s_profiler, s_besok, s_meddelanden (text-kolumner) från kopian
+-- Förutsätter tillfälliga tabeller s_konton, s_profiler, s_besok, s_meddelanden och ev. s_medaljer (text-kolumner) från kopian
+-- (kopior från före 2026-10-08 saknar medaljer.csv – då hoppas medaljerna över)
 -- och inställningen aterstall.epost ('' = alla användare).
 
 -- Gammalt användar-id -> nuvarande konto, via e-post
@@ -70,6 +71,32 @@ end $$;
 
 alter table public.meddelanden enable trigger user;
 
+-- Världsarv: kopior från före 2026-10-08 har namnet som nyckel – översätt till UNESCO-numret (23_varldsarv_unesco.sql)
+do $$
+declare n bigint;
+begin
+  update public.besok b set objekt_id = o.ext_id
+  from public.objekt o
+  where b.scheme = 'VA' and o.kalla = 'VA' and b.objekt_id = o.namn and b.objekt_id !~ '^[0-9]+$';
+  get diagnostics n = row_count;
+  if n > 0 then raise notice 'världsarv: % besök översatta från namn till UNESCO-nummer', n; end if;
+end $$;
+
+-- Medaljer: läggs tillbaka på rätt konto (via e-post). Finns medaljen redan (samma cup och period) ändras den inte.
+do $$
+declare n bigint; tot bigint; v_epost text := current_setting('aterstall.epost');
+begin
+  if to_regclass('pg_temp.s_medaljer') is null then raise notice 'medaljer: finns inte i kopian'; return; end if;
+  select count(*) into tot from s_medaljer;
+  insert into public.medaljer (user_id, cup, tid, period, plats, antal, deltagare, utdelad)
+  select m.ny, s.cup, s.tid, s.period::date, s.plats::int, s.antal::int, s.deltagare::int, coalesce(nullif(s.utdelad, '')::timestamptz, now())
+  from s_medaljer s join anvkarta m on m.gammal = s.user_id::uuid
+  where (v_epost = '' or lower(m.epost) = lower(v_epost))
+  on conflict (user_id, cup, tid, period) do nothing;
+  get diagnostics n = row_count;
+  raise notice 'medaljer: % i kopian, % återställda', tot, n;
+end $$;
+
 \echo '=== Så här ser det ut efteråt ==='
 select (select count(*) from public.profiler) as profiler, (select count(*) from public.besok) as besok,
-       (select count(*) from public.meddelanden) as meddelanden;
+       (select count(*) from public.meddelanden) as meddelanden, (select count(*) from public.medaljer) as medaljer;
