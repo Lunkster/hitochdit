@@ -109,6 +109,29 @@ details.fall > summary h2{margin:0}
 #nara .fot{color:var(--mute);font-size:.78rem;margin:.3rem 0 0}
 #nara .tom{color:var(--mute);font-size:.9rem;margin:.3rem 0}
 /* ---- Min statistik ---- */
+#stat .stattabs{display:flex;border-bottom:1px solid var(--line);margin:-.3rem 0 .6rem}
+#stat .stattabs button{flex:1;padding:.55rem .5rem .45rem;border-bottom:3px solid transparent;color:var(--mute);font-weight:600}
+#stat .stattabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--moss)}
+#stat .minplats{margin-top:.8rem;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;display:grid;grid-template-columns:auto 1fr;gap:0 .8rem;align-items:center}
+#stat .minplats strong{font:600 1.9rem/1 var(--serif,Georgia,serif);grid-row:span 2}
+#stat .minplats .rad1{font-weight:600}
+#stat .minplats .rad2{color:var(--mute);font-size:.88rem}
+#stat .rk{display:grid;grid-template-columns:1.7rem minmax(0,1fr) auto;gap:.55rem;align-items:center;padding:.18rem .3rem;border-bottom:1px solid var(--line);font-size:.95rem}
+#stat .rk .pl{width:1.55rem;height:1.55rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.88rem;color:var(--mute)}
+#stat .rk .pl.m1{border:2px solid #b8901c;color:var(--ink)}
+#stat .rk .pl.m2{border:2px solid #8d979c;color:var(--ink)}
+#stat .rk .pl.m3{border:2px solid #a8643a;color:var(--ink)}
+#stat .rk .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#stat .rk b{font-variant-numeric:tabular-nums}
+#stat .rk.du{background:color-mix(in srgb,var(--moss) 14%,transparent);border-radius:6px}
+#stat .glapp{text-align:center;color:var(--mute);padding:.2rem 0;letter-spacing:.3em}
+#stat .basta{display:flex;flex-wrap:wrap;gap:.4rem}
+#stat .basta button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:.4rem .6rem;text-align:left;font-size:.85rem;line-height:1.3}
+#stat .basta button b{font-size:1.05rem;margin-right:.3rem}
+#stat .basta button span{color:var(--mute)}
+#stat .synlig{margin-top:1.2rem;font-size:.88rem;color:var(--mute);display:grid;gap:.3rem}
+#stat .synlig label{display:flex;gap:.5rem;align-items:center;color:var(--ink)}
+#stat .synlig input{width:1.1rem;height:1.1rem;accent-color:var(--btn)}
 #stat .lead{color:var(--mute);margin:0 0 .8rem;font-size:.92rem}
 #stat button{background:none;border:0;color:inherit;padding:0;border-radius:0}
 #stat .filters{display:grid;gap:.45rem;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.7rem}
@@ -307,7 +330,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <button class="ghost small stang" aria-label="Stäng">✕</button>
   <h2>Om Hit och Dit</h2>
   <p>Hit och Dit hjälper dig att upptäcka och samla Sveriges skyddade natur. Tryck på <strong>Var är jag?</strong> när du är ute, så visar appen vilka naturreservat, nationalparker och andra skyddade områden du står i. Logga besöket och bygg upp din egen lista och karta över platser du har varit på.</p>
-  <p>Appen är ett hobbyprojekt under utveckling. Fler typer av platser, statistik och topplistor kommer efter hand.</p>
+  <p>Appen är ett hobbyprojekt under utveckling. Fler typer av platser och funktioner kommer efter hand.</p>
 
   <h3>Så använder du appen</h3>
   <ul>
@@ -325,17 +348,18 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <p><strong>Vad som sparas:</strong></p>
   <ul>
     <li>Din e-postadress – för att du ska kunna logga in.</li>
-    <li>Ditt användarnamn – visas i appen och kan i framtiden visas i topplistor.</li>
+    <li>Ditt användarnamn – visas i appen och i topplistorna.</li>
     <li>Dina loggade besök – område, datum och tid, kommun, län, socken och landskap samt din position och dess noggrannhet när du loggade besöket.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
+  <p><strong>Topplistor:</strong> andra inloggade ser ditt användarnamn, din placering och hur många platser du har besökt – aldrig din e-post, dina enskilda besök eller var du har varit. Alla är med från början; du kan dölja dig under <em>Statistik → Topplistor</em>.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
   <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
   <p><strong>Kontaktformuläret:</strong> ditt meddelande och den e-postadress du eventuellt anger sparas i Supabase tills ärendet är hanterat. Meddelandet skickas också till mig som en avisering via tjänsten ntfy.sh, där det mellanlagras en kort tid.</p>
   <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
   <p><strong>Dina rättigheter:</strong> du kan när som helst ladda ner dina uppgifter, ta bort enskilda besök, byta användarnamn och radera hela ditt konto under ⚙ Inställningar. Du har också rätt att begära rättelse och att klaga hos <a href="https://www.imy.se/" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a>.</p>
-  <p class="liten">Senast uppdaterad 2026-10-04.</p>
+  <p class="liten">Senast uppdaterad 2026-10-07.</p>
   <p class="liten">Version <span class="appver"></span></p>
 
   <h3 id="kontakt">Kontakt</h3>
@@ -378,9 +402,10 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <div id="visits"></div>
 </div>
 <div id="flik-statistik" class="flik" hidden>
-<section id="stat" aria-label="Min statistik">
-  <h2>Min statistik</h2>
-  <p class="lead">Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.</p>
+<section id="stat" aria-label="Statistik">
+  <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button></nav>
+  <h2 id="statrubrik">Min statistik</h2>
+  <p class="lead" id="statlead">Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.</p>
   <div id="statvy"></div>
 </section>
 </div>
@@ -389,7 +414,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.32.1", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.33.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -429,11 +454,11 @@ function showWho(){
 
 async function loadProfile(){
   const u = user.id;
-  let { data, error } = await sb.from("profiler").select("namn").eq("id", u).maybeSingle();
+  let { data, error } = await sb.from("profiler").select("namn, i_topplistor").eq("id", u).maybeSingle();
   if (!error && !data) ({ error } = await sb.from("profiler").insert({ id: u }));   // om triggern saknas
   if (error) { console.error("Profil", error); return; }
   if (u !== user?.id) return;
-  user.namn = data?.namn || "";
+  user.namn = data?.namn || ""; user.topp = data?.i_topplistor !== false;
   showWho();
   if (!user.namn) { visaInst(true); $("#nameform").hidden = false; $("#uname").focus(); setStatus("Välj ett användarnamn."); }
 }
@@ -445,7 +470,7 @@ async function saveName(e){
   if (error) { setStatus(error.code === "23505" ? `Namnet ”${namn}” är redan upptaget.` : "Kunde inte spara namnet: " + error.message, true); return; }
   user.namn = namn; showWho(); $("#nameform").hidden = true; setStatus("Användarnamnet är sparat.");
 }
-const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function label(scheme, des){
   if (scheme === "IUCN") return des === "nationalPark" ? "Nationalpark" : "Naturreservat";
@@ -1023,6 +1048,7 @@ function render(){
   ritaSymboler();   // besökta kyrkor/fyrar byter färg
   ritaIndelning();  // besökta socknar/kommuner fylls i
   ritaNara();
+  toppNollstall();
   ritaStat();
 }
 
@@ -1193,7 +1219,7 @@ const KALLA_KAT = { NR: "natur", NP: "natur", NM: "natur", KR: "kultur", VA: "ku
 const MANAD = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const LANBOKSTAV = { "01": "AB", "03": "C", "04": "D", "05": "E", "06": "F", "07": "G", "08": "H", "09": "I", "10": "K", "12": "M", "13": "N", "14": "O", "17": "S", "18": "T", "19": "U", "20": "W", "21": "X", "22": "Y", "23": "Z", "24": "AC", "25": "BD" };
 const STAT = { t: "y", y: new Date().getFullYear(), m: new Date().getMonth(), kat: "alla", niva: "r", lan: null, kom: null, eft: true,
-  cvis: store.get("statVy", "karta"), alla: false, namn: null };
+  cvis: store.get("statVy", "karta"), alla: false, namn: null, sida: store.get("statSida", "stat") };
 // Namn på län och kommuner (en gång, utan geometri)
 async function statNamn(){
   if (STAT.namn || !sb) return;
@@ -1221,33 +1247,53 @@ function statUrval(bas, opt = {}){ return bas.filter(b => (opt.tid === false || 
 function statPeriodNamn(){ return STAT.t === "a" ? "Alla år" : STAT.t === "y" ? String(STAT.y) : `${MANAD[STAT.m]} ${STAT.y}`; }
 function statOmrNamn(){ return STAT.niva === "r" ? "hela Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom) + " kommun"; }
 
-function ritaStat(){
-  const ruta = $("#statvy"); if (!ruta || $("#flik-statistik").hidden) return;
-  const bas = statBas();
-  if (!bas.length) { ruta.innerHTML = `<p class="tom">Inga besök än. Logga en plats så börjar statistiken.</p>`; return; }
-  const ar = bas.map(b => b.d.getFullYear()), minAr = Math.min(...ar), nu = new Date();
-  // Filter
+// Filter (delas av Min statistik och Topplistor)
+const statSekt = (id, rubrik, extra = "") => `<details class="fall sekt" data-sekt="${id}" ${STAT_STANGDA.has(id) ? "" : "open"}><summary><h3 class="sh">${rubrik}${extra ? ` <small>${extra}</small>` : ""}</h3></summary>`;
+function statFilter(bas, topp){
+  const sekt = statSekt, nu = new Date();
+  const minAr = Math.min(nu.getFullYear(), ...bas.map(b => b.d.getFullYear()));
   const omrOpts = () => {
     if (STAT.niva === "r") return "";
     const nyckel = STAT.niva === "l" ? "l" : "k", rakna = {};
     bas.forEach(b => { if (b[nyckel]) rakna[b[nyckel]] = (rakna[b[nyckel]] || 0) + 1; });
     const cur = STAT.niva === "l" ? STAT.lan : STAT.kom;
+    if (topp) {   // topplistor: alla län/kommuner i bokstavsordning, där senaste besöket var först
+      const typ = STAT.niva === "l" ? "lan" : "kommun", namn = c => STAT.niva === "l" ? lanNamn(c) : komNamn(c);
+      const senast = visits.find(v => v.kommunkod), hem = senast ? (STAT.niva === "l" ? senast.lanskod : senast.kommunkod) : null;
+      const ovr = Object.keys(STAT.namn?.[typ] || {}).filter(c => c !== hem).sort((a, b) => namn(a).localeCompare(namn(b), "sv"));
+      return `<select id="statomr" aria-label="Välj område">${hem ? `<option value="${hem}" ${hem === cur ? "selected" : ""}>${esc(namn(hem))} (senaste besöket)</option>` : ""}${ovr.map(c =>
+        `<option value="${c}" ${c === cur ? "selected" : ""}>${esc(namn(c))}</option>`).join("")}</select>`;
+    }
     return `<select id="statomr" aria-label="Välj område">${Object.keys(rakna).sort((a, b) => rakna[b] - rakna[a]).map(c =>
       `<option value="${c}" ${c === cur ? "selected" : ""}>${esc(STAT.niva === "l" ? lanNamn(c) : komNamn(c))} (${rakna[c]})</option>`).join("")}</select>`;
   };
   const kanBak = STAT.t === "y" ? STAT.y > minAr : !(STAT.y <= minAr && STAT.m === 0);
   const kanFram = STAT.t === "y" ? STAT.y < nu.getFullYear() : (STAT.y < nu.getFullYear() || STAT.m < nu.getMonth());
-  const sekt = (id, rubrik, extra = "") => `<details class="fall sekt" data-sekt="${id}" ${STAT_STANGDA.has(id) ? "" : "open"}><summary><h3 class="sh">${rubrik}${extra ? ` <small>${extra}</small>` : ""}</h3></summary>`;
   const filterText = [statPeriodNamn(), STAT.kat === "alla" ? "alla kategorier" : STAT_KAT[STAT.kat].n.toLowerCase(), statOmrNamn()].join(" · ");
-  let h = sekt("filter", "Filter", esc(filterText)) + `<div class="filters">
-    <div class="frow"><span class="flabel">Tid</span><div class="fc"><span class="seg">${[["m", "Månad"], ["y", "År"], ["a", "Alla år"]].map(([t, n]) =>
+  return sekt("filter", "Filter", esc(filterText)) + `<div class="filters">
+    <div class="frow"><span class="flabel">Tid</span><div class="fc"><span class="seg">${[["m", "Månad"], ["y", "År"], ["a", topp ? "Totalt" : "Alla år"]].map(([t, n]) =>
       `<button data-statt="${t}" aria-pressed="${STAT.t === t}">${n}</button>`).join("")}</span>
       ${STAT.t === "a" ? "" : `<span class="stepper"><button data-statsteg="-1" ${kanBak ? "" : "disabled"} aria-label="Föregående">‹</button><span>${statPeriodNamn()}</span><button data-statsteg="1" ${kanFram ? "" : "disabled"} aria-label="Nästa">›</button></span>`}</div></div>
     <div class="frow"><span class="flabel">Kategori</span><div class="fc">${[["alla", "Alla", ""], ...Object.entries(STAT_KAT).map(([k, v]) => [k, v.n, v.c])].map(([k, n, c]) =>
       `<button class="chip" data-statkat="${k}" aria-pressed="${STAT.kat === k}">${c ? `<i class="dot" style="background:${c}"></i>` : ""}${n}</button>`).join("")}</div></div>
     <div class="frow"><span class="flabel">Område</span><div class="fc"><span class="seg">${[["r", "Riket"], ["l", "Län"], ["k", "Kommun"]].map(([n, t]) =>
       `<button data-statniva="${n}" aria-pressed="${STAT.niva === n}">${t}</button>`).join("")}</span>${omrOpts()}</div></div>
-    <label class="toggle"><input type="checkbox" id="stateft" ${STAT.eft ? "checked" : ""}> Ta med efterhandsbesök</label></div></details>`;
+    ${topp ? "" : `<label class="toggle"><input type="checkbox" id="stateft" ${STAT.eft ? "checked" : ""}> Ta med efterhandsbesök</label>`}</div></details>`;
+}
+
+function ritaStat(){
+  const ruta = $("#statvy"); if (!ruta || $("#flik-statistik").hidden) return;
+  const topp = STAT.sida === "topp";
+  document.querySelectorAll("[data-statsida]").forEach(b => b.setAttribute("aria-pressed", b.dataset.statsida === STAT.sida));
+  $("#statrubrik").textContent = topp ? "Topplistor" : "Min statistik";
+  $("#statlead").textContent = topp ? "Flest olika platser under perioden. Bara besök loggade på plats räknas (inom 100 m från platsen) – efterhandsbesök räknas inte. Varje plats räknas en gång per period."
+    : "Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.";
+  if (topp) { ritaTopp(ruta); return; }
+  const bas = statBas();
+  if (!bas.length) { ruta.innerHTML = `<p class="tom">Inga besök än. Logga en plats så börjar statistiken.</p>`; return; }
+  const ar = bas.map(b => b.d.getFullYear()), minAr = Math.min(...ar), nu = new Date();
+  const sekt = statSekt;
+  let h = statFilter(bas, false);
   // Nyckeltal
   const u = statUrval(bas), forst = {};
   bas.forEach(b => { if (!forst[b.key] || b.d < forst[b.key].d) forst[b.key] = b; });
@@ -1317,12 +1363,93 @@ document.addEventListener("click", e => {
   else if (d.statlan) { if (STAT.niva === "l" && STAT.lan === d.statlan) STAT.niva = "r"; else { STAT.niva = "l"; STAT.lan = d.statlan; } }
   else if (d.statkom) { STAT.niva = "k"; STAT.kom = d.statkom; STAT.lan = d.statkom.slice(0, 2); }
   else if (d.statalla) { STAT.alla = true; ritaStat(); return; }
-  STAT.alla = false;
+  STAT.alla = false; TOPP.alla = false;
   ritaStat();
 });
 document.addEventListener("change", e => {
   if (e.target.id === "statomr") { if (STAT.niva === "l") STAT.lan = e.target.value; else { STAT.kom = e.target.value; STAT.lan = STAT.kom.slice(0, 2); } STAT.alla = false; ritaStat(); }
   if (e.target.id === "stateft") { STAT.eft = e.target.checked; ritaStat(); }
+});
+
+// ---- Topplistor (databasfunktionerna topplista och mina_placeringar, 21_topplistor.sql) ----
+const TOPP = { cache: {}, basta: null, alla: false };
+const ordtal = p => p + ((p % 10 === 1 || p % 10 === 2) && p % 100 !== 11 && p % 100 !== 12 ? ":a" : ":e");
+const toppParam = () => ({ p_tid: STAT.t, p_ar: STAT.t === "a" ? null : STAT.y, p_manad: STAT.t === "m" ? STAT.m + 1 : null, p_kat: STAT.kat,
+  p_niva: STAT.niva, p_kod: STAT.niva === "l" ? STAT.lan : STAT.niva === "k" ? STAT.kom : null });
+function toppNollstall(){ TOPP.cache = {}; TOPP.basta = null; }
+function toppText(o){
+  const per = o.tid === "a" ? "totalt" : o.tid === "y" ? "i år" : "denna månad";
+  const omr = o.niva === "r" ? "Sverige" : o.niva === "l" ? lanNamn(o.kod) : komNamn(o.kod);
+  return { per, omr, kat: o.kat === "alla" ? "Alla platser" : STAT_KAT[o.kat].n };
+}
+async function ritaTopp(ruta){
+  if (!sb || !user) { ruta.innerHTML = `<p class="tom">Logga in för att se topplistorna.</p>`; return; }
+  await statNamn();
+  const f = toppParam(), nyckel = JSON.stringify(f), aktuell = () => STAT.sida === "topp" && JSON.stringify(toppParam()) === nyckel && !$("#flik-statistik").hidden;
+  let h = statFilter(statBas(), true);
+  let rad = TOPP.cache[nyckel];
+  if (!rad) {
+    ruta.innerHTML = h + `<p class="tom">Hämtar topplistan…</p>`;
+    const { data, error } = await sb.rpc("topplista", f);
+    if (!aktuell()) return;   // filtret har ändrats under tiden
+    if (error) { console.warn("topplista", error); ruta.innerHTML = h + `<p class="tom">Kunde inte hämta topplistan just nu.</p>`; return; }
+    rad = TOPP.cache[nyckel] = data || [];
+  }
+  const omrTxt = STAT.niva === "r" ? "Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom);
+  const perTxt = STAT.t === "a" ? "totalt" : statPeriodNamn();
+  const mig = rad.find(r => r.du), deltagare = rad.length ? rad[0].deltagare : 0;
+  h += `<div class="minplats">`;
+  if (mig) {
+    const fore = rad.filter(r => r.plats < mig.plats).pop(), efter = rad.find(r => r.plats > mig.plats);
+    const pl = n => n + " " + (n === 1 ? "plats" : "platser");
+    const motiv = mig.plats === 1 ? (efter ? `Du leder med ${pl(mig.antal - efter.antal)}` : deltagare > 1 ? "Du delar förstaplatsen" : "Du är ensam på listan än så länge")
+      : fore ? `${pl(fore.antal - mig.antal + 1)} till, så går du om ${esc(fore.namn)}` : "";
+    h += `<strong>${ordtal(mig.plats)}</strong><span class="rad1">${pl(mig.antal)} · ${deltagare} ${deltagare === 1 ? "deltagare" : "deltagare"}</span><span class="rad2">${motiv}</span>`;
+  } else h += `<strong>–</strong><span class="rad1">Du är inte med på den här listan än</span><span class="rad2">Logga en plats på plats i ${esc(omrTxt)}${STAT.t === "a" ? "" : " under " + esc(perTxt)} så är du med.</span>`;
+  h += `</div><p class="note">${STAT.kat === "alla" ? "Alla platser" : STAT_KAT[STAT.kat].n} · ${esc(omrTxt)} · ${esc(perTxt)}${!user.topp ? " · du är dold för andra" : ""}</p>`;
+  if (!rad.length) h += `<p class="tom">Ingen har loggat något här under perioden.</p>`;
+  else {
+    const visa = TOPP.alla ? rad.length : 10, i = mig ? rad.indexOf(mig) : -1;
+    const rk = r => `<div class="rk ${r.du ? "du" : ""}"><span class="pl ${r.plats <= 3 ? "m" + r.plats : ""}">${r.plats}</span><span class="nm">${esc(r.namn)}${r.du ? " (du)" : ""}</span><b>${r.antal}</b></div>`;
+    h += `<h3 style="margin-top:1rem">Topplista <small>${deltagare} deltagare</small></h3>` + rad.slice(0, visa).map(rk).join("");
+    if (mig && i >= visa) { if (i - 2 > visa) h += `<div class="glapp">···</div>`; h += rad.slice(Math.max(visa, i - 2), i + 3).map(rk).join(""); }
+    if (rad.length > visa) h += `<button class="mer" data-toppalla="1">Visa fler</button>`;
+  }
+  // Dina bästa placeringar (bara listor med minst 3 deltagare – annars säger placeringen inget)
+  if (!TOPP.basta) {
+    const { data, error } = await sb.rpc("mina_placeringar");
+    if (!aktuell()) return;
+    TOPP.basta = error ? [] : (data || []);
+    if (error) console.warn("mina_placeringar", error);
+  }
+  const basta = TOPP.basta.filter(b => b.deltagare >= 3).sort((a, b) => a.plats - b.plats || b.deltagare - a.deltagare).slice(0, 6);
+  h += `<h3>Dina bästa placeringar <small>${basta.length ? "tryck för att visa" : ""}</small></h3>` + (basta.length ? `<div class="basta">${basta.map(b => { const t = toppText(b);
+    return `<button data-toppkomb="${esc(JSON.stringify({ t: b.tid, kat: b.kat, niva: b.niva, kod: b.kod }))}"><b>${ordtal(b.plats)}</b>${esc(t.kat)}<br><span>${esc(t.omr)}, ${t.per} · av ${b.deltagare}</span></button>`; }).join("")}</div>`
+    : `<p class="note">Visas när det finns listor med minst tre deltagare där du är med.</p>`);
+  h += `<div class="synlig"><label><input type="checkbox" id="toppsynlig" ${user.topp ? "checked" : ""}> Visa mig i topplistorna som <b>${esc(user.namn || "–")}</b></label>
+    <span>Alla är med från början. Bara ditt användarnamn och antal platser syns för andra inloggade, aldrig e-post eller enskilda besök. Välj ett namn som inte går att koppla till dig; du kan byta det under ⚙ Inställningar. Stänger du av ser du fortfarande din egen placering, men andra ser inte dig.</span></div>`;
+  ruta.innerHTML = h;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest?.("#stat [data-statsida],#stat [data-toppalla],#stat [data-toppkomb]"); if (!b) return;
+  const d = b.dataset;
+  if (d.statsida) { STAT.sida = d.statsida; store.set("statSida", STAT.sida); }
+  else if (d.toppalla) { TOPP.alla = true; ritaStat(); return; }
+  else if (d.toppkomb) {
+    const k = JSON.parse(d.toppkomb), nu = new Date();
+    Object.assign(STAT, { t: k.t, kat: k.kat, niva: k.niva, y: nu.getFullYear(), m: nu.getMonth() });
+    if (k.niva === "l") STAT.lan = k.kod; if (k.niva === "k") { STAT.kom = k.kod; STAT.lan = k.kod.slice(0, 2); }
+    window.scrollTo({ top: 0 });
+  }
+  TOPP.alla = false;
+  ritaStat();
+});
+document.addEventListener("change", async e => {
+  if (e.target.id !== "toppsynlig" || !user) return;
+  const pa = e.target.checked;
+  const { error } = await sb.from("profiler").update({ i_topplistor: pa }).eq("id", user.id);
+  if (error) { e.target.checked = !pa; setStatus("Kunde inte spara valet: " + error.message, true); return; }
+  user.topp = pa; toppNollstall(); ritaStat();
 });
 
 // Databasrad <-> appens format
