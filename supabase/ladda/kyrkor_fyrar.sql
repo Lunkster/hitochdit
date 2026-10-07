@@ -49,3 +49,6 @@ drop table import.bebyggelse;
 commit;
 
 select kalla, typ, count(*) as antal from public.objekt where kalla in ('KY', 'FY') group by 1, 2;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

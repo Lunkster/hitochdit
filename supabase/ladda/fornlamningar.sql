@@ -45,3 +45,6 @@ from public.objekt where kalla = 'FL';
 -- Vanligaste lämningstyperna
 select egenskaper->>'lamningstyp' as lamningstyp, count(*) from public.objekt where kalla = 'FL'
 group by 1 order by 2 desc limit 15;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

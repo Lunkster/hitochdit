@@ -22,3 +22,6 @@ drop table import.varldsarv;
 commit;
 
 select count(*) as varldsarv, pg_size_pretty(sum(pg_column_size(geom))) as geometri from public.objekt where kalla = 'VA';
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

@@ -7,9 +7,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script>try { if (JSON.parse(localStorage.getItem("tema")) === "dark") document.documentElement.dataset.theme = "dark"; } catch {}</script>
 <style>
-:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;color-scheme:light}
+:root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;--omr:#55707a;--las:#c9cec5;color-scheme:light}
 /* Mörkt läge: samma mossgröna familj, mörka ytor */
-:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;color-scheme:dark}
+:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;--omr:#5f7c86;--las:#3a463f;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -132,6 +132,55 @@ details.fall > summary h2{margin:0}
 #stat .synlig{margin-top:1.2rem;font-size:.88rem;color:var(--mute);display:grid;gap:.3rem}
 #stat .synlig label{display:flex;gap:.5rem;align-items:center;color:var(--ink)}
 #stat .synlig input{width:1.1rem;height:1.1rem;accent-color:var(--btn)}
+/* Märken och medaljer */
+#stat .mkrub{margin:1rem 0 .4rem;font:700 .78rem var(--sans,system-ui);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:.4rem;color:var(--mute)}
+#stat .mkrub i{width:.6rem;height:.6rem;border-radius:50%;display:inline-block}
+#stat .nivaer{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.3rem;margin:.4rem 0 .6rem}
+#stat .niva{text-align:center;font-size:.74rem;line-height:1.2;color:var(--mute)}
+#stat .niva svg{width:100%;max-width:3rem;height:auto;display:block;margin:0 auto .2rem}
+#stat .niva b{display:block;color:var(--ink);font-size:.8rem}
+#stat .galler{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.2rem,1fr));gap:.5rem}
+#stat .katmk{display:grid;grid-template-columns:3.8rem 1fr;gap:.8rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.55rem .8rem;margin-bottom:.5rem}
+#stat .katmk svg{width:3.8rem;height:auto}
+#stat .katmk b{display:block;font-size:1.05rem}
+#stat .katmk div > span{display:block;font-size:.82rem;color:var(--mute)}
+#stat .mk{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.55rem .35rem .5rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.12rem;min-width:0}
+#stat .mk svg{width:3.3rem;height:auto}
+#stat .mk b{font-size:.82rem;line-height:1.2}
+#stat .mk .nv{font-size:.74rem;color:var(--mute)}
+#stat .mk .pr{width:100%;height:.35rem;background:color-mix(in srgb,var(--line) 60%,transparent);border-radius:999px;overflow:hidden;margin-top:.2rem}
+#stat .mk .pr i{display:block;height:100%;border-radius:999px}
+#stat .mk .nx{font-size:.7rem;color:var(--mute);line-height:1.25}
+#stat .summa{display:flex;gap:.5rem;flex-wrap:wrap;margin:.2rem 0 .2rem}
+#stat .summa span{display:inline-flex;align-items:center;gap:.3rem;font-size:.84rem;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.15rem .6rem .15rem .25rem}
+#stat .summa svg{width:1.4rem;height:auto}
+#stat .hylla{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem}
+#stat .cup{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.55rem .15rem .5rem;text-align:center;min-width:0}
+#stat .cup > svg{width:3.2rem;height:auto;display:block;margin:0 auto .15rem}
+#stat .cup b{display:block;font-size:.8rem;line-height:1.2}
+#stat .cup .rader{display:grid;gap:.15rem;margin-top:.35rem;font-size:.72rem;color:var(--mute)}
+#stat .cup .rader div{display:grid;grid-template-columns:auto repeat(3,1.05rem);justify-content:center;align-items:center;gap:.12rem}
+#stat .cup .rader div > i{font-style:normal;text-align:left}
+#stat .mynt{width:1.05rem;height:1.05rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 .68rem/1 system-ui,sans-serif;color:#3b2e10;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+#stat .mynt.guld{background:linear-gradient(135deg,#fff3b0,#e7bb3c 45%,#b88a17)}
+#stat .mynt.silver{background:linear-gradient(135deg,#fff,#c3cacf 45%,#848d93);color:#2c3134}
+#stat .mynt.brons{background:linear-gradient(135deg,#f3bf8f,#b8743f 45%,#7f4720);color:#fff}
+#stat .mynt.noll{opacity:.28}
+#stat .prel{background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:.55rem .8rem;margin-top:.6rem;font-size:.88rem}
+#stat .medlista{list-style:none;margin:.3rem 0 0;padding:0}
+#stat .medlista li{display:grid;grid-template-columns:2rem 1fr auto;gap:.6rem;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+#stat .medlista li svg{width:2rem;height:auto}
+#stat .medlista li small{display:block;color:var(--mute);font-size:.8rem}
+#stat .medlista li .dt{color:var(--mute);font-size:.82rem;white-space:nowrap}
+#stat .regler{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem .9rem;font-size:.88rem;margin-top:.7rem}
+#stat .regler ul{margin:.3rem 0 0;padding-left:1.1rem}
+#stat .tabwrap{overflow-x:auto;margin:.8rem -16px 0;padding:0 16px}
+#stat .tabwrap table{border-collapse:collapse;width:100%;min-width:21rem;font-size:.8rem}
+#stat .tabwrap th,#stat .tabwrap td{padding:.28rem .2rem;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+#stat .tabwrap th{font-size:.66rem;text-transform:uppercase;letter-spacing:.03em;color:var(--mute)}
+#stat .tabwrap th:first-child,#stat .tabwrap td:first-child{text-align:left}
+#stat .tabwrap td small{display:block;color:var(--mute);font-size:.72rem}
+#stat .tabwrap tr.grupp td{background:color-mix(in srgb,var(--line) 30%,transparent);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 #stat .lead{color:var(--mute);margin:0 0 .8rem;font-size:.92rem}
 #stat button{background:none;border:0;color:inherit;padding:0;border-radius:0}
 #stat .filters{display:grid;gap:.45rem;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.7rem}
@@ -350,6 +399,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <li>Din e-postadress – för att du ska kunna logga in.</li>
     <li>Ditt användarnamn – visas i appen och i topplistorna.</li>
     <li>Dina loggade besök – område, datum och tid, kommun, län, socken och landskap samt din position och dess noggrannhet när du loggade besöket.</li>
+    <li>Dina vunna medaljer – vilken cup, period, placering och antal platser.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
   <p><strong>Topplistor:</strong> andra inloggade ser ditt användarnamn, din placering och hur många platser du har besökt – aldrig din e-post, dina enskilda besök eller var du har varit. Alla är med från början; du kan dölja dig under <em>Statistik → Topplistor</em>.</p>
@@ -402,8 +452,21 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <div id="visits"></div>
 </div>
 <div id="flik-statistik" class="flik" hidden>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="m-tra" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b98a5a"/><stop offset=".45" stop-color="#8b5e34"/><stop offset=".55" stop-color="#a0703f"/><stop offset="1" stop-color="#6b4424"/></linearGradient>
+    <linearGradient id="m-jarn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a8f93"/><stop offset=".5" stop-color="#4d5357"/><stop offset="1" stop-color="#2f3437"/></linearGradient>
+    <linearGradient id="m-koppar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a77a"/><stop offset=".5" stop-color="#b8653a"/><stop offset="1" stop-color="#7d3f20"/></linearGradient>
+    <linearGradient id="m-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f7"/><stop offset=".5" stop-color="#aeb6bb"/><stop offset="1" stop-color="#7d868c"/></linearGradient>
+    <linearGradient id="m-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#e2b53a"/><stop offset="1" stop-color="#9c7414"/></linearGradient>
+    <linearGradient id="md-guld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".4" stop-color="#e7bb3c"/><stop offset=".75" stop-color="#b88a17"/><stop offset="1" stop-color="#f2d36b"/></linearGradient>
+    <linearGradient id="md-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#c3cacf"/><stop offset=".75" stop-color="#848d93"/><stop offset="1" stop-color="#dfe4e7"/></linearGradient>
+    <linearGradient id="md-brons" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3bf8f"/><stop offset=".4" stop-color="#b8743f"/><stop offset=".75" stop-color="#7f4720"/><stop offset="1" stop-color="#d69a63"/></linearGradient>
+    <linearGradient id="m-platina" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#d9e6ee"/><stop offset=".6" stop-color="#b5c7d3"/><stop offset="1" stop-color="#e9f1f6"/></linearGradient>
+  </defs>
+</svg>
 <section id="stat" aria-label="Statistik">
-  <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button></nav>
+  <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button><button data-statsida="marken" aria-pressed="false">Märken</button></nav>
   <h2 id="statrubrik">Min statistik</h2>
   <p class="lead" id="statlead">Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.</p>
   <div id="statvy"></div>
@@ -414,7 +477,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.33.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.34.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -1048,7 +1111,7 @@ function render(){
   ritaSymboler();   // besökta kyrkor/fyrar byter färg
   ritaIndelning();  // besökta socknar/kommuner fylls i
   ritaNara();
-  toppNollstall();
+  toppNollstall(); markenNollstall();
   ritaStat();
 }
 
@@ -1283,11 +1346,12 @@ function statFilter(bas, topp){
 
 function ritaStat(){
   const ruta = $("#statvy"); if (!ruta || $("#flik-statistik").hidden) return;
-  const topp = STAT.sida === "topp";
+  const topp = STAT.sida === "topp", mrk = STAT.sida === "marken";
   document.querySelectorAll("[data-statsida]").forEach(b => b.setAttribute("aria-pressed", b.dataset.statsida === STAT.sida));
-  $("#statrubrik").textContent = topp ? "Topplistor" : "Min statistik";
-  $("#statlead").textContent = topp ? "Flest olika platser under perioden. Bara besök loggade på plats räknas (inom 100 m från platsen) – efterhandsbesök räknas inte. Varje plats räknas en gång per period."
+  $("#statrubrik").textContent = mrk ? "Märken" : topp ? "Topplistor" : "Min statistik";
+  $("#statlead").textContent = mrk ? "Loggmärken för varje kategori du samlar, och medaljer för de tre bästa i topplistan varje månad och år." : topp ? "Flest olika platser under perioden. Bara besök loggade på plats räknas (inom 100 m från platsen) – efterhandsbesök räknas inte. Varje plats räknas en gång per period."
     : "Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.";
+  if (mrk) { ritaMarken(ruta); return; }
   if (topp) { ritaTopp(ruta); return; }
   const bas = statBas();
   if (!bas.length) { ruta.innerHTML = `<p class="tom">Inga besök än. Logga en plats så börjar statistiken.</p>`; return; }
@@ -1371,6 +1435,147 @@ document.addEventListener("change", e => {
   if (e.target.id === "stateft") { STAT.eft = e.target.checked; ritaStat(); }
 });
 
+// ---- Märken och medaljer (22_marken.sql). Utseende och regler enligt märkesmockupen. ----
+const NIV = [{ id: "tra", n: "Trä", p: 0, txt: "första" }, { id: "jarn", n: "Järn", p: .02, txt: "2 %" }, { id: "koppar", n: "Koppar", p: .05, txt: "5 %" },
+  { id: "silver", n: "Silver", p: .20, txt: "20 %" }, { id: "guld", n: "Guld", p: .50, txt: "50 %" }, { id: "platina", n: "Platina", p: 1, txt: "100 %" }];
+const MKAT = { natur: ["Natur", "var(--natur)"], kultur: ["Kultur", "var(--kultur)"], geo: ["Geografi", "var(--geo)"], omr: ["Områden", "var(--omr)"] };
+const IK = {
+  tree:`<path d="M20 7 12 19h5l-7 9h20l-7-9h5Z"/><rect x="18.5" y="28" width="3" height="5"/>`,
+  mountain:`<path d="M6 31 16 13l5 8 4-5 9 15Z"/><path d="m16 13 3 5.5-3-1.4-3 1.4Z" fill="var(--bg)" opacity=".0"/>`,
+  globe:`<circle cx="20" cy="20" r="11" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M9 20h22M20 9c-5 6-5 16 0 22M20 9c5 6 5 16 0 22" fill="none" stroke="#fff" stroke-width="1.8"/>`,
+  house:`<path d="M8 20 20 9l12 11v12H8Z"/><rect x="17" y="24" width="6" height="8" fill="currentColor"/>`,
+  columns:`<path d="M20 8 7 15h26Z"/><rect x="10" y="17" width="3.2" height="11"/><rect x="18.4" y="17" width="3.2" height="11"/><rect x="26.8" y="17" width="3.2" height="11"/><rect x="7" y="29" width="26" height="3.2"/>`,
+  church:`<path d="M20 6v7M17 9h6" stroke="#fff" stroke-width="2.2"/><path d="M20 13 13 20v13h14V20Z"/><path d="M18 33v-5a2 2 0 0 1 4 0v5Z" fill="currentColor"/>`,
+  lighthouse:`<path d="M16 33 17.8 15h4.4L24 33Z"/><rect x="16" y="9" width="8" height="5.5" rx="1"/><path d="M15 9h10l-5-4Z"/><path d="M25 10 34 7v8Z" opacity=".7"/>`,
+  stones:`<circle cx="20" cy="20" r="10" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="1 3"/><circle cx="20" cy="10" r="2.6"/><circle cx="29.5" cy="17" r="2.6"/><circle cx="26" cy="28.5" r="2.6"/><circle cx="14" cy="28.5" r="2.6"/><circle cx="10.5" cy="17" r="2.6"/>`,
+  fire:`<path d="M20 8c3 5 8 8 8 14a8 8 0 0 1-16 0c0-4 2-6 4-8 0 3 1 5 3 5-1-4 0-8 1-11Z"/><path d="M11 32h18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
+  ship:`<path d="M7 21c4 6 22 6 26 0" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M9 21h22M13 21v-4M17 21v-4M21 21v-4M25 21v-4M29 21v-4" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="30" r="2"/><circle cx="20" cy="31" r="2"/><circle cx="28" cy="30" r="2"/>`,
+  runestone:`<path d="M13 33V14a7 7 0 0 1 14 0v19Z"/><path d="M17 15v12M17 18l5 3.5M23 15v12" stroke="currentColor" stroke-width="1.6" fill="none"/>`,
+  fort:`<path d="M6 25c2-9 9-14 14-14s12 5 14 14" fill="none" stroke="#fff" stroke-width="3.4" stroke-dasharray="4 1.5"/><path d="M6 29h28" stroke="#fff" stroke-width="2"/>`,
+  stone:`<path d="M10 31c-1-6 1-14 7-17 5-2 10 1 12 6 2 6 0 10 1 11Z"/>`,
+  peak:`<path d="M6 32 18 12l5 8 3-4 8 16Z"/><path d="M18 12V5l5 2-5 2" fill="none" stroke="#fff" stroke-width="1.6"/>`,
+  island:`<path d="M9 26c3-6 19-6 22 0Z"/><path d="M19 23v-9M19 14c-3-2-6-1-7 1M19 14c3-2 6-1 7 1M19 14c-1-3-3-4-5-4M19 14c1-3 3-4 5-4" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 31c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0 4-2 6 0" fill="none" stroke="#fff" stroke-width="1.6"/>`,
+  lake:`<path d="M6 16c2.3-2 4.7-2 7 0s4.7 2 7 0 4.7-2 7 0 4.7 2 7 0M6 22c2.3-2 4.7-2 7 0s4.7 2 7 0 4.7-2 7 0 4.7 2 7 0M6 28c2.3-2 4.7-2 7 0s4.7 2 7 0 4.7-2 7 0 4.7 2 7 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`,
+  town:`<rect x="8" y="18" width="7" height="14"/><rect x="16.5" y="10" width="7" height="22"/><rect x="25" y="15" width="7" height="17"/><path d="M18.5 14h3M18.5 18h3M18.5 22h3M10 22h3M27 19h3M27 23h3" stroke="currentColor" stroke-width="1.4"/>`,
+  shield:`<path d="M20 7 31 11v8c0 7-5 12-11 14C14 31 9 26 9 19v-8Z"/><path d="M20 12v16M14 18h12" stroke="currentColor" stroke-width="2"/>`,
+  pin:`<path d="M20 33c-6-8-9-12-9-17a9 9 0 0 1 18 0c0 5-3 9-9 17Z"/><circle cx="20" cy="16" r="3.4" fill="currentColor"/>`,
+  region:`<path d="M10 9 19 7l4 5 8 1 2 9-5 4 1 6-9 2-5-5-6 1-2-8 4-5Z"/>`,
+  oak:`<circle cx="14" cy="15" r="6"/><circle cx="26" cy="15" r="6"/><circle cx="20" cy="11" r="6.5"/><circle cx="20" cy="19" r="6"/><path d="M18 22h4l1 11h-6Z"/>`,
+  bell:`<path d="M20 7a1.5 1.5 0 0 1 1.5 1.5v1A8 8 0 0 1 28 17v7l3 4H9l3-4v-7a8 8 0 0 1 6.5-7.5v-1A1.5 1.5 0 0 1 20 7Z"/><circle cx="20" cy="31" r="2.4"/>`
+};
+IK.kompass = `<path d="M20 5 23.2 16.8 35 20 23.2 23.2 20 35 16.8 23.2 5 20 16.8 16.8Z"/><path d="M20 11 21.4 18.6 29 20 21.4 21.4 20 29 18.6 21.4 11 20 18.6 18.6Z" fill="currentColor" opacity=".35"/><circle cx="20" cy="20" r="2.2" fill="currentColor"/>`;
+// Märkesgrupper: nyckel (som i databasen), namn, kategori, ikon
+const MRADER = [
+  ["NR", "Naturreservat", "natur", "tree"], ["NP", "Nationalparker", "natur", "mountain"], ["NM", "Naturminnen", "natur", "oak"],
+  ["VA", "Världsarv", "kultur", "globe"], ["KR", "Kulturreservat", "kultur", "house"], ["BM", "Byggnadsminnen", "kultur", "columns"],
+  ["KY", "Kyrkor", "kultur", "church"], ["FY", "Fyrar", "kultur", "lighthouse"],
+  ["FL:sten", "Stensättningar", "kultur", "stones", 1], ["FL:bopl", "Boplatser", "kultur", "fire", 1], ["FL:hall", "Hällristningar", "kultur", "ship", 1],
+  ["FL:rune", "Runristningar", "kultur", "runestone", 1], ["FL:borg", "Fornborgar", "kultur", "fort", 1], ["FL:ovr", "Övriga fornlämningar", "kultur", "stone", 1],
+  ["TO", "Toppar", "geo", "peak"], ["OE", "300 största öarna", "geo", "island"], ["SJ", "300 största sjöarna", "geo", "lake"], ["TA", "300 största tätorterna", "geo", "town"],
+  ["LN", "Län", "omr", "shield"], ["KN", "Kommuner", "omr", "pin"], ["LS", "Landskap", "omr", "region"], ["SO", "Socknar och städer", "omr", "bell"]];
+const MKATIK = { natur: "tree", kultur: "columns", geo: "peak", omr: "region" };
+// Gränser: andel av totalen (uppåt), minst en mer än nivån under. Stora grupper (≥ naturreservatens 6 020): fasta 1, 100, 300, 1 200, 3 000, alla
+const MSTOR = 6020, MFASTA = [1, 100, 300, 1200, 3000];
+function granser(tot){
+  if (tot >= MSTOR) return [...MFASTA, tot].map(v => ({ v, fast: true }));
+  const g = []; let foreg = 0;
+  NIV.forEach((n, i) => { const ratt = i === 0 ? 1 : Math.ceil(n.p * tot); const v = Math.max(ratt, foreg + 1); g.push({ v, bump: v !== ratt }); foreg = v; });
+  return g;
+}
+function marke(nivId, kat, ikon, las){
+  const ram = las ? "var(--las)" : `url(#m-${nivId})`, fyll = las ? "var(--las)" : MKAT[kat][1];
+  return `<svg viewBox="0 0 40 46" aria-hidden="true" style="color:${fyll}"><path d="M20 1 38 11.5v23L20 45 2 34.5v-23Z" fill="${ram}"/>
+    <path d="M20 5.5 34.2 13.7v18.6L20 40.5 5.8 32.3V13.7Z" fill="${fyll}"/>
+    <g transform="translate(20 23) scale(.62) translate(-20 -20)" fill="#fff" ${las ? 'opacity=".75"' : ""}>${IK[ikon]}</g></svg>`;
+}
+// Medaljer: fyra cuper. Band i kategorifärg med ljus rand; totalcupen blågul med kompassros
+const CUP = { alla: ["Totalcupen", "#2f5d7c", "kompass"], natur: ["Natur", "var(--natur)", "tree"], kultur: ["Kultur", "var(--kultur)", "columns"], geo: ["Geografi", "var(--geo)", "peak"] };
+const MET = [["guld", "Guld"], ["silver", "Silver"], ["brons", "Brons"]];
+const metAv = plats => MET[Math.min(plats, 3) - 1];
+function medalj(met, cup, las){
+  const [, farg, ikon] = CUP[cup], ring = las ? "var(--las)" : `url(#md-${met})`, fyll = las ? "var(--las)" : farg;
+  const band = las ? "var(--las)" : cup === "alla" ? "#006aa7" : farg, rand = las ? "var(--card)" : cup === "alla" ? "#fecc02" : "rgba(255,255,255,.55)";
+  return `<svg viewBox="0 0 40 54" aria-hidden="true" style="color:${fyll}">
+    <path d="M8 0h9l6 21-7 3Z" fill="${band}"/><path d="M11.6 0h1.8l5.4 20.2-1.6.7Z" fill="${rand}"/>
+    <path d="M32 0h-9l-6 21 7 3Z" fill="${band}" style="filter:brightness(.85)"/><path d="M28.4 0h-1.8l-5.4 20.2 1.6.7Z" fill="${rand}"/>
+    <circle cx="20" cy="36" r="16" fill="${ring}"/><circle cx="20" cy="36" r="16" fill="none" stroke="rgba(0,0,0,.18)" stroke-width=".8"/>
+    <circle cx="20" cy="36" r="12" fill="${fyll}"/><circle cx="20" cy="36" r="12" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".8" stroke-dasharray="1.2 1.6"/>
+    <g transform="translate(20 36) scale(.5) translate(-20 -20)" fill="#fff" ${las ? 'opacity=".75"' : ""}>${IK[ikon]}</g></svg>`;
+}
+const MARK = { tot: null, mina: null, med: null, prel: null };
+function markenNollstall(){ MARK.mina = null; MARK.med = null; MARK.prel = null; }
+const periodText = (tid, period) => { const d = new Date(period + "T12:00:00"); return tid === "y" ? String(d.getFullYear()) : MANAD[d.getMonth()] + " " + d.getFullYear(); };
+async function ritaMarken(ruta){
+  if (!sb || !user) { ruta.innerHTML = `<p class="tom">Logga in för att se dina märken.</p>`; return; }
+  if (!MARK.tot || !MARK.mina || !MARK.med) {
+    if (!ruta.innerHTML.includes("galler")) ruta.innerHTML = `<p class="tom">Hämtar dina märken…</p>`;
+    const [t, m, d, p] = await Promise.all([
+      MARK.tot ? { data: null } : sb.from("marke_totaler").select("grupp,totalt"),
+      MARK.mina ? { data: null } : sb.rpc("mina_marken"),
+      MARK.med ? { data: null } : sb.rpc("mina_medaljer"),
+      MARK.prel ? { data: null } : sb.rpc("mina_placeringar")]);
+    if (t.error || m.error || d.error) { console.warn("märken", t.error || m.error || d.error); ruta.innerHTML = `<p class="tom">Kunde inte hämta märkena just nu.</p>`; return; }
+    if (t.data) MARK.tot = Object.fromEntries(t.data.map(r => [r.grupp, r.totalt]));
+    if (m.data) MARK.mina = Object.fromEntries(m.data.map(r => [r.grupp, r.antal]));
+    if (d.data) MARK.med = d.data;
+    MARK.prel = p.error ? [] : (p.data || MARK.prel || []);
+    if (STAT.sida !== "marken" || $("#flik-statistik").hidden) return;
+  }
+  // Loggmärken
+  const rader = MRADER.filter(r => MARK.tot[r[0]]).map(([id, namn, kat, ikon, fl]) => {
+    const tot = MARK.tot[id], n = MARK.mina[id] || 0, g = granser(tot); let niv = -1;
+    g.forEach((x, i) => { if (n >= x.v) niv = i; });
+    return { id, namn, kat, ikon, fl, tot, n, g, niv };
+  });
+  const per = NIV.map((_, i) => rader.filter(r => r.niv === i).length);
+  // Medaljer
+  const med = MARK.med, ant = (c, t, met) => med.filter(x => x.cup === c && x.tid === t && metAv(x.plats)[0] === met).length;
+  const basta = c => MET.find(([mt]) => med.some(x => x.cup === c && metAv(x.plats)[0] === mt))?.[0];
+  let h = `<details class="fall sekt" data-sekt="medaljer" ${STAT_STANGDA.has("medaljer") ? "" : "open"}><summary><h3 class="sh">Vunna medaljer <small>${med.length} ${med.length === 1 ? "medalj" : "medaljer"}</small></h3></summary>
+    <div class="hylla">${Object.keys(CUP).map(c => {
+      const b = basta(c), rad = (t, namn) => `<div><i>${namn}</i>${MET.map(([mt, mn]) => { const n = ant(c, t, mt); return `<span class="mynt ${mt} ${n ? "" : "noll"}" title="${mn}: ${n}">${n}</span>`; }).join("")}</div>`;
+      return `<div class="cup">${medalj(b || "guld", c, !b)}<b>${CUP[c][0]}</b><div class="rader">${rad("m", "Mån")}${rad("y", "År")}</div></div>`;
+    }).join("")}</div>`;
+  const prel = (MARK.prel || []).filter(x => x.niva === "r" && x.tid === "m").sort((a, b) => a.plats - b.plats);
+  const nu = new Date(), manadNu = MANAD[nu.getMonth()] + " " + nu.getFullYear();
+  if (!user.topp) h += `<div class="prel">Du är dold i topplistorna och tävlar därför inte om medaljer. Ändra under <em>Topplistor</em>.</div>`;
+  else if (prel.length) h += `<div class="prel">${manadNu[0].toUpperCase() + manadNu.slice(1)}, preliminärt: ${prel.map(x => `<b>${ordtal(x.plats)}</b> ${x.kat === "alla" ? "i totalcupen" : "i " + CUP[x.kat][0].toLowerCase()}${x.deltagare < 3 ? ` <span class="liten">(${x.deltagare} ${x.deltagare === 1 ? "deltagare" : "deltagare"})</span>` : ""}`).join(", ")}. Avgörs när månaden är slut – medaljer kräver minst 3 deltagare.</div>`;
+  else h += `<div class="prel">Logga en plats på plats i ${manadNu} så är du med och tävlar om månadens medaljer.</div>`;
+  h += med.length ? `<h3 class="sh" style="margin-top:1rem">Senaste medaljerna</h3><ul class="medlista">${med.slice(0, 8).map(x => { const [mt, mn] = metAv(x.plats);
+      return `<li>${medalj(mt, x.cup)}<span>${mn} · ${CUP[x.cup][0]}<small>${x.tid === "y" ? "Årsmedalj" : "Månadsmedalj"} · ${x.antal} platser · ${ordtal(x.plats)} av ${x.deltagare}</small></span><span class="dt">${periodText(x.tid, x.period)}</span></li>`; }).join("")}</ul>`
+    : `<p class="note">Inga medaljer än. Guld, silver och brons delas ut efter varje månad och år till de tre bästa i topplistan för hela Sverige – i totalcupen och i natur, kultur och geografi.</p>`;
+  h += `</details>`;
+  h += `<details class="fall sekt" data-sekt="loggmarken" ${STAT_STANGDA.has("loggmarken") ? "" : "open"}><summary><h3 class="sh">Loggmärken <small>${rader.filter(r => r.niv >= 0).length} av ${rader.length} tagna</small></h3></summary>
+    <div class="summa">${NIV.map((x, i) => per[i] ? `<span>${marke(x.id, "omr", "shield")}<b>${per[i]}</b> ${x.n.toLowerCase()}</span>` : "").join("")}</div>`;
+  Object.keys(MKAT).forEach(k => {
+    const rk = rader.filter(r => r.kat === k); if (!rk.length) return;
+    const m = rk.reduce((s, r) => s + r.niv + 1, 0) / rk.length, kniv = Math.floor(m) - 1;
+    h += `<h4 class="mkrub"><i style="background:${MKAT[k][1]}"></i>${MKAT[k][0]}</h4><div class="katmk">${marke(NIV[Math.max(kniv, 0)].id, k, MKATIK[k], kniv < 0)}<div><b>${MKAT[k][0]}</b>
+      <span>${kniv >= 0 ? NIV[kniv].n : "Inte tagen"} · medel ${m.toFixed(1).replace(".", ",")} av ${rk.length} märken</span>${kniv < 5 ? `<span>Höj medlet till ${kniv + 2} för ${NIV[kniv + 1].n.toLowerCase()}</span>` : ""}</div></div><div class="galler">`;
+    rk.forEach(r => {
+      const nasta = r.g[r.niv + 1], fran = r.niv >= 0 ? r.g[r.niv].v : 0, andel = nasta ? Math.min(1, (r.n - fran) / (nasta.v - fran)) : 1;
+      h += `<div class="mk">${marke(NIV[Math.max(r.niv, 0)].id, r.kat, r.ikon, r.niv < 0)}<b>${r.namn}</b><span class="nv">${r.niv >= 0 ? NIV[r.niv].n : "Inte tagen"} · ${statFmt(r.n)}</span>
+        ${nasta ? `<span class="pr"><i style="width:${andel * 100}%;background:${MKAT[r.kat][1]}"></i></span><span class="nx">${statFmt(nasta.v - r.n)} kvar till ${NIV[r.niv + 1].n.toLowerCase()}</span>` : `<span class="nx">Alla nivåer klara</span>`}</div>`;
+    });
+    h += `</div>`;
+  });
+  h += `</details>`;
+  // Regler och matris (stängd som förval)
+  h += `<details class="fall sekt" data-sekt="mregler" ${STAT_STANGDA.has("mregler") ? "" : ""}><summary><h3 class="sh">Så fungerar märken och medaljer</h3></summary>
+    <div class="nivaer">${NIV.map(n => `<div class="niva">${marke(n.id, "natur", "tree")}<b>${n.n}</b>${n.p ? n.txt : "första besöket"}</div>`).join("")}</div>
+    <div class="regler"><b>Loggmärken</b><ul><li>Ett märke per kategori som uppgraderas i sex nivåer: trä (första besöket), järn 2 %, koppar 5 %, silver 20 %, guld 50 %, platina 100 % av alla platser i kategorin. Varje nivå kräver minst en plats mer än nivån under.</li>
+      <li>Stora grupper (lika stora som naturreservaten eller större) har fasta gränser: 1, 100, 300, 1 200, 3 000 och alla.</li>
+      <li>Bara besök loggade på plats räknas, för all tid. Efterhandsbesök räknas inte. Län, kommuner, landskap och socknar kryssas automatiskt.</li>
+      <li>Kategorimärket (natur, kultur, geografi, områden) får medelnivån av sina märken, avrundat nedåt. Ett märke som inte är taget räknas som 0.</li></ul></div>
+    <div class="regler"><b>Medaljer</b><ul><li>Guld, silver och brons till de tre bästa i topplistan för hela Sverige, varje månad och varje år – i totalcupen (alla platser) och i natur, kultur och geografi.</li>
+      <li>Samma räkning som topplistan: flest olika platser, bara besök loggade på plats inom 100 m. Delas ut när perioden är slut.</li>
+      <li>Delad placering ger samma valör (två guld, sedan brons). Minst 3 deltagare krävs. En vunnen medalj ligger kvar. Den som är dold i topplistorna tävlar inte.</li></ul></div>
+    <div class="tabwrap"><table><thead><tr><th>Märke</th>${NIV.map(n => `<th>${n.n}</th>`).join("")}</tr></thead><tbody>${Object.keys(MKAT).map(k =>
+      `<tr class="grupp"><td colspan="7">${MKAT[k][0]}</td></tr>` + rader.filter(r => r.kat === k).map(r => `<tr><td>${r.namn}<small>${statFmt(r.tot)} st</small></td>${r.g.map((x, i) =>
+        `<td>${i === 5 && x.fast ? "alla" : statFmt(x.v)}</td>`).join("")}</tr>`).join("")).join("")}</tbody></table></div></details>`;
+  ruta.innerHTML = h;
+}
+
 // ---- Topplistor (databasfunktionerna topplista och mina_placeringar, 21_topplistor.sql) ----
 const TOPP = { cache: {}, basta: null, alla: false };
 const ordtal = p => p + ((p % 10 === 1 || p % 10 === 2) && p % 100 !== 11 && p % 100 !== 12 ? ":a" : ":e");
@@ -1449,7 +1654,7 @@ document.addEventListener("change", async e => {
   const pa = e.target.checked;
   const { error } = await sb.from("profiler").update({ i_topplistor: pa }).eq("id", user.id);
   if (error) { e.target.checked = !pa; setStatus("Kunde inte spara valet: " + error.message, true); return; }
-  user.topp = pa; toppNollstall(); ritaStat();
+  user.topp = pa; toppNollstall(); markenNollstall(); ritaStat();
 });
 
 // Databasrad <-> appens format
@@ -1487,12 +1692,13 @@ async function sync(){
 // ---- GDPR: export och radering ----
 async function exportera(){
   if (!user) return;
-  const [{ data: profil }, { data: besok, error }] = await Promise.all([
+  const [{ data: profil }, { data: besok, error }, { data: medaljer }] = await Promise.all([
     sb.from("profiler").select("*").eq("id", user.id).maybeSingle(),
-    sb.from("besok").select("*").order("datum", { ascending: false })
+    sb.from("besok").select("*").order("datum", { ascending: false }),
+    sb.from("medaljer").select("cup,tid,period,plats,antal,deltagare,utdelad").order("period", { ascending: false })
   ]);
   if (error) { setStatus("Kunde inte hämta dina data: " + error.message, true); return; }
-  const data = { exporterad: new Date().toISOString(), konto: { id: user.id, epost: user.email, ...profil }, besok };
+  const data = { exporterad: new Date().toISOString(), konto: { id: user.id, epost: user.email, ...profil }, besok, medaljer: medaljer || [] };
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
   a.download = `hitochdit-mina-data-${new Date().toISOString().slice(0, 10)}.json`;

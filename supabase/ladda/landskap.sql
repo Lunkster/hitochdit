@@ -29,3 +29,6 @@ commit;
 select count(*) as landskap, pg_size_pretty(sum(pg_column_size(geom))) as geometri from public.indelning where typ = 'landskap';
 select kod as landskap, round((ST_Area(geom::geography) / 1e6)::numeric) as km2_inkl_vatten from public.indelning where typ = 'landskap' order by 2 desc;
 select count(*) as besok, count(landskap) as med_landskap from public.besok;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

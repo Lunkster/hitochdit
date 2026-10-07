@@ -22,3 +22,6 @@ drop table import.osm_oar, import.osm_oar_linjer;
 commit;
 
 select count(*) as oar, pg_size_pretty(sum(pg_column_size(geom))) as geometri from public.objekt where kalla = 'OE' and not (egenskaper ? 'utgatt');
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

@@ -30,3 +30,6 @@ commit;
 
 select typ, count(*) as antal, pg_size_pretty(sum(pg_column_size(geom))) as geometri from public.indelning group by typ;
 select count(*) as besok, count(kommunkod) as med_kommun from public.besok;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

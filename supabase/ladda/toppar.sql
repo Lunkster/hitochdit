@@ -33,3 +33,6 @@ select count(*) as toppar, count(*) filter (where egenskaper ? 'rang') as i_300_
 from public.objekt where kalla = 'TO' and not (egenskaper ? 'utgatt');
 select namn, egenskaper->>'rangtext' as rang from public.objekt where kalla = 'TO'
   and ((egenskaper->>'rang')::int <= 5 or (egenskaper->>'lanrang')::int = 1) order by (egenskaper->>'hojd')::int desc limit 30;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

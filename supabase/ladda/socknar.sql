@@ -41,3 +41,6 @@ commit;
 select undertyp, count(*) as antal, count(lanskod) as med_lan, pg_size_pretty(sum(pg_column_size(geom))) as geometri
 from public.indelning where typ = 'socken' group by undertyp;
 select count(*) as besok, count(sockenkod) as med_socken from public.besok;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

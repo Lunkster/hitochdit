@@ -21,7 +21,8 @@ Efter varje ändring: uppdatera tågordningen (bocka av / *ska testas*) och läg
 - **Backend:** Supabase (Postgres + PostGIS + Auth med e-postlänk). Tabeller `besok`, `profiler`, `meddelanden`, `objekt`. Row Level Security på allt.
 - **Geodata:** visning från källornas WMS (Naturvårdsverket, RAÄ); positionsmatchning mot egen tabell `objekt` via RPC `objekt_vid`, `objekt_geom`, `objekt_i_ruta`, `objekt_ytor_i_ruta`, `objekt_nara` (I närheten). Källkoder i `objekt.kalla`: NR, NP, KR, NM, VA, BM, FL, KY, KO, FY (natur/kultur), TA, SJ, OE, TO (geografi, 300-listor med `egenskaper.rang`; toppar även `lanrang` och `rangtext`).
 - **Uppdatering av objekt:** upsert på `(kalla, ext_id)`; borttagna rensas med `public.objekt_stada()` – besökta objekt ligger kvar med `egenskaper.utgatt` och ger inga nya träffar.
-- **Laddning av geodata:** `tools/ladda_*.sh` (ogr2ogr + psql) körs av Henrik på hans dator. Varje skript kör sin `supabase/ladda/*.sql` automatiskt.
+- **Laddning av geodata:** `tools/ladda_*.sh` (ogr2ogr + psql) körs av Henrik på hans dator. Varje skript kör sin `supabase/ladda/*.sql` automatiskt, som sist räknar om märkenas totaler (`marke_totaler_uppdatera()`). Nya laddfiler ska också göra det.
+- **Märken och medaljer:** `22_marken.sql` – `mina_marken()`, `marke_totaler`, `medaljer` (delas ut i efterhand av `mina_medaljer()` → `medaljer_ikapp()`, ingen pg_cron). Topplistor: `21_topplistor.sql`.
 
 ## Regler
 - **Version:** höj `VERSION` / `VERSION_DATUM` överst i skriptet i `index.html` vid varje ändring (`0.MINOR.0` funktion, `0.x.PATCH` rättning). Aktuell version står också i `Naturapp.md`.

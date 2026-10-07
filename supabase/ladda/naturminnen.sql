@@ -53,3 +53,6 @@ from public.objekt where kalla = 'NM' and not (egenskaper ? 'utgatt');
 -- Vanligaste namnen före kommuntillägget
 select regexp_replace(namn, ' \(.*\)$', '') as namn, count(*) as antal
 from public.objekt where kalla = 'NM' group by 1 order by 2 desc limit 10;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

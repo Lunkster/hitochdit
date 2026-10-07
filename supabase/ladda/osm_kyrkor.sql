@@ -59,3 +59,6 @@ commit;
 select count(*) as kyrkor_fran_osm from public.objekt where kalla = 'KO';
 select namn from public.objekt where kalla = 'KO' order by random() limit 10;
 select kalla, namn from public.objekt where kalla in ('KY', 'KO') and namn ilike 'Sanda kyrka%';
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

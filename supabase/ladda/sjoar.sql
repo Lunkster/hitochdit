@@ -52,3 +52,6 @@ select (egenskaper->>'rang')::int as rang, namn, egenskaper->>'area_km2' as km2,
 from public.objekt where kalla = 'SJ' and ((egenskaper->>'rang')::int <= 10 or (egenskaper->>'rang')::int >= 298) order by 1;
 select namn, count(*) as antal, string_agg(egenskaper->>'rang', ', ' order by (egenskaper->>'rang')::int) as rang
 from public.objekt where kalla = 'SJ' group by namn having count(*) > 1 or namn = 'Namnlös sjö' order by 2 desc, 1;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;

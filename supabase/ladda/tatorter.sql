@@ -33,3 +33,6 @@ select count(*) filter (where not (egenskaper ? 'utgatt')) as tatorter, count(*)
 from public.objekt where kalla = 'TA';
 select (egenskaper->>'rang')::int as rang, namn, egenskaper->>'kommun' as kommun, (egenskaper->>'folkmangd')::int as folkmangd
 from public.objekt where kalla = 'TA' and (egenskaper->>'rang')::int in (1, 2, 3, 100, 200, 299, 300) order by 1;
+
+-- Märkenas totaler (22_marken.sql) räknas om efter varje laddning
+select public.marke_totaler_uppdatera() as marke_grupper;
