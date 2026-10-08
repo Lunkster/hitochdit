@@ -2,8 +2,8 @@
 
 Webbapp som tar din position, visar vilka skyddade områden du står i (Naturvårdsverkets öppna geodata) och loggar besöket. Inloggning och lagring i Supabase.
 
-**App:** https://lunkster.github.io/hitochdit/
-Testa utan GPS: `https://lunkster.github.io/hitochdit/?lat=59.33&lon=18.07`
+**App:** https://hitochdit.xyz/
+Testa utan GPS: `https://hitochdit.xyz/?lat=59.33&lon=18.07`
 
 ## Filer
 | Fil | Vad |
