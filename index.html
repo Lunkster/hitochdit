@@ -208,6 +208,29 @@ body:not(.utloggad) #valkommen,body:not(.utloggad) #toppinlogg{display:none!impo
 #stat .basta button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:.4rem .6rem;text-align:left;font-size:.85rem;line-height:1.3}
 #stat .basta button b{font-size:1.05rem;margin-right:.3rem}
 #stat .basta button span{color:var(--mute)}
+#stat .stattabs button{font-size:.92rem;padding-inline:.2rem}
+/* Grupper */
+#stat .grp{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.55rem .75rem;margin:.45rem 0}
+#stat .grp .gn{font-weight:700}
+#stat .grp .gm{color:var(--mute);font-size:.85rem}
+#stat .grp .gk{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
+#stat .grp .gk button,#stat .grpform button{background:var(--btn);border:1px solid var(--btn);color:#fff;border-radius:6px;padding:.3rem .7rem;font-size:.88rem}
+#stat .grp .gk button.ghost{background:transparent;color:var(--moss);border-color:var(--moss)}
+#stat .grp .gk button.farlig{background:transparent;color:var(--warn);border-color:var(--warn)}
+#stat .grpform button{padding:.45rem .9rem}
+#stat .grp .lank{margin-top:.5rem;font-size:.85rem;display:grid;gap:.3rem}
+#stat .grp .lank code{white-space:nowrap;font-size:1.05rem;letter-spacing:.06em;font-weight:700}
+#stat .grp .lank input{width:100%;font-size:.8rem;padding:.3rem .4rem}
+#stat .grp.inbj{border-color:var(--moss);border-width:2px}
+#stat .grpform{display:flex;gap:.4rem;margin:.3rem 0}
+#stat .grpform input{flex:1;min-width:0;padding:.4rem .5rem;margin:0}
+#stat .grpform button{white-space:nowrap}
+#stat .trappa{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.3rem}
+#stat .trappa td{padding:.3rem .35rem;border-bottom:1px solid var(--line);vertical-align:top}
+#stat .trappa td:first-child{font-weight:700;white-space:nowrap}
+#stat .trappa td:nth-child(2){color:var(--mute);white-space:nowrap}
+#stat .trappa tr.nu td{background:color-mix(in srgb,var(--moss) 14%,transparent)}
+#stat .grpfel{color:var(--warn);font-size:.88rem;margin:.3rem 0}
 #stat .synlig{margin-top:1.2rem;font-size:.88rem;color:var(--mute);display:grid;gap:.3rem}
 #stat .synlig label{display:flex;gap:.5rem;align-items:center;color:var(--ink)}
 #stat .synlig input{width:1.1rem;height:1.1rem;accent-color:var(--btn)}
@@ -502,9 +525,11 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
     <li>Ditt användarnamn – visas i appen och i topplistorna.</li>
     <li>Dina loggade besök – område, datum och tid, kommun, län, socken och landskap samt din position och dess noggrannhet när du loggade besöket.</li>
     <li>Dina vunna medaljer – vilken cup, period, placering och antal platser.</li>
+    <li>Grupper du är med i – gruppens namn, din roll och när du gick med.</li>
   </ul>
   <p><strong>Varför:</strong> för att appen ska kunna visa dina besök, din karta och din statistik. Rättslig grund är att tillhandahålla tjänsten du har valt att använda (avtal, GDPR art. 6.1 b). Uppgifterna säljs inte och används inte för reklam.</p>
   <p><strong>Topplistor:</strong> andra inloggade ser ditt användarnamn, din placering och hur många platser du har besökt – aldrig din e-post, dina enskilda besök eller var du har varit. Alla är med från början; du kan dölja dig under <em>Statistik → Topplistor</em>.</p>
+  <p><strong>Grupper:</strong> går du med i en grupp ser gruppens medlemmar ditt användarnamn, din placering och antal platser i gruppens topplista – även om du är dold i de vanliga topplistorna. Ingen i gruppen ser var eller när du har varit. Du kan lämna en grupp när du vill.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
   <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
@@ -650,7 +675,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 </div>
 <div id="flik-statistik" class="flik" hidden>
 <section id="stat" aria-label="Statistik">
-  <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button><button data-statsida="marken" aria-pressed="false">Märken</button></nav>
+  <nav class="stattabs" aria-label="Statistik"><button data-statsida="stat" aria-pressed="true">Min statistik</button><button data-statsida="topp" aria-pressed="false">Topplistor</button><button data-statsida="marken" aria-pressed="false">Märken</button><button data-statsida="grupper" aria-pressed="false">Grupper</button></nav>
   <h2 id="statrubrik">Min statistik</h2>
   <p class="lead" id="statlead">Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.</p>
   <div id="statvy"></div>
@@ -661,7 +686,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.38.0", VERSION_DATUM = "2026-10-08";
+const VERSION = "0.39.0", VERSION_DATUM = "2026-10-08";
 
 // ---- Inställningar ----
 const CFG = {
@@ -1545,7 +1570,7 @@ const statIKat = b => STAT.kat === "alla" || b.kat === STAT.kat;
 const statIOmr = b => STAT.niva === "r" || (STAT.niva === "l" ? b.l === STAT.lan : b.k === STAT.kom);
 function statUrval(bas, opt = {}){ return bas.filter(b => (opt.tid === false || statIPeriod(b.d)) && statIKat(b) && (opt.omr === false || statIOmr(b))); }
 function statPeriodNamn(){ return STAT.t === "a" ? "Alla år" : STAT.t === "y" ? String(STAT.y) : `${MANAD[STAT.m]} ${STAT.y}`; }
-function statOmrNamn(){ return STAT.niva === "r" ? "hela Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom) + " kommun"; }
+function statOmrNamn(){ return STAT.niva === "g" ? "gruppen " + grpNamn(STAT.grupp) : STAT.niva === "r" ? "hela Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom) + " kommun"; }
 
 // Filter (delas av Min statistik och Topplistor)
 const statSekt = (id, rubrik, extra = "") => `<details class="fall sekt" data-sekt="${id}" ${STAT_STANGDA.has(id) ? "" : "open"}><summary><h3 class="sh">${rubrik}${extra ? ` <small>${extra}</small>` : ""}</h3></summary>`;
@@ -1554,6 +1579,8 @@ function statFilter(bas, topp){
   const minAr = Math.min(nu.getFullYear(), ...bas.map(b => b.d.getFullYear()));
   const omrOpts = () => {
     if (STAT.niva === "r") return "";
+    if (STAT.niva === "g") return `<select id="statomr" aria-label="Välj grupp">${(GRP.lista || []).map(g =>
+      `<option value="${g.id}" ${g.id === STAT.grupp ? "selected" : ""}>${esc(g.namn)} (${g.medlemmar})</option>`).join("")}</select>`;
     const nyckel = STAT.niva === "l" ? "l" : "k", rakna = {};
     bas.forEach(b => { if (b[nyckel]) rakna[b[nyckel]] = (rakna[b[nyckel]] || 0) + 1; });
     const cur = STAT.niva === "l" ? STAT.lan : STAT.kom;
@@ -1576,18 +1603,20 @@ function statFilter(bas, topp){
       ${STAT.t === "a" ? "" : `<span class="stepper"><button data-statsteg="-1" ${kanBak ? "" : "disabled"} aria-label="Föregående">‹</button><span>${statPeriodNamn()}</span><button data-statsteg="1" ${kanFram ? "" : "disabled"} aria-label="Nästa">›</button></span>`}</div></div>
     <div class="frow"><span class="flabel">Kategori</span><div class="fc">${[["alla", "Alla", ""], ...Object.entries(STAT_KAT).map(([k, v]) => [k, v.n, v.c])].map(([k, n, c]) =>
       `<button class="chip" data-statkat="${k}" aria-pressed="${STAT.kat === k}">${c ? `<i class="dot" style="background:${c}"></i>` : ""}${n}</button>`).join("")}</div></div>
-    <div class="frow"><span class="flabel">Område</span><div class="fc"><span class="seg">${[["r", "Riket"], ["l", "Län"], ["k", "Kommun"]].map(([n, t]) =>
+    <div class="frow"><span class="flabel">Område</span><div class="fc"><span class="seg">${[["r", "Riket"], ["l", "Län"], ["k", "Kommun"], ...(topp && GRP.lista?.length ? [["g", "Grupp"]] : [])].map(([n, t]) =>
       `<button data-statniva="${n}" aria-pressed="${STAT.niva === n}">${t}</button>`).join("")}</span>${omrOpts()}</div></div>
     ${topp ? "" : `<label class="toggle"><input type="checkbox" id="stateft" ${STAT.eft ? "checked" : ""}> Ta med efterhandsbesök</label>`}</div></details>`;
 }
 
 function ritaStat(){
   const ruta = $("#statvy"); if (!ruta || $("#flik-statistik").hidden) return;
-  const topp = STAT.sida === "topp", mrk = STAT.sida === "marken";
+  const topp = STAT.sida === "topp", mrk = STAT.sida === "marken", grp = STAT.sida === "grupper";
+  if (!topp && STAT.niva === "g") STAT.niva = "r";   // grupp finns bara i topplistorna
   document.querySelectorAll("[data-statsida]").forEach(b => b.setAttribute("aria-pressed", b.dataset.statsida === STAT.sida));
-  $("#statrubrik").textContent = mrk ? "Märken" : topp ? "Topplistor" : "Min statistik";
-  $("#statlead").textContent = mrk ? "Loggmärken för varje kategori du samlar, och medaljer för de tre bästa i topplistan varje månad och år." : topp ? "Flest olika platser under perioden. Bara besök loggade på plats räknas (inom 100 m från platsen) – efterhandsbesök räknas inte. Varje plats räknas en gång per period."
+  $("#statrubrik").textContent = grp ? "Grupper" : mrk ? "Märken" : topp ? "Topplistor" : "Min statistik";
+  $("#statlead").textContent = grp ? "Tävla med vänner, arbetskamrater eller klassen. Gruppens topplista räknas som de vanliga: olika platser loggade på plats." : mrk ? "Loggmärken för varje kategori du samlar, och medaljer för de tre bästa i topplistan varje månad och år." : topp ? "Flest olika platser under perioden. Bara besök loggade på plats räknas (inom 100 m från platsen) – efterhandsbesök räknas inte. Varje plats räknas en gång per period."
     : "Dina egna besök. Efterhandsbesök räknas här men inte i topplistor.";
+  if (grp) { ritaGrupper(ruta); return; }
   if (mrk) { ritaMarken(ruta); return; }
   if (topp) { ritaTopp(ruta); return; }
   const bas = statBas();
@@ -1658,7 +1687,8 @@ document.addEventListener("click", e => {
     const senast = visits.find(v => v.kommunkod);   // förval: där senaste besöket var
     if (STAT.niva === "l" && !STAT.lan) STAT.lan = senast?.lanskod || null;
     if (STAT.niva === "k" && !STAT.kom) STAT.kom = senast?.kommunkod || null;
-    if (STAT.niva !== "r" && !(STAT.niva === "l" ? STAT.lan : STAT.kom)) STAT.niva = "r";
+    if (STAT.niva === "g" && !grpNamn(STAT.grupp)) STAT.grupp = GRP.lista?.[0]?.id || null;
+    if (STAT.niva !== "r" && !(STAT.niva === "l" ? STAT.lan : STAT.niva === "g" ? STAT.grupp : STAT.kom)) STAT.niva = "r";
   }
   else if (d.statcvis) { STAT.cvis = d.statcvis; store.set("statVy", STAT.cvis); }
   else if (d.statlan) { if (STAT.niva === "l" && STAT.lan === d.statlan) STAT.niva = "r"; else { STAT.niva = "l"; STAT.lan = d.statlan; } }
@@ -1668,7 +1698,7 @@ document.addEventListener("click", e => {
   ritaStat();
 });
 document.addEventListener("change", e => {
-  if (e.target.id === "statomr") { if (STAT.niva === "l") STAT.lan = e.target.value; else { STAT.kom = e.target.value; STAT.lan = STAT.kom.slice(0, 2); } STAT.alla = false; ritaStat(); }
+  if (e.target.id === "statomr") { if (STAT.niva === "g") STAT.grupp = e.target.value; else if (STAT.niva === "l") STAT.lan = e.target.value; else { STAT.kom = e.target.value; STAT.lan = STAT.kom.slice(0, 2); } STAT.alla = false; ritaStat(); }
   if (e.target.id === "stateft") { STAT.eft = e.target.checked; ritaStat(); }
 });
 
@@ -1833,6 +1863,7 @@ function uppdateraLage(){
   if (user && !user.namn && user.profilLast) VR.steg = 3;
   else if (!user && VR.steg === 3) VR.steg = 1;
   if (ut) ritaReg();
+  else if (store.get("grupp_inbjudan", "") && !GRP.inbj) grpInbjudanVisa();
 }
 const VTYPIK = {
   natur: `<path d="M16 4 9 15h4L7 24h18l-6-9h4Z" fill="var(--moss)"/><rect x="15" y="24" width="2" height="4" fill="var(--bark)"/>`,
@@ -1935,16 +1966,17 @@ document.addEventListener("click", e => {
 const TOPP = { cache: {}, basta: null, alla: false };
 const ordtal = p => p + ((p % 10 === 1 || p % 10 === 2) && p % 100 !== 11 && p % 100 !== 12 ? ":a" : ":e");
 const toppParam = () => ({ p_tid: STAT.t, p_ar: STAT.t === "a" ? null : STAT.y, p_manad: STAT.t === "m" ? STAT.m + 1 : null, p_kat: STAT.kat,
-  p_niva: STAT.niva, p_kod: STAT.niva === "l" ? STAT.lan : STAT.niva === "k" ? STAT.kom : null });
+  p_niva: STAT.niva, p_kod: STAT.niva === "l" ? STAT.lan : STAT.niva === "k" ? STAT.kom : STAT.niva === "g" ? STAT.grupp : null });
 function toppNollstall(){ TOPP.cache = {}; TOPP.basta = null; }
 function toppText(o){
   const per = o.tid === "a" ? "totalt" : o.tid === "y" ? "i år" : "denna månad";
-  const omr = o.niva === "r" ? "Sverige" : o.niva === "l" ? lanNamn(o.kod) : komNamn(o.kod);
+  const omr = o.niva === "g" ? grpNamn(o.kod) : o.niva === "r" ? "Sverige" : o.niva === "l" ? lanNamn(o.kod) : komNamn(o.kod);
   return { per, omr, kat: o.kat === "alla" ? "Alla platser" : STAT_KAT[o.kat].n };
 }
 async function ritaTopp(ruta){
   if (!sb || !user) { ruta.innerHTML = `<p class="tom">Logga in för att se topplistorna.</p>`; return; }
-  await statNamn();
+  await Promise.all([statNamn(), grpLadda()]);
+  if (STAT.niva === "g" && !grpNamn(STAT.grupp)) STAT.niva = "r";   // gruppen finns inte längre
   const f = toppParam(), nyckel = JSON.stringify(f), aktuell = () => STAT.sida === "topp" && JSON.stringify(toppParam()) === nyckel && !$("#flik-statistik").hidden;
   let h = statFilter(statBas(), true);
   let rad = TOPP.cache[nyckel];
@@ -1955,7 +1987,7 @@ async function ritaTopp(ruta){
     if (error) { console.warn("topplista", error); ruta.innerHTML = h + `<p class="tom">Kunde inte hämta topplistan just nu.</p>`; return; }
     rad = TOPP.cache[nyckel] = data || [];
   }
-  const omrTxt = STAT.niva === "r" ? "Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom);
+  const omrTxt = STAT.niva === "g" ? grpNamn(STAT.grupp) : STAT.niva === "r" ? "Sverige" : STAT.niva === "l" ? lanNamn(STAT.lan) : komNamn(STAT.kom);
   const perTxt = STAT.t === "a" ? "totalt" : statPeriodNamn();
   const mig = rad.find(r => r.du), deltagare = rad.length ? rad[0].deltagare : 0;
   h += `<div class="minplats">`;
@@ -1965,8 +1997,8 @@ async function ritaTopp(ruta){
     const motiv = mig.plats === 1 ? (efter ? `Du leder med ${pl(mig.antal - efter.antal)}` : deltagare > 1 ? "Du delar förstaplatsen" : "Du är ensam på listan än så länge")
       : fore ? `${pl(fore.antal - mig.antal + 1)} till, så går du om ${esc(fore.namn)}` : "";
     h += `<strong>${ordtal(mig.plats)}</strong><span class="rad1">${pl(mig.antal)} · ${deltagare} ${deltagare === 1 ? "deltagare" : "deltagare"}</span><span class="rad2">${motiv}</span>`;
-  } else h += `<strong>–</strong><span class="rad1">Du är inte med på den här listan än</span><span class="rad2">Logga en plats på plats i ${esc(omrTxt)}${STAT.t === "a" ? "" : " under " + esc(perTxt)} så är du med.</span>`;
-  h += `</div><p class="note">${STAT.kat === "alla" ? "Alla platser" : STAT_KAT[STAT.kat].n} · ${esc(omrTxt)} · ${esc(perTxt)}${!user.topp ? " · du är dold för andra" : ""}</p>`;
+  } else h += `<strong>–</strong><span class="rad1">Du är inte med på den här listan än</span><span class="rad2">Logga en plats på plats${STAT.niva === "g" ? "" : " i " + esc(omrTxt)}${STAT.t === "a" ? "" : " under " + esc(perTxt)} så är du med.</span>`;
+  h += `</div><p class="note">${STAT.kat === "alla" ? "Alla platser" : STAT_KAT[STAT.kat].n} · ${esc(omrTxt)} · ${esc(perTxt)}${STAT.niva === "g" ? " · alla medlemmar syns i gruppens lista" : !user.topp ? " · du är dold för andra" : ""}</p>`;
   if (!rad.length) h += `<p class="tom">Ingen har loggat något här under perioden.</p>`;
   else {
     const visa = TOPP.alla ? rad.length : 10, i = mig ? rad.indexOf(mig) : -1;
@@ -1998,7 +2030,7 @@ document.addEventListener("click", e => {
   else if (d.toppkomb) {
     const k = JSON.parse(d.toppkomb), nu = new Date();
     Object.assign(STAT, { t: k.t, kat: k.kat, niva: k.niva, y: nu.getFullYear(), m: nu.getMonth() });
-    if (k.niva === "l") STAT.lan = k.kod; if (k.niva === "k") { STAT.kom = k.kod; STAT.lan = k.kod.slice(0, 2); }
+    if (k.niva === "l") STAT.lan = k.kod; if (k.niva === "k") { STAT.kom = k.kod; STAT.lan = k.kod.slice(0, 2); } if (k.niva === "g") STAT.grupp = k.kod;
     window.scrollTo({ top: 0 });
   }
   TOPP.alla = false;
@@ -2010,6 +2042,131 @@ document.addEventListener("change", async e => {
   const { error } = await sb.from("profiler").update({ i_topplistor: pa }).eq("id", user.id);
   if (error) { e.target.checked = !pa; setStatus("Kunde inte spara valet: " + error.message, true); return; }
   user.topp = pa; toppNollstall(); markenNollstall(); ritaStat();
+});
+
+// ---- Grupper och befogenheter (24_grupper.sql). Trappan beslutad 2026-10-08 (Hit och Dit - Ekonomi). ----
+const NIVAER = [
+  { n: "Ny", g: 0, txt: "Logga, topplistor, märken. Gå med i grupper via inbjudan." },
+  { n: "Aktiv", g: 25, txt: "Bjuda in andra till grupper du är med i." },
+  { n: "Erfaren", g: 100, txt: "Skapa egna grupper (högst 3)." },
+  { n: "Veteran", g: 500, txt: "Skapa fler grupper (högst 10)." }];
+const GRP = { uid: null, lista: null, bef: null, inbj: null, info: null, fel: "", oppen: null };
+const grpNamn = id => GRP.lista?.find(g => g.id === id)?.namn || "";
+const grpKodVisa = k => k ? k.slice(0, 4) + "-" + k.slice(4) : "";
+const grpLank = k => location.origin + location.pathname + "?grupp=" + grpKodVisa(k);
+function grpNollstall(){ GRP.lista = null; GRP.bef = null; }
+async function grpLadda(tvinga){
+  if (!sb || !user) { GRP.lista = []; return; }
+  if (GRP.uid !== user.id) { if (GRP.uid) { GRP.info = null; GRP.inbj = null; } GRP.uid = user.id; grpNollstall(); }
+  if (GRP.lista && GRP.bef && !tvinga) return;
+  const [a, b] = await Promise.all([sb.rpc("mina_grupper"), sb.rpc("mina_befogenheter")]);
+  if (a.error || b.error) console.warn("grupper", a.error || b.error);
+  GRP.lista = a.data || []; GRP.bef = (b.data || [])[0] || { niva: 0, verifierade: 0, upplast: 0, egna: 0, max_egna: 0 };
+}
+// Inbjudningslänk ?grupp=XXXX-XXXX: sparas på enheten (inloggningslänken tappar adressens parametrar) och visas under Grupper
+(() => {
+  const q = new URLSearchParams(location.search), k = q.get("grupp");
+  if (!k) return;
+  store.set("grupp_inbjudan", k.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8));
+  q.delete("grupp");
+  history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + "#statistik");
+})();
+async function grpInbjudanVisa(){
+  const k = store.get("grupp_inbjudan", "");
+  if (!k || !user || !user.namn || !sb) return;
+  GRP.inbj = k; GRP.info = null;
+  const { data, error } = await sb.rpc("grupp_info", { p_kod: k });
+  GRP.info = error ? { fel: "Kunde inte läsa inbjudan just nu." } : (data && data[0]) || { fel: "Hittar ingen grupp med koden " + grpKodVisa(k) + ". Den kan ha bytts – be om en ny länk." };
+  if (GRP.info.med) { store.set("grupp_inbjudan", ""); GRP.inbj = null; }
+  STAT.sida = "grupper"; store.set("statSida", "grupper");
+  if (flikIAdressen() !== "statistik") { history.pushState(null, "", "#statistik"); visaFlik("statistik"); } else ritaStat();
+}
+async function ritaGrupper(ruta){
+  if (!sb || !user) { ruta.innerHTML = `<p class="tom">Logga in för att se och gå med i grupper.</p>`; return; }
+  if (!GRP.lista || !GRP.bef || GRP.uid !== user.id) { ruta.innerHTML = `<p class="tom">Hämtar grupper…</p>`; await grpLadda(); if (STAT.sida !== "grupper") return; }
+  const b = GRP.bef, niva = NIVAER[b.niva] || NIVAER[0], nasta = NIVAER[b.niva + 1];
+  let h = "";
+  if (GRP.inbj && GRP.info) {
+    const i = GRP.info;
+    h += `<div class="grp inbj">` + (i.fel ? `<p class="grpfel">${esc(i.fel)}</p><div class="gk"><button class="ghost" data-grp="avbojd">Stäng</button></div>`
+      : `<div class="gn">Inbjudan till ${esc(i.namn)}</div><div class="gm">${i.medlemmar} ${i.medlemmar === 1 ? "medlem" : "medlemmar"}${i.fullsatt ? " · gruppen är full" : ""}</div>
+         <p class="note">Som medlem syns ditt användarnamn och antal platser i gruppens topplista – även om du är dold i de vanliga topplistorna. Du kan lämna gruppen när du vill.</p>
+         <div class="gk"><button data-grp="gamed" ${i.fullsatt ? "disabled" : ""}>Gå med</button><button class="ghost" data-grp="avbojd">Nej tack</button></div>`) + `</div>`;
+  }
+  if (GRP.fel) h += `<p class="grpfel">${esc(GRP.fel)}</p>`;
+  h += `<h3>Mina grupper <small>${GRP.lista.length || ""}</small></h3>`;
+  h += GRP.lista.length ? GRP.lista.map(g => {
+    const agare = g.roll === "agare", oppen = GRP.oppen === g.id;
+    return `<div class="grp"><div class="gn">${esc(g.namn)}</div><div class="gm">${g.medlemmar} ${g.medlemmar === 1 ? "medlem" : "medlemmar"}${agare ? " · du är ägare" : ""}</div>
+      <div class="gk"><button data-grp="topp" data-id="${g.id}">Topplista</button>${g.kod ? `<button class="ghost" data-grp="bjud" data-id="${g.id}" aria-expanded="${oppen}">Bjud in</button>` : ""}
+        <button class="ghost" data-grp="lamna" data-id="${g.id}">Lämna</button>${agare ? `<button class="farlig" data-grp="radera" data-id="${g.id}">Ta bort gruppen</button>` : ""}</div>
+      ${oppen && g.kod ? `<div class="lank"><span>Dela länken, eller be dem skriva in koden <code>${grpKodVisa(g.kod)}</code> under Grupper.</span>
+        <input readonly value="${esc(grpLank(g.kod))}" aria-label="Inbjudningslänk">
+        <div class="gk"><button data-grp="kopiera" data-id="${g.id}">${navigator.share ? "Dela länken" : "Kopiera länken"}</button>${agare ? `<button class="ghost" data-grp="nykod" data-id="${g.id}">Byt kod</button>` : ""}</div>
+        ${agare ? `<span class="gm">Byter du kod slutar gamla länkar att fungera. Den som redan är med påverkas inte.</span>` : ""}</div>` : ""}</div>`;
+  }).join("") : `<p class="tom">Du är inte med i någon grupp än.</p>`;
+  if (GRP.lista.length && b.niva < 1) h += `<p class="note">Du kan bjuda in andra när du har ${NIVAER[1].g} verifierade platser.</p>`;
+  h += `<h3>Gå med med kod</h3><form class="grpform" data-grpform="kod"><input id="grpkod" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" maxlength="12" aria-label="Gruppkod"><button>Gå med</button></form>`;
+  h += `<h3>Skapa grupp</h3>`;
+  if (b.niva >= 2 && b.egna < b.max_egna) h += `<form class="grpform" data-grpform="skapa"><input id="grpnamn" placeholder="Gruppens namn" maxlength="40" aria-label="Gruppens namn"><button>Skapa</button></form>
+    <p class="note">3–40 tecken. Gruppnamnet syns för alla som får en inbjudan. Du har ${b.egna} av ${b.max_egna} egna grupper.</p>`;
+  else if (b.niva >= 2) h += `<p class="note">Du har redan ${b.egna} egna grupper, så många som nivån ${esc(niva.n)} tillåter.</p>`;
+  else h += `<p class="note">Du kan skapa egna grupper när du har ${NIVAER[2].g} verifierade platser – du har ${b.verifierade}. Fram till dess kan du gå med i grupper som andra bjuder in till.</p>`;
+  h += `<h3>Din nivå: ${esc(niva.n)} <small>${b.verifierade} verifierade platser${b.upplast > 0 && b.upplast === b.niva && b.verifierade < niva.g ? " · upplåst" : ""}</small></h3>
+    <table class="trappa">${NIVAER.map((x, i) => `<tr class="${i === b.niva ? "nu" : ""}"><td>${x.n}</td><td>${x.g ? x.g + " platser" : "från start"}</td><td>${x.txt}</td></tr>`).join("")}</table>
+    <p class="note">${nasta ? `${Math.max(nasta.g - b.verifierade, 0)} platser kvar till ${nasta.n}. ` : ""}Bara olika platser loggade på plats räknas (samma som i topplistorna). Gränserna kan ändras när appen växer.</p>`;
+  ruta.innerHTML = h;
+}
+document.addEventListener("click", async e => {
+  const k = e.target.closest?.("#stat [data-grp]"); if (!k) return;
+  const d = k.dataset, g = GRP.lista?.find(x => x.id === d.id);
+  GRP.fel = "";
+  const kor = async (fn, args) => { const { data, error } = await sb.rpc(fn, args); if (error) { GRP.fel = error.message; console.warn(fn, error); } return error ? null : (data ?? true); };
+  if (d.grp === "topp") { Object.assign(STAT, { sida: "topp", niva: "g", grupp: d.id }); store.set("statSida", "topp"); TOPP.alla = false; ritaStat(); window.scrollTo({ top: 0 }); return; }
+  if (d.grp === "bjud") { GRP.oppen = GRP.oppen === d.id ? null : d.id; ritaStat(); return; }
+  if (d.grp === "kopiera" && g) {
+    const lank = grpLank(g.kod);
+    if (navigator.share) { try { await navigator.share({ title: "Hit och Dit", text: `Gå med i ${g.namn} på Hit och Dit`, url: lank }); } catch {} return; }
+    try { await navigator.clipboard.writeText(lank); k.textContent = "Kopierad!"; } catch { k.closest(".lank").querySelector("input").select(); }
+    return;
+  }
+  if (d.grp === "avbojd") { store.set("grupp_inbjudan", ""); GRP.inbj = null; GRP.info = null; ritaStat(); return; }
+  if (d.grp === "gamed") {
+    k.disabled = true;
+    const id = await kor("grupp_ga_med", { p_kod: GRP.inbj });
+    if (id) { store.set("grupp_inbjudan", ""); GRP.inbj = null; GRP.info = null; setStatus("Du är med i gruppen."); }
+  }
+  else if (d.grp === "lamna" && g) {
+    const ensam = g.medlemmar === 1;
+    if (!confirm(ensam ? `Du är ensam i ${g.namn}. Lämnar du tas gruppen bort. Fortsätta?` : `Lämna ${g.namn}?${g.roll === "agare" ? " Den som varit med längst blir ny ägare." : ""}`)) return;
+    await kor("grupp_lamna", { p_id: g.id });
+  }
+  else if (d.grp === "radera" && g) {
+    if (!confirm(`Ta bort ${g.namn} för alla ${g.medlemmar} medlemmar? Besöken påverkas inte.`)) return;
+    await kor("grupp_radera", { p_id: g.id });
+  }
+  else if (d.grp === "nykod" && g) {
+    if (!confirm("Byta kod? Gamla länkar slutar fungera.")) return;
+    await kor("grupp_ny_kod", { p_id: g.id });
+  }
+  else return;
+  await grpLadda(true); toppNollstall(); ritaStat();
+});
+document.addEventListener("submit", async e => {
+  const f = e.target.closest?.("#stat [data-grpform]"); if (!f) return;
+  e.preventDefault(); GRP.fel = "";
+  const knapp = f.querySelector("button"); knapp.disabled = true;
+  if (f.dataset.grpform === "kod") {
+    const kod = $("#grpkod").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (kod.length !== 8) { GRP.fel = "Koden har 8 tecken, t.ex. ABCD-2345."; knapp.disabled = false; ritaStat(); return; }
+    store.set("grupp_inbjudan", kod); knapp.disabled = false; await grpInbjudanVisa(); return;
+  }
+  const namn = $("#grpnamn").value.trim();
+  const { error } = await sb.rpc("grupp_skapa", { p_namn: namn });
+  if (error) GRP.fel = error.message; else { setStatus(`Gruppen ${namn} är skapad. Tryck på Bjud in för att dela länken.`); }
+  await grpLadda(true);
+  if (!error) GRP.oppen = GRP.lista.find(g => g.namn === namn)?.id || null;
+  ritaStat();
 });
 
 // Databasrad <-> appens format
@@ -2047,13 +2204,15 @@ async function sync(){
 // ---- GDPR: export och radering ----
 async function exportera(){
   if (!user) return;
-  const [{ data: profil }, { data: besok, error }, { data: medaljer }] = await Promise.all([
+  const [{ data: profil }, { data: besok, error }, { data: medaljer }, { data: grupper }] = await Promise.all([
     sb.from("profiler").select("*").eq("id", user.id).maybeSingle(),
     sb.from("besok").select("*").order("datum", { ascending: false }),
-    sb.from("medaljer").select("cup,tid,period,plats,antal,deltagare,utdelad").order("period", { ascending: false })
+    sb.from("medaljer").select("cup,tid,period,plats,antal,deltagare,utdelad").order("period", { ascending: false }),
+    sb.rpc("mina_grupper")
   ]);
   if (error) { setStatus("Kunde inte hämta dina data: " + error.message, true); return; }
-  const data = { exporterad: new Date().toISOString(), konto: { id: user.id, epost: user.email, ...profil }, besok, medaljer: medaljer || [] };
+  const data = { exporterad: new Date().toISOString(), konto: { id: user.id, epost: user.email, ...profil }, besok, medaljer: medaljer || [],
+    grupper: (grupper || []).map(g => ({ namn: g.namn, roll: g.roll === "agare" ? "ägare" : "medlem", gick_med: g.gick_med })) };
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
   a.download = `hitochdit-mina-data-${new Date().toISOString().slice(0, 10)}.json`;

@@ -1,5 +1,6 @@
 -- Används av tools/aterstall.sh (körs inom en transaktion som skriptet avslutar med commit eller rollback).
--- Förutsätter tillfälliga tabeller s_konton, s_profiler, s_besok, s_meddelanden och ev. s_medaljer (text-kolumner) från kopian
+-- Förutsätter tillfälliga tabeller s_konton, s_profiler, s_besok, s_meddelanden och ev. s_medaljer, s_grupper,
+-- s_grupp_medlemmar, s_befogenheter (text-kolumner) från kopian
 -- (kopior från före 2026-10-08 saknar medaljer.csv – då hoppas medaljerna över)
 -- och inställningen aterstall.epost ('' = alla användare).
 
@@ -97,6 +98,40 @@ begin
   raise notice 'medaljer: % i kopian, % återställda', tot, n;
 end $$;
 
+-- Grupper (2026-10-08): gruppen läggs tillbaka med samma id, namn och kod om den inte finns (och namnet/koden är ledigt);
+-- medlemskap och upplåsta nivåer läggs tillbaka på rätt konto. Vid återställning av en enskild användare
+-- tas bara den användarens medlemskap (och grupper hen är med i) med.
+do $$
+declare n1 bigint := 0; n2 bigint := 0; n3 bigint := 0; v_epost text := current_setting('aterstall.epost');
+begin
+  if to_regclass('pg_temp.s_grupper') is null then raise notice 'grupper: finns inte i kopian'; return; end if;
+  insert into public.grupper (id, namn, kod, skapad, skapad_av)
+  select s.id::uuid, s.namn, s.kod, s.skapad::timestamptz, (select m.ny from anvkarta m where m.gammal = nullif(s.skapad_av, '')::uuid)
+  from s_grupper s
+  where exists (select 1 from s_grupp_medlemmar sm join anvkarta m on m.gammal = sm.user_id::uuid
+                where sm.grupp_id = s.id and (v_epost = '' or lower(m.epost) = lower(v_epost)))
+    and not exists (select 1 from public.grupper g where g.kod = s.kod or lower(btrim(g.namn)) = lower(btrim(s.namn)))
+  on conflict (id) do nothing;
+  get diagnostics n1 = row_count;
+  insert into public.grupp_medlemmar (grupp_id, user_id, roll, gick_med)
+  select sm.grupp_id::uuid, m.ny, sm.roll, sm.gick_med::timestamptz
+  from s_grupp_medlemmar sm join anvkarta m on m.gammal = sm.user_id::uuid
+  where (v_epost = '' or lower(m.epost) = lower(v_epost))
+    and exists (select 1 from public.grupper g where g.id = sm.grupp_id::uuid)
+  on conflict (grupp_id, user_id) do nothing;
+  get diagnostics n2 = row_count;
+  if to_regclass('pg_temp.s_befogenheter') is not null then
+    insert into public.befogenheter (user_id, niva, notering, satt)
+    select m.ny, s.niva::int, nullif(s.notering, ''), s.satt::timestamptz
+    from s_befogenheter s join anvkarta m on m.gammal = s.user_id::uuid
+    where (v_epost = '' or lower(m.epost) = lower(v_epost))
+    on conflict (user_id) do nothing;
+    get diagnostics n3 = row_count;
+  end if;
+  raise notice 'grupper: % återställda, % medlemskap, % upplåsta nivåer', n1, n2, n3;
+end $$;
+
 \echo '=== Så här ser det ut efteråt ==='
 select (select count(*) from public.profiler) as profiler, (select count(*) from public.besok) as besok,
-       (select count(*) from public.meddelanden) as meddelanden, (select count(*) from public.medaljer) as medaljer;
+       (select count(*) from public.meddelanden) as meddelanden, (select count(*) from public.medaljer) as medaljer,
+       (select count(*) from public.grupper) as grupper;

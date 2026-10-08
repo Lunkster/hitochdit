@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Återställer användardata (profiler, besök, kontaktmeddelanden, medaljer) från en säkerhetskopia gjord med tools/backup.sh.
+# Återställer användardata (profiler, besök, kontaktmeddelanden, medaljer, grupper) från en säkerhetskopia gjord med tools/backup.sh.
 #
 #   aterstall.sh                      provkör med senaste kopian – visar vad som skulle återställas, ändrar inget
 #   aterstall.sh --kor                återställer på riktigt
@@ -51,7 +51,7 @@ ladda() {  # ladda <namn>
   echo "\\set ON_ERROR_STOP on"
   echo "\\pset pager off"
   echo "begin;"
-  for t in konton profiler besok meddelanden medaljer; do ladda "$t"; done
+  for t in konton profiler besok meddelanden medaljer grupper grupp_medlemmar befogenheter; do ladda "$t"; done
   echo "\\o /dev/null"
   echo "select set_config('aterstall.epost', '${EPOST//\'/}', true);"
   echo "\\o"
