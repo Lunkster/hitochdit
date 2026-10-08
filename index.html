@@ -379,6 +379,15 @@ button.efterknapp{display:block;margin-top:.35rem;padding:.2rem .55rem;font-size
 .leaflet-control-layers label{display:block;margin:0;color:var(--ink);font-size:.9rem}
 .leaflet-control-layers label > span,.leaflet-control-layers label > div{display:flex;align-items:center;gap:.4rem}
 .leaflet-control-layers input{width:auto;padding:0;margin:0;accent-color:var(--moss)}
+.skiktgrupp{display:flex;align-items:center;gap:.4rem;margin:.45rem 0 .1rem;padding-top:.35rem;border-top:1px solid var(--line)}
+.skiktgrupp:first-child{margin-top:0;padding-top:0;border-top:0}
+.skiktgrupp button{display:flex;align-items:center;gap:.3rem;flex:1;background:none;border:0;padding:0;margin:0;color:var(--ink);font:inherit;font-size:.9rem;cursor:pointer;text-align:left}
+.skiktgrupp .namn{font-weight:700}
+.skiktgrupp .antal{margin-left:auto;color:var(--mute);font-size:.78rem}
+.skiktgrupp .pil{display:inline-block;width:.8em;color:var(--mute);transition:transform .15s}
+.skiktgrupp.stangd .pil{transform:rotate(-90deg)}
+.leaflet-control-layers label.igrupp{padding-left:1.25rem}
+.leaflet-control-layers label[hidden]{display:none}
 .symbol{color:#8a5a2b;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);background:none;border:0}
 .symbol.besokt{color:#c2410c}
 .indetikett{background:none;border:0}
@@ -478,7 +487,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <ul>
     <li><strong>Var är jag?</strong> – hämtar din position och visar skyddade områden där du står.</li>
     <li><strong>Logga besök</strong> – sparar besöket på ditt konto. Samma område kan loggas en gång per dag.</li>
-    <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med ett finger och zooma med två. Tryck ⤢ för stor karta och ⌖ för att centrera på din position. Bakgrundskartan väljs med kartikonen uppe till höger, skikten med knappen under.</li>
+    <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med ett finger och zooma med två. Tryck ⤢ för stor karta och ⌖ för att centrera på din position. Bakgrundskartan väljs med kartikonen uppe till höger, skikten med knappen under – grupperade på natur, kultur, geografi och områden. Kryssrutan vid gruppens namn slår av eller på hela gruppen, och gruppen fälls ihop med ett tryck på namnet.</li>
     <li><strong>Mina besök</strong> – dina platser grupperade per typ. Klicka på ett namn för att visa platsen, ▾ för enskilda besök.</li>
   </ul>
 
@@ -652,7 +661,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.37.0", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.38.0", VERSION_DATUM = "2026-10-08";
 
 // ---- Inställningar ----
 const CFG = {
@@ -915,7 +924,7 @@ function initMap(){
   };
   nvUppdatera();
   map.on("overlayadd overlayremove", e => { if (NV_NAMN[e.name]) nvUppdatera(); });
-  ctl = L.control.layers(null, over, { collapsed: true }).addTo(map);
+  ctl = new GrupperadeSkikt(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
   ctl.addOverlay(hiGroup, "Besökta områden");
   pins = L.layerGroup().addTo(map);
@@ -951,6 +960,58 @@ function drawPins(){
 
 // Besökta objekt: ytorna hämtas en gång via WFS (på NVR-id) och ritas av appen.
 // Reserv: besök utan NVR-id, eller ytor som inte gick att hämta, färgas av servern via WMS (cql_filter + sld_body).
+// Skiktmenyn grupperad på kategori (natur, kultur, geografi, områden, egna besök).
+// Varje grupp har en rubrik som fäller ihop/ut (valet sparas) och en kryssruta som slår av/på alla skikt i gruppen.
+const SKIKTGRUPPER = [
+  ["natur", "Natur", "var(--natur)", ["Naturreservat", "Nationalparker", "Naturminnen"]],
+  ["kultur", "Kultur", "var(--kultur)", ["Världsarv", "Kulturreservat", "Byggnadsminnen", "Fornlämningar", "Kyrkor", "Fyrar"]],
+  ["geo", "Geografi", "var(--geo)", ["Toppar", "Tätorter (300)", "Sjöar (300)", "Öar (300)"]],
+  ["omr", "Områden", "var(--omr)", ["Socknar", "Kommuner"]],
+  ["egna", "Mina besök", "var(--besokt)", ["Besökta områden"]]];
+const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
+  _update(){
+    L.Control.Layers.prototype._update.call(this);
+    if (!this._map) return this;
+    const lista = this._overlaysList, stangda = new Set(store.get("skiktgrupper_stangda", []));
+    const etiketter = {};
+    [...lista.children].forEach(lbl => {
+      const inp = lbl.querySelector("input"), obj = inp && this._getLayer(inp.layerId);
+      if (obj) etiketter[obj.name] = { lbl, layer: obj.layer };
+    });
+    const anvanda = new Set();
+    SKIKTGRUPPER.forEach(([nyckel, rubrik, farg, namn]) => {
+      const rader = namn.map(n => etiketter[n]).filter(Boolean);
+      if (!rader.length) return;
+      rader.forEach(r => anvanda.add(r.lbl));
+      const pa = rader.filter(r => this._map.hasLayer(r.layer)).length, stangd = stangda.has(nyckel);
+      const h = L.DomUtil.create("div", "skiktgrupp" + (stangd ? " stangd" : ""), lista);
+      h.innerHTML = `<input type="checkbox" aria-label="Alla skikt i ${rubrik}"><button type="button" aria-expanded="${!stangd}">` +
+        `<span class="pil" aria-hidden="true">▾</span><span class="namn" style="color:${farg}">${rubrik}</span><span class="antal">${pa}/${rader.length}</span></button>`;
+      const box = h.querySelector("input");
+      box.checked = pa === rader.length; box.indeterminate = pa > 0 && pa < rader.length;
+      L.DomEvent.on(box, "click", L.DomEvent.stopPropagation);
+      L.DomEvent.on(box, "change", () => {
+        const pa2 = box.checked;
+        this._handlingClick = true;
+        rader.forEach(r => { if (pa2 && !this._map.hasLayer(r.layer)) this._map.addLayer(r.layer); else if (!pa2 && this._map.hasLayer(r.layer)) this._map.removeLayer(r.layer); });
+        this._handlingClick = false;
+        this._update();
+      });
+      L.DomEvent.on(h.querySelector("button"), "click", e => {
+        L.DomEvent.stop(e);
+        const s = new Set(store.get("skiktgrupper_stangda", []));
+        s.has(nyckel) ? s.delete(nyckel) : s.add(nyckel);
+        store.set("skiktgrupper_stangda", [...s]);
+        this._update();
+      });
+      rader.forEach(r => { r.lbl.classList.add("igrupp"); r.lbl.hidden = stangd; lista.appendChild(r.lbl); });
+    });
+    // Skikt som inte finns i någon grupp hamnar sist, utan rubrik
+    [...lista.children].filter(el => el.tagName === "LABEL" && !anvanda.has(el)).forEach(el => lista.appendChild(el));
+    return this;
+  }
+}) : null;
+
 let ctl, hiGroup;
 const hi = {};
 const LAGER = { "Nationalpark": "PS.ProtectedSites.NP", "Naturreservat": "PS.ProtectedSites.NR" };
