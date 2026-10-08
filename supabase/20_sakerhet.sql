@@ -13,7 +13,7 @@ revoke execute on function public.besok_satt_indelning() from public, anon, auth
 --    Kvar efteråt: objekt/indelning select (alla); meddelanden insert (alla); profiler select/insert/update (inloggade);
 --    besok select/insert/delete (inloggade) + select för anon (ger inga rader – RLS gäller bara inloggade – men objekt_i_omrade får inte fel).
 revoke insert, update, delete, truncate, references, trigger on public.objekt, public.indelning from anon, authenticated;
-revoke update, delete, truncate, references, trigger on public.besok from anon, authenticated;
+revoke update, truncate, references, trigger on public.besok from anon, authenticated;   -- delete ska finnas kvar för inloggade (rättat 2026-10-08, se 25_radera_besok.sql)
 revoke insert, delete on public.besok from anon;
 revoke update, truncate, references, trigger on public.meddelanden from anon, authenticated;
 revoke select, delete on public.meddelanden from anon, authenticated;
