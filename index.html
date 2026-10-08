@@ -652,7 +652,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.36.2", VERSION_DATUM = "2026-10-07";
+const VERSION = "0.37.0", VERSION_DATUM = "2026-10-07";
 
 // ---- Inställningar ----
 const CFG = {
@@ -1703,7 +1703,10 @@ async function ritaMarken(ruta){
     g.forEach((x, i) => { if (n >= x.v) niv = i; });
     return { id, namn, kat, ikon, fl, tot, n, g, niv };
   });
-  const per = NIV.map((_, i) => rader.filter(r => r.niv === i).length);
+  // Kategorimärken (natur, kultur, geografi, områden): medelnivån av kategorins märken, avrundat nedåt – räknas med i summeringen
+  const katNiv = Object.keys(MKAT).map(k => { const rk = rader.filter(r => r.kat === k); return rk.length ? Math.floor(rk.reduce((s, r) => s + r.niv + 1, 0) / rk.length) - 1 : null; }).filter(n => n !== null);
+  const alla = [...rader.map(r => r.niv), ...katNiv];
+  const per = NIV.map((_, i) => alla.filter(n => n === i).length);
   // Medaljer
   const med = MARK.med, ant = (c, t, met) => med.filter(x => x.cup === c && x.tid === t && metAv(x.plats)[0] === met).length;
   const basta = c => MET.find(([mt]) => med.some(x => x.cup === c && metAv(x.plats)[0] === mt))?.[0];
@@ -1721,7 +1724,7 @@ async function ritaMarken(ruta){
       return `<li>${medalj(mt, x.cup)}<span>${mn} · ${CUP[x.cup][0]}<small>${x.tid === "y" ? "Årsmedalj" : "Månadsmedalj"} · ${x.antal} platser · ${ordtal(x.plats)} av ${x.deltagare}</small></span><span class="dt">${periodText(x.tid, x.period)}</span></li>`; }).join("")}</ul>`
     : `<p class="note">Inga medaljer än. Guld, silver och brons delas ut efter varje månad och år till de tre bästa i topplistan för hela Sverige – i totalcupen och i natur, kultur och geografi.</p>`;
   h += `</details>`;
-  h += `<details class="fall sekt" data-sekt="loggmarken" ${STAT_STANGDA.has("loggmarken") ? "" : "open"}><summary><h3 class="sh">Loggmärken <small>${rader.filter(r => r.niv >= 0).length} av ${rader.length} tagna</small></h3></summary>
+  h += `<details class="fall sekt" data-sekt="loggmarken" ${STAT_STANGDA.has("loggmarken") ? "" : "open"}><summary><h3 class="sh">Loggmärken <small>${alla.filter(n => n >= 0).length} av ${alla.length} tagna</small></h3></summary>
     <div class="summa">${NIV.map((x, i) => per[i] ? `<span>${marke(x.id, "omr", "shield")}<b>${per[i]}</b> ${x.n.toLowerCase()}</span>` : "").join("")}</div>`;
   Object.keys(MKAT).forEach(k => {
     const rk = rader.filter(r => r.kat === k); if (!rk.length) return;
