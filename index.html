@@ -120,6 +120,11 @@ details.fall > summary h2{margin:0}
 /* ---- Välkomstsida (bara för den som inte är inloggad, eller saknar användarnamn) ---- */
 body.utloggad .flikar,body.utloggad #gear,body.utloggad main > section#auth,body.utloggad .flik{display:none!important}
 body:not(.utloggad) #valkommen,body:not(.utloggad) #toppinlogg{display:none!important}
+.toppnamn{display:flex;align-items:center;gap:.25rem;margin-left:auto;background:none;border:0;padding:.2rem .1rem;color:#fff;font-size:.85rem;line-height:1.1;min-width:0;max-width:9.5rem}
+.toppnamn svg{width:1.1rem;height:1.1rem;flex:none;opacity:.85}
+.toppnamn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body:not(.utloggad) .toppnamn + .gear{margin-left:0}
+body.utloggad .toppnamn{display:none!important}
 .toppinlogg{color:#fff;font-size:.88rem;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 #valkommen{--display:"HitochDit Rubrik","Iowan Old Style",Charter,Georgia,serif}
 #valkommen section{padding-block:2.2rem 0;scroll-margin-top:4.5rem}
@@ -455,6 +460,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <svg class="ros" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/><circle cx="20" cy="20" r="10" fill="none" stroke="currentColor" stroke-width=".9" stroke-dasharray="1.4 2" opacity=".5"/><path d="M20 20 31 9M20 20 9 31M20 20 31 31M20 20 9 9" stroke="currentColor" stroke-width="1" opacity=".45"/><path d="M20 2.5 23.2 16.8 37.5 20 23.2 23.2 20 37.5 16.8 23.2 2.5 20 16.8 16.8Z" fill="currentColor"/><path d="M20 2.5 23.2 16.8 20 20 16.8 16.8Z" fill="#fecc02"/><circle cx="20" cy="20" r="2.1" fill="var(--top)"/></svg>
   <h1><span class="appnamn">Hit och Dit</span><span class="tagline">Utforska Sverige</span></h1>
   <a href="#registrera" id="toppinlogg" class="toppinlogg" data-vhopp="loggain">Logga in</a>
+  <button id="toppnamn" class="toppnamn" hidden aria-label="Inloggad – öppna inställningar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg><span></span></button>
   <button id="infoknapp" class="gear" aria-label="Om appen och integritet" aria-expanded="false" aria-controls="info">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor"/></svg>
   </button>
@@ -531,7 +537,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
   <p><strong>Topplistor:</strong> andra inloggade ser ditt användarnamn, din placering och hur många platser du har besökt – aldrig din e-post, dina enskilda besök eller var du har varit. Alla är med från början; du kan dölja dig under <em>Statistik → Topplistor</em>.</p>
   <p><strong>Grupper:</strong> går du med i en grupp ser gruppens medlemmar ditt användarnamn, din placering och antal platser i gruppens topplista – även om du är dold i de vanliga topplistorna. Ingen i gruppen ser var eller när du har varit. Du kan lämna en grupp när du vill.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
-  <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
+  <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Inloggningsmejlen skickas via e-posttjänsten Brevo (EU), som får din e-postadress för att kunna skicka dem och också är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
   <p><strong>Kontaktformuläret:</strong> ditt meddelande och den e-postadress du eventuellt anger sparas i Supabase tills ärendet är hanterat. Meddelandet skickas också till mig som en avisering via tjänsten ntfy.sh, där det mellanlagras en kort tid.</p>
   <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
@@ -686,7 +692,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.39.0", VERSION_DATUM = "2026-10-08";
+const VERSION = "0.40.0", VERSION_DATUM = "2026-10-08";
 
 // ---- Inställningar ----
 const CFG = {
@@ -714,7 +720,7 @@ function setUser(u){
   if ((u?.id || null) === (user?.id || null)) return;
   user = u ? { id: u.id, email: u.email } : null;
   visits = user ? store.get("visits:" + user.id, []) : [];
-  $("#login").hidden = true; $("#who").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user;
+  $("#login").hidden = true; $("#who").hidden = true; $("#toppnamn").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user;
   showWho();
   if (pins) pins.clearLayers();
   uppdateraLage();
@@ -722,6 +728,9 @@ function setUser(u){
 }
 function showWho(){
   if (user) $("#who > span").textContent = "Inloggad som " + (user.namn || user.email);
+  // Namnet visas i toppbalken i stället för på en egen rad (sparar plats); tryck öppnar inställningarna
+  const tn = $("#toppnamn"); tn.hidden = !user; $("#who").hidden = true;
+  if (user) { tn.querySelector("span").textContent = user.namn || user.email; tn.title = "Inloggad som " + (user.namn || user.email); }
   $("#acct").textContent = user ? `${user.namn || "(inget användarnamn)"} · ${user.email}` : "Inte inloggad. Logga in med e-post på startsidan.";
 }
 
@@ -997,7 +1006,7 @@ const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
   _update(){
     L.Control.Layers.prototype._update.call(this);
     if (!this._map) return this;
-    const lista = this._overlaysList, stangda = new Set(store.get("skiktgrupper_stangda", []));
+    const lista = this._overlaysList, oppna = new Set(store.get("skiktgrupper_oppna", []));   // alla grupper hopfällda som förval
     const etiketter = {};
     [...lista.children].forEach(lbl => {
       const inp = lbl.querySelector("input"), obj = inp && this._getLayer(inp.layerId);
@@ -1008,7 +1017,7 @@ const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
       const rader = namn.map(n => etiketter[n]).filter(Boolean);
       if (!rader.length) return;
       rader.forEach(r => anvanda.add(r.lbl));
-      const pa = rader.filter(r => this._map.hasLayer(r.layer)).length, stangd = stangda.has(nyckel);
+      const pa = rader.filter(r => this._map.hasLayer(r.layer)).length, stangd = !oppna.has(nyckel);
       const h = L.DomUtil.create("div", "skiktgrupp" + (stangd ? " stangd" : ""), lista);
       h.innerHTML = `<input type="checkbox" aria-label="Alla skikt i ${rubrik}"><button type="button" aria-expanded="${!stangd}">` +
         `<span class="pil" aria-hidden="true">▾</span><span class="namn" style="color:${farg}">${rubrik}</span><span class="antal">${pa}/${rader.length}</span></button>`;
@@ -1024,9 +1033,9 @@ const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
       });
       L.DomEvent.on(h.querySelector("button"), "click", e => {
         L.DomEvent.stop(e);
-        const s = new Set(store.get("skiktgrupper_stangda", []));
+        const s = new Set(store.get("skiktgrupper_oppna", []));
         s.has(nyckel) ? s.delete(nyckel) : s.add(nyckel);
-        store.set("skiktgrupper_stangda", [...s]);
+        store.set("skiktgrupper_oppna", [...s]);
         this._update();
       });
       rader.forEach(r => { r.lbl.classList.add("igrupp"); r.lbl.hidden = stangd; lista.appendChild(r.lbl); });
@@ -2336,10 +2345,11 @@ $("#more").addEventListener("click", () => { $("#other").hidden = !$("#other").h
 $("#login").addEventListener("submit", sendLink);
 $("#nameform").addEventListener("submit", saveName);
 $("#gear").addEventListener("click", () => visaPanel("settings"));
+$("#toppnamn").addEventListener("click", () => visaPanel("settings"));
 $("#infoknapp").addEventListener("click", () => visaPanel("info"));
 document.querySelectorAll(".panel .stang").forEach(b => b.addEventListener("click", () => visaPanel(null)));
 document.addEventListener("keydown", e => { if (e.key === "Escape") visaPanel(null); });
-document.addEventListener("click", e => { if (!e.target.closest(".panel, .gear")) visaPanel(null); });
+document.addEventListener("click", e => { if (!e.target.closest(".panel, .gear, .toppnamn")) visaPanel(null); });
 document.querySelectorAll(".appver").forEach(el => el.textContent = `${VERSION} (${VERSION_DATUM})`);
 $("#export").addEventListener("click", exportera);
 $("#kontaktform").addEventListener("submit", skickaKontakt);
