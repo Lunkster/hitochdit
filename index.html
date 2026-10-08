@@ -11,8 +11,8 @@
 } catch { document.documentElement.dataset.theme = "dark"; }</script>
 <style>
 :root{--bg:#eef0ea;--card:#f9faf6;--ink:#22302b;--mute:#5f6d66;--line:#c9d1c4;--moss:#4f6b4a;--btn:#4f6b4a;--bark:#7a5c3e;--warn:#9a4a2b;--top:#4f6b4a;--natur:#4f6b4a;--kultur:#8a5a2b;--geo:#2f6690;--besokt:#c2410c;--omr:#55707a;--las:#c9cec5;--orange:#d9733f;--orange2:#e9a27a;--salvia:#9db58f;--salvia2:#c4d3b9;--sand:#e6d5ad;color-scheme:light}
-/* Mörkt läge: samma mossgröna familj, mörka ytor */
-:root[data-theme=dark]{--bg:#141c18;--card:#1c2621;--ink:#e3e8e1;--mute:#9aa79f;--line:#33423a;--moss:#8fb285;--btn:#2f4430;--bark:#c29a6e;--warn:#ec9068;--top:#2f4430;--natur:#8fb285;--kultur:#d6a26c;--geo:#7fb3d9;--besokt:#f08a4b;--omr:#5f7c86;--las:#3a463f;--orange:#d97a4a;--orange2:#a85a35;--salvia:#5f7a57;--salvia2:#34463a;--sand:#5a5038;color-scheme:dark}
+/* Mörkt läge: samma mossgröna familj, mörka ytor (ett uns ljusare från v0.41.0 – bättre kontrast på datorskärmar) */
+:root[data-theme=dark]{--bg:#18211c;--card:#222d27;--ink:#e8ece6;--mute:#a9b5ad;--line:#3e4f45;--moss:#97bb8c;--btn:#35503a;--bark:#c29a6e;--warn:#ec9068;--top:#35503a;--natur:#97bb8c;--kultur:#dcab78;--geo:#8abde0;--besokt:#f39459;--omr:#5f7c86;--las:#3a463f;--orange:#d97a4a;--orange2:#a85a35;--salvia:#5f7a57;--salvia2:#34463a;--sand:#5a5038;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -122,6 +122,9 @@ body.utloggad .flikar,body.utloggad #gear,body.utloggad main > section#auth,body
 body:not(.utloggad) #valkommen,body:not(.utloggad) #toppinlogg{display:none!important}
 .toppnamn{display:flex;align-items:center;gap:.25rem;margin-left:auto;background:none;border:0;padding:.2rem .1rem;color:#fff;font-size:.85rem;line-height:1.1;min-width:0;max-width:9.5rem}
 .toppnamn svg{width:1.1rem;height:1.1rem;flex:none;opacity:.85}
+.topbar h1 .appnamn,.topbar h1 .tagline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){.topbar{gap:.5rem;padding:.65rem .7rem}.topbar .ros{width:2rem;height:2rem}.topbar h1 .appnamn{font-size:1.28rem}.topbar h1 .tagline{font-size:.82rem}.toppnamn{max-width:5.5rem}.gear{padding:.2rem}}
+@media (max-width:350px){.toppnamn span{display:none}}
 .toppnamn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body:not(.utloggad) .toppnamn + .gear{margin-left:0}
 body.utloggad .toppnamn{display:none!important}
@@ -692,7 +695,7 @@ h3 span{color:var(--mute);font:400 .9rem system-ui,sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.40.0", VERSION_DATUM = "2026-10-08";
+const VERSION = "0.41.0", VERSION_DATUM = "2026-10-08";
 
 // ---- Inställningar ----
 const CFG = {
@@ -866,6 +869,10 @@ function initMap(){
   // Kartan ska inte fånga sidans scroll: på mobil flyttas den med två fingrar, på dator zoomar hjulet först efter klick i kartan.
   // Ett finger flyttar kartan (även på mobil). Två fingrar zoomar.
   map = L.map("map", { tap: false, scrollWheelZoom: false }).setView([62, 15], 5);
+  // Kartans ruta ändrar storlek utan att fönstret gör det: på mobil när adressfältet fälls in (höjd i dvh), efter inloggning
+  // (kartan skapades dold bakom välkomstsidan), vid stor karta och utfällning. Då måste Leaflet räkna om – annars hämtas
+  // kartrutor bara för den gamla storleken och kartan ser ut att inte ladda i kanten.
+  if (window.ResizeObserver) { let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => map.invalidateSize({ pan: false }), 60); }).observe($("#map")); }
   map.on("click focus", () => map.scrollWheelZoom.enable());
   map.on("mouseout blur", () => map.scrollWheelZoom.disable());
   // Knapp för större/mindre karta. I stort läge flyttas kartan med ett finger.
