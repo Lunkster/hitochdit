@@ -1,0 +1,7 @@
+Typsnittsfilerna rubrik.woff och rubrik-kursiv.woff är delmängder (bara latinska tecken) av typsnittet Lora,
+omdöpta till "HitochDit Rubrik" eftersom "Lora" är ett reserverat namn enligt licensen.
+
+Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora".
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org (https://scripts.sil.org/OFL)

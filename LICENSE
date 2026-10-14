@@ -1,0 +1,17 @@
+Copyright (c) 2026 Henrik Lundqvist. Alla rättigheter förbehållna. / All rights reserved.
+
+Hit och Dit (https://hitochdit.xyz/)
+
+Svenska: Källkoden i det här repot publiceras bara för att webbplatsen ska kunna
+visas via GitHub Pages. Den får läsas men inte kopieras, ändras, spridas eller
+användas i andra tjänster eller produkter utan skriftligt tillstånd från
+upphovsrättsinnehavaren. Kontakt sker via kontaktformuläret i appen.
+
+English: The source code in this repository is published solely so that the
+website can be served via GitHub Pages. You may view it, but you may not copy,
+modify, distribute or use it in other services or products without written
+permission from the copyright holder. Contact via the contact form in the app.
+
+Undantag / Exceptions: tredjepartsfiler har egna licenser, se KÄLLOR.md
+(typsnittet i fonts/ omfattas av SIL Open Font License, se fonts/LICENS.txt).
+Geodata och kartbilder som appen hämtar tillhör respektive källa, se KÄLLOR.md.
