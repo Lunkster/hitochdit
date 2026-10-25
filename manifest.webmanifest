@@ -1,0 +1,16 @@
+{
+  "name": "Hit och Dit",
+  "short_name": "Hit och Dit",
+  "description": "Logga besök i skyddade och sevärda platser i Sverige",
+  "lang": "sv",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#18211c",
+  "theme_color": "#18211c",
+  "icons": [
+    { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "ikon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "ikon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

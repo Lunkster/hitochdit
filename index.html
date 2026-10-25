@@ -4,7 +4,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#18211c">
 <title>Hit och Dit</title>
+<link rel="icon" href="ikon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Hit och Dit">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script>try {   // mörkt om man valt det – och alltid på välkomstsidan (ingen sparad inloggning)
   const inloggad = Object.keys(localStorage).some(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
@@ -581,6 +589,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
     <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med ett finger och zooma med två. Tryck ⤢ för stor karta och ⌖ för att centrera på din position. Bakgrundskartan väljs med kartikonen uppe till höger, skikten med knappen under – grupperade på natur, kultur, geografi och områden. Kryssrutan vid gruppens namn slår av eller på hela gruppen, och gruppen fälls ihop med ett tryck på namnet.</li>
     <li><strong>Mina besök</strong> – dina platser grupperade per typ. Klicka på ett namn för att visa platsen, ▾ för enskilda besök.</li>
     <li><strong>Enkel eller Utförlig</strong> – två sätt att se appen. Enkel visar det viktigaste: var du är, logga och det närmaste runt dig. Utförlig visar allt: radar, filter, kartskikt, alla topplistor och detaljer. Byt under ⚙ Inställningar; valet sparas på ditt konto.</li>
+    <li><strong>Lägg på hemskärmen eller skrivbordet</strong> – i mobilen: webbläsarens meny → <em>Lägg till på startskärmen</em>. På datorn (Chrome/Edge): installationsikonen i adressfältet. Då öppnas Hit och Dit som en egen app.</li>
   </ul>
 
   <h3>Data och källor</h3>
@@ -759,7 +768,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.44.1", VERSION_DATUM = "2026-10-14";
+const VERSION = "0.45.0", VERSION_DATUM = "2026-10-22";
 
 // ---- Inställningar ----
 const CFG = {
@@ -898,6 +907,22 @@ const hitHtml = h => {
 };
 
 let map, meL = [], pins, overlays = {}, BAS = {}, basNamn = "";
+// Kartan i Enkel (önskemål 2026-10-22): bara mörk OSM som bakgrund, egna loggade platser (besökta områden och
+// nålar) släckta och inga skiktknappar (de döljs i CSS). Utförlig får tillbaka användarens eget val.
+const KARTA_FORE = { hi: true, pins: true };
+function kartaVisning(){
+  if (!map || !BAS["Mörk (OSM)"] || !BAS[basNamn]) return;
+  const enkel = arEnkel();
+  const sparad = store.get("bas", "");
+  const onskad = enkel ? "Mörk (OSM)" : (BAS[sparad] ? sparad : (tema() === "dark" ? "Mörk (OSM)" : "Nedtonad (OSM)"));
+  if (basNamn !== onskad) { map.removeLayer(BAS[basNamn]); basNamn = onskad; BAS[onskad].addTo(map); }   // sparas inte: Utförlig-valet ligger kvar
+  [["hi", hiGroup], ["pins", pins]].forEach(([k, g]) => {
+    if (!g) return;
+    if (enkel) { if (map.hasLayer(g)) { KARTA_FORE[k] = true; map.removeLayer(g); } }
+    else if (KARTA_FORE[k] && !map.hasLayer(g)) map.addLayer(g);
+  });
+  nvUppdatera();   // reservatens stil följer bakgrunden (mörk karta → ljus stil)
+}
 function bytBas(n){
   if (!map || !BAS[n] || n === basNamn) return;
   map.removeLayer(BAS[basNamn]); basNamn = n; BAS[n].addTo(map); store.set("bas", n);
@@ -1037,7 +1062,7 @@ function initMap(){
     const l = Object.keys(over).filter(n => NV_NAMN[n] && map.hasLayer(over[n])).map(n => NV_NAMN[n]);
     if (!l.length) { map.removeLayer(nvSkikt); return; }
     // Mörkt läge: egen stil (SLD) så att båda skikten syns mot mörk karta. Ljust läge: NV:s egen stil.
-    if (tema() === "dark") nvSkikt.wmsParams.sld_body = sldNV(l); else delete nvSkikt.wmsParams.sld_body;
+    if (tema() === "dark" || basNamn === "Mörk (OSM)") nvSkikt.wmsParams.sld_body = sldNV(l); else delete nvSkikt.wmsParams.sld_body;
     nvSkikt.setParams({ layers: l.join(",") }); if (!map.hasLayer(nvSkikt)) nvSkikt.addTo(map);
   };
   nvUppdatera();
@@ -1047,6 +1072,7 @@ function initMap(){
   ctl.addOverlay(hiGroup, "Besökta områden");
   pins = L.layerGroup().addTo(map);
   map.on("click", infoClick);
+  kartaVisning();
 }
 function showMe(lat, lon, acc){
   if (!map) return;
@@ -1489,6 +1515,7 @@ function tillampaVisning(v){
   // I närheten i Enkel: alltid "inom 10 km" utan filter
   if (enkel) { NARA.kat = "alla"; NARA.enkelN = 5; if (NARA.omr || NARA.obes) { NARA.omr = null; NARA.obes = false; hamtaNara(); } }
   if (enkel) $("#tipsvisning").hidden = true;
+  kartaVisning();
   render();
 }
 async function bytVisning(v){
@@ -2661,6 +2688,7 @@ document.addEventListener("toggle", e => { if (e.target.id === "kartblock" && e.
 $("#nara summary").addEventListener("click", e => { if (e.target.closest(".vy")) e.preventDefault(); });
 function tillKartan(){ if ($("#flik-utforska").hidden) { history.pushState(null, "", "#utforska"); visaFlik("utforska"); } }
 initMap(); render();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});   // gör appen installerbar (hemskärm/skrivbord)
 document.body.classList.toggle("utloggad", !harSparadSession());   // rättas när inloggningen lästs in
 ritaReg(); ritaValkommenSiffror();
 visaFlik(flikIAdressen());
