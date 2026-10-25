@@ -11,4 +11,3 @@ Databas, skript och övrigt ligger inte här.
 - Källor och tredjepartslicenser: [KÄLLOR.md](KÄLLOR.md)
 - Licens: alla rättigheter förbehållna, se [LICENSE](LICENSE)
 - Frågor och synpunkter: kontaktformuläret under ⓘ i appen
-# skytte
