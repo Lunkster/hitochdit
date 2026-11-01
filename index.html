@@ -775,7 +775,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.46.0", VERSION_DATUM = "2026-11-01";
+const VERSION = "0.47.0", VERSION_DATUM = "2026-11-01";
 
 // ---- Inställningar ----
 const CFG = {
@@ -2309,7 +2309,7 @@ document.addEventListener("click", e => {
 });
 
 // ---- Topplistor (databasfunktionerna topplista och mina_placeringar, 21_topplistor.sql) ----
-const TOPP = { cache: {}, basta: null, alla: false };
+const TOPP = { cache: {}, basta: null, alla: false, manadOppen: false };
 const ordtal = p => p + ((p % 10 === 1 || p % 10 === 2) && p % 100 !== 11 && p % 100 !== 12 ? ":a" : ":e");
 const toppParam = () => ({ p_tid: STAT.t, p_ar: STAT.t === "a" ? null : STAT.y, p_manad: STAT.t === "m" ? STAT.m + 1 : null, p_kat: STAT.kat,
   p_niva: STAT.niva, p_kod: STAT.niva === "l" ? STAT.lan : STAT.niva === "k" ? STAT.kom : STAT.niva === "g" ? STAT.grupp : null });
@@ -2326,7 +2326,7 @@ async function ritaTopp(ruta){
   await Promise.all([statNamn(), grpLadda()]);
   if (STAT.niva === "g" && !grpNamn(STAT.grupp)) STAT.niva = "r";   // gruppen finns inte längre
   const f = toppParam(), nyckel = JSON.stringify(f), aktuell = () => STAT.sida === "topp" && JSON.stringify(toppParam()) === nyckel && !$("#flik-statistik").hidden;
-  let h = enkel ? `<p class="note">Sverige · i år · alla platser. Listor per månad, län, kommun, kategori och grupp finns i Utförlig (⚙).</p>` : statFilter(statBas(), true);
+  let h = enkel ? `<p class="note">Sverige · i år · alla platser. Månadens listor finns längre ner. Listor per län, kommun och grupp finns i Utförlig (⚙).</p>` : statFilter(statBas(), true);
   let rad = TOPP.cache[nyckel];
   if (!rad) {
     ruta.innerHTML = h + `<p class="tom">Hämtar topplistan…</p>`;
@@ -2355,7 +2355,7 @@ async function ritaTopp(ruta){
     if (mig && i >= visa) { if (i - 2 > visa) h += `<div class="glapp">···</div>`; h += rad.slice(Math.max(visa, i - 2), i + 3).map(rk).join(""); }
     if (rad.length > visa && !enkel) h += `<button class="mer" data-toppalla="1">Visa fler</button>`;
   }
-  if (enkel) { ruta.innerHTML = h + toppSynligHtml(); return; }
+  if (enkel) { ruta.innerHTML = h + enkelManadHtml() + toppSynligHtml(); if (TOPP.manadOppen) enkelManadLadda(); return; }
   // Dina bästa placeringar (bara listor med minst 3 deltagare – annars säger placeringen inget)
   if (!TOPP.basta) {
     const { data, error } = await sb.rpc("mina_placeringar");
@@ -2369,6 +2369,42 @@ async function ritaTopp(ruta){
     : `<p class="note">Visas när det finns listor med minst tre deltagare där du är med.</p>`);
   ruta.innerHTML = h + toppSynligHtml();
 }
+// Enkel: månadens topplistor (Sverige, innevarande månad) – totalt och per kategori, infällda som förval (önskelista 2026-11-01).
+// Hämtas först när rutan öppnas; valet att ha den öppen gäller tills sidan laddas om.
+const ENKEL_MANAD_KAT = [["alla", "Totalt"], ["natur", "Natur"], ["kultur", "Kultur"], ["geo", "Geografi"]];
+function enkelManadHtml(){
+  const nu = new Date();
+  return `<details class="fall" id="enkelmanad" ${TOPP.manadOppen ? "open" : ""} style="margin-top:1rem"><summary><h3>Månadens topplistor <small>${MANAD[nu.getMonth()]}</small></h3></summary>
+    <div id="enkelmanadlistor"><p class="note">Hämtar…</p></div></details>`;
+}
+async function enkelManadLadda(){
+  const el = () => $("#enkelmanadlistor");
+  if (!el() || !sb || !user) return;
+  const nu = new Date(), ar = nu.getFullYear(), m = nu.getMonth() + 1;
+  const listor = await Promise.all(ENKEL_MANAD_KAT.map(async ([kat, namn]) => {
+    const f = { p_tid: "m", p_ar: ar, p_manad: m, p_kat: kat, p_niva: "r", p_kod: null }, nyckel = JSON.stringify(f);
+    let rad = TOPP.cache[nyckel];
+    if (!rad) { const { data, error } = await sb.rpc("topplista", f); if (error) { console.warn("topplista", error); return [namn, kat, null]; } rad = TOPP.cache[nyckel] = data || []; }
+    return [namn, kat, rad];
+  }));
+  if (!el()) return;
+  const rk = r => `<div class="rk ${r.du ? "du" : ""}"><span class="pl ${r.plats <= 3 ? "m" + r.plats : ""}">${r.plats}</span><span class="nm">${esc(r.namn)}${r.du ? " (du)" : ""}</span><b>${r.antal}</b></div>`;
+  el().innerHTML = listor.map(([namn, kat, rad]) => {
+    const farg = kat === "alla" ? "var(--ink, currentColor)" : STAT_KAT[kat].c;
+    let h = `<h4 style="margin:.9rem 0 .3rem;color:${farg}">${namn}${rad?.length ? ` <small style="color:var(--mute);font-weight:normal">${rad[0].deltagare} deltagare</small>` : ""}</h4>`;
+    if (!rad) return h + `<p class="note">Kunde inte hämta listan just nu.</p>`;
+    if (!rad.length) return h + `<p class="note">Ingen har loggat något här i ${MANAD[nu.getMonth()]} än.</p>`;
+    const mig = rad.find(r => r.du), topp = rad.slice(0, 5);
+    h += topp.map(rk).join("");
+    if (mig && !topp.includes(mig)) h += `<div class="glapp">···</div>` + rk(mig);
+    return h;
+  }).join("") + `<p class="note">Bara besök loggade på plats räknas. Medaljer delas ut till de tre bästa när månaden är slut.</p>`;
+}
+document.addEventListener("toggle", e => {
+  if (e.target.id !== "enkelmanad") return;
+  TOPP.manadOppen = e.target.open;
+  if (e.target.open) enkelManadLadda();
+}, true);
 function toppSynligHtml(){
   return `<div class="synlig"><label><input type="checkbox" id="toppsynlig" ${user.topp ? "checked" : ""}> Visa mig i topplistorna som <b>${esc(user.namn || "–")}</b></label>
     <span>Alla är med från början. Bara ditt användarnamn och antal platser syns för andra inloggade, aldrig e-post eller enskilda besök. Välj ett namn som inte går att koppla till dig; du kan byta det under ⚙ Inställningar. Stänger du av ser du fortfarande din egen placering, men andra ser inte dig.</span></div>`;
