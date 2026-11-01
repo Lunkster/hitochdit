@@ -775,7 +775,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.48.0", VERSION_DATUM = "2026-11-02";
+const VERSION = "0.48.1", VERSION_DATUM = "2026-11-02";
 
 // ---- Inställningar ----
 const CFG = {
@@ -932,7 +932,7 @@ function kartaVisning(){
   const sparad = store.get("bas", "");
   const onskad = enkel ? "Mörk (OSM)" : (BAS[sparad] ? sparad : (tema() === "dark" ? "Mörk (OSM)" : "Nedtonad (OSM)"));
   if (basNamn !== onskad) { map.removeLayer(BAS[basNamn]); basNamn = onskad; BAS[onskad].addTo(map); }   // sparas inte: Utförlig-valet ligger kvar
-  [["hi", hiGroup], ["pins", pins]].forEach(([k, g]) => {
+  [["hi", hiGroup]].forEach(([k, g]) => {   // nålarna ligger i hiGroup
     if (!g) return;
     if (enkel) { if (map.hasLayer(g)) { KARTA_FORE[k] = true; map.removeLayer(g); } }
     else if (KARTA_FORE[k] && !map.hasLayer(g)) map.addLayer(g);
@@ -1090,8 +1090,11 @@ function initMap(){
   map.on("overlayadd overlayremove", e => { if (NV_NAMN[e.name]) nvUppdatera(); });
   ctl = new GrupperadeSkikt(null, over, { collapsed: true }).addTo(map);
   hiGroup = L.layerGroup().addTo(map);
-  ctl.addOverlay(hiGroup, "Besökta områden");
-  pins = L.layerGroup().addTo(map);
+  ctl.addOverlay(hiGroup, "Besökta platser");
+  // Nålarna för besökta platser ligger i samma skikt som de besökta områdena, så att båda släcks med samma kryssruta (v0.48.1)
+  pins = L.layerGroup().addTo(hiGroup);
+  // Symboler (kyrkor, slott m.m.) visas som besökta bara när skiktet Besökta platser är på
+  map.on("overlayremove overlayadd", e => { if (e.layer === hiGroup) ritaSymboler(); });
   map.on("click", infoClick);
   kartaVisning();
 }
@@ -1132,7 +1135,7 @@ const SKIKTGRUPPER = [
   ["kultur", "Kultur", "var(--kultur)", ["Världsarv", "Kulturreservat", "Byggnadsminnen", "Slott och herrgårdar", "Residens", "Domkyrkor", "Fornlämningar", "Kyrkor", "Fyrar"]],
   ["geo", "Geografi", "var(--geo)", ["Toppar", "Tätorter (300)", "Sjöar (300)", "Öar (300)", "Vattendrag"]],
   ["omr", "Områden", "var(--omr)", ["Socknar", "Kommuner"]],
-  ["egna", "Mina besök", "var(--besokt)", ["Besökta områden"]]];
+  ["egna", "Mina besök", "var(--besokt)", ["Besökta platser"]]];
 const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
   _update(){
     L.Control.Layers.prototype._update.call(this);
@@ -1323,7 +1326,7 @@ function ritaSymboler(){
     if (error) { console.warn("objekt_i_ruta", error); return; }
     aktiva.forEach(k => symbolSkikt[k].clearLayers());
     (data || []).forEach(o => {
-      const besokt = visits.some(v => v.scheme === o.kalla && v.id === o.ext_id);
+      const besokt = map.hasLayer(hiGroup) && visits.some(v => v.scheme === o.kalla && v.id === o.ext_id);
       const grupp = o.kalla === "KO" ? "KY" : o.kalla;
       const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
       const stor = grupp === "NM" ? [22, 22] : grupp === "TO" || grupp === "SH" ? [20, 18] : grupp === "DK" || grupp === "RE" ? [20, 20] : [18, 22];
