@@ -599,7 +599,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
   </ul>
 
   <h3>Data och källor</h3>
-  <p>Kommuner, län och socknar kommer från Lantmäteriet, landskap från Lantmäteriets distriktskarta (via Per Liedmans <em>svenska-landskap</em>), tätorter från SCB, sjöar från SMHI (Svenskt vattenarkiv), öar från OpenStreetMap och toppar ur Lantmäteriets höjddata. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, slott och herrgårdar, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
+  <p>Kommuner, län och socknar kommer från Lantmäteriet, landskap från Lantmäteriets distriktskarta (via Per Liedmans <em>svenska-landskap</em>), tätorter från SCB, sjöar och vattendrag från SMHI (Svenskt vattenarkiv), öar från OpenStreetMap och toppar ur Lantmäteriets höjddata. Skyddade områden kommer från <a href="https://geodata.naturvardsverket.se/" target="_blank" rel="noopener">Naturvårdsverkets</a> och kulturmiljöer (världsarv, byggnadsminnen, slott och herrgårdar, fornlämningar, kyrkor, fyrar) från <a href="https://www.raa.se/" target="_blank" rel="noopener">Riksantikvarieämbetets</a> öppna geodata. Kyrkor som saknas hos RAÄ kompletteras från OpenStreetMap. Bakgrundskartor från © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-bidragsgivare, OpenTopoMap och Esri. Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskrifterna på plats som gäller.</p>
 
   <h3>Integritet och personuppgifter</h3>
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
@@ -775,7 +775,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.47.0", VERSION_DATUM = "2026-11-01";
+const VERSION = "0.48.0", VERSION_DATUM = "2026-11-02";
 
 // ---- Inställningar ----
 const CFG = {
@@ -869,7 +869,7 @@ function flat(f){
 function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.className = warn ? "warn" : ""; }
 
 const FIND_TEXT = "Se vad du står i och logga besöket";
-const RADIE_STD = 25, RADIE_KALLA = { KY: 50, KO: 50, FY: 50, SH: 50, BM: 50, DK: 50, RE: 50, SJ: 50, TO: 75 },
+const RADIE_STD = 25, RADIE_KALLA = { KY: 50, KO: 50, FY: 50, SH: 50, BM: 50, DK: 50, RE: 50, SJ: 50, VD: 50, TO: 75 },
       RADIE_MAX = Math.max(RADIE_STD, ...Object.values(RADIE_KALLA));
 function findLage(txt){ const b = $("#find"); b.disabled = !!txt; b.classList.toggle("letar", !!txt); $("#findsub").textContent = txt || FIND_TEXT; }
 function find(){
@@ -1069,6 +1069,8 @@ function initMap(){
     "Tätorter (300)": ytSkikt.TA,
     "Sjöar (300)": ytSkikt.SJ,
     "Öar (300)": ytSkikt.OE,
+    // Vattendrag (39 största enligt SMHI, v0.48.0): huvudfåran som linje från egen databas, avstängd som förval
+    "Vattendrag": ytSkikt.VD,
     // Socknar (från zoom 8) och kommuner (från zoom 5): gränser från egen databas, besökta fylls i orange. Avstängda som förval.
     "Socknar": indSkikt.socken,
     "Kommuner": indSkikt.kommun };
@@ -1128,7 +1130,7 @@ function drawPins(){
 const SKIKTGRUPPER = [
   ["natur", "Natur", "var(--natur)", ["Naturreservat", "Nationalparker", "Naturminnen"]],
   ["kultur", "Kultur", "var(--kultur)", ["Världsarv", "Kulturreservat", "Byggnadsminnen", "Slott och herrgårdar", "Residens", "Domkyrkor", "Fornlämningar", "Kyrkor", "Fyrar"]],
-  ["geo", "Geografi", "var(--geo)", ["Toppar", "Tätorter (300)", "Sjöar (300)", "Öar (300)"]],
+  ["geo", "Geografi", "var(--geo)", ["Toppar", "Tätorter (300)", "Sjöar (300)", "Öar (300)", "Vattendrag"]],
   ["omr", "Områden", "var(--omr)", ["Socknar", "Kommuner"]],
   ["egna", "Mina besök", "var(--besokt)", ["Besökta områden"]]];
 const GrupperadeSkikt = window.L ? L.Control.Layers.extend({
@@ -1234,16 +1236,17 @@ async function loadShapes(){
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
 const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Naturminnen": "NM", "Världsarv": "VA", "Byggnadsminnen": "BM",
-  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Slott och herrgårdar": "SH", "Domkyrkor": "DK", "Residens": "RE", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE", "Toppar": "TO" };
+  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Slott och herrgårdar": "SH", "Domkyrkor": "DK", "Residens": "RE", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE", "Vattendrag": "VD", "Toppar": "TO" };
 // Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
 const rangText = o => o.rangtext ? " · " + esc(o.rangtext) : o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
 // ---- Geografi: tätorter och sjöar ritas som ytor från egen databas (förenklade efter zoom, klippta mot kartutsnittet) ----
 const YT_STIL = {
   TA: { color: "#5b6f9a", weight: 1.5, dashArray: "4 3", fillColor: "#5b6f9a", fillOpacity: .08, interactive: false },
   SJ: { color: "#2f7fc1", weight: 1.5, fillColor: "#2f7fc1", fillOpacity: .18, interactive: false },
-  OE: { color: "#3b7d8c", weight: 1.5, dashArray: "2 3", fillColor: "#3b7d8c", fillOpacity: .12, interactive: false }
+  OE: { color: "#3b7d8c", weight: 1.5, dashArray: "2 3", fillColor: "#3b7d8c", fillOpacity: .12, interactive: false },
+  VD: { color: "#1f6fb2", weight: 3, opacity: .85, interactive: false }
 };
-const ytSkikt = window.L ? { TA: L.layerGroup(), SJ: L.layerGroup(), OE: L.layerGroup() } : {};
+const ytSkikt = window.L ? { TA: L.layerGroup(), SJ: L.layerGroup(), OE: L.layerGroup(), VD: L.layerGroup() } : {};
 let ytTimer, ytAnrop = 0;
 function ritaYtor(){
   clearTimeout(ytTimer);
@@ -1581,7 +1584,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.loggaalla) loggaAlla();
 });
 // Ikon per källa (samma som på välkomstsidan)
-const KALLA_IKON = { NR: "natur", NP: "np", NM: "ek", VA: "va", KR: "kr", BM: "bm", KY: "ky", KO: "ky", SH: "sh", DK: "dk", RE: "re", FY: "fy", FL: "fl", TO: "geo", OE: "oe", SJ: "sj", TA: "ta" };
+const KALLA_IKON = { NR: "natur", NP: "np", NM: "ek", VA: "va", KR: "kr", BM: "bm", KY: "ky", KO: "ky", SH: "sh", DK: "dk", RE: "re", FY: "fy", FL: "fl", TO: "geo", OE: "oe", SJ: "sj", TA: "ta", VD: "vd" };
 const kallaIkon = (k, klass = "") => `<svg class="${klass}" viewBox="0 0 32 32" aria-hidden="true">${VTYPIK[KALLA_IKON[k] || "natur"]}</svg>`;
 const idag = () => new Date().toISOString().slice(0, 10);
 const loggatIdag = h => visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0, 10) === idag());
@@ -1791,7 +1794,7 @@ document.addEventListener("toggle", e => {
 
 // ---- Min statistik (variant C "Sverige" ur mockupen): egna besök per tid, kategori och område ----
 const STAT_KAT = { natur: { n: "Natur", c: "var(--natur)" }, kultur: { n: "Kultur", c: "var(--kultur)" }, geo: { n: "Geografi", c: "var(--geo)" } };
-const KALLA_KAT = { NR: "natur", NP: "natur", NM: "natur", KR: "kultur", VA: "kultur", BM: "kultur", FL: "kultur", KY: "kultur", KO: "kultur", FY: "kultur", SH: "kultur", DK: "kultur", RE: "kultur", TA: "geo", SJ: "geo", OE: "geo", TO: "geo" };
+const KALLA_KAT = { NR: "natur", NP: "natur", NM: "natur", KR: "kultur", VA: "kultur", BM: "kultur", FL: "kultur", KY: "kultur", KO: "kultur", FY: "kultur", SH: "kultur", DK: "kultur", RE: "kultur", TA: "geo", SJ: "geo", OE: "geo", TO: "geo", VD: "geo" };
 const MANAD = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const LANBOKSTAV = { "01": "AB", "03": "C", "04": "D", "05": "E", "06": "F", "07": "G", "08": "H", "09": "I", "10": "K", "12": "M", "13": "N", "14": "O", "17": "S", "18": "T", "19": "U", "20": "W", "21": "X", "22": "Y", "23": "Z", "24": "AC", "25": "BD" };
 const STAT = { t: "y", y: new Date().getFullYear(), m: new Date().getMonth(), kat: "alla", niva: "r", lan: null, kom: null, eft: true,
@@ -2020,6 +2023,7 @@ const IK = {
   oak:`<circle cx="14" cy="15" r="6"/><circle cx="26" cy="15" r="6"/><circle cx="20" cy="11" r="6.5"/><circle cx="20" cy="19" r="6"/><path d="M18 22h4l1 11h-6Z"/>`,
   bell:`<path d="M20 7a1.5 1.5 0 0 1 1.5 1.5v1A8 8 0 0 1 28 17v7l3 4H9l3-4v-7a8 8 0 0 1 6.5-7.5v-1A1.5 1.5 0 0 1 20 7Z"/><circle cx="20" cy="31" r="2.4"/>`
 };
+IK.river = `<path d="M13 6c6 4-6 8 0 12s-6 8 0 12" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M23 6c6 4-6 8 0 12s-6 8 0 12" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity=".6"/>`;
 IK.cathedral = `<path d="M8 33V16l3-8 3 8v4h12v-4l3-8 3 8v17h-9v-6a3 3 0 0 0-6 0v6Z"/>`;
 IK.residens = `<path d="M20 5v6" stroke="#fff" stroke-width="1.6"/><path d="M20 5h6v3.5h-6Z"/><path d="M20 11 7 17h26Z"/><path d="M8 18h24v15h-9v-6h-6v6H8Z"/>`;
 IK.castle = `<path d="M8 33V16h4v-5h3v5h3v-5h4v5h3v-5h3v5h4v17h-9v-6a3 3 0 0 0-6 0v6Z"/>`;
@@ -2031,7 +2035,7 @@ const MRADER = [
   ["KY", "Kyrkor", "kultur", "church"], ["FY", "Fyrar", "kultur", "lighthouse"], ["SH", "Slott och herrgårdar", "kultur", "castle"], ["RE", "Residens", "kultur", "residens"], ["DK", "Domkyrkor", "kultur", "cathedral"],
   ["FL:sten", "Stensättningar", "kultur", "stones", 1], ["FL:bopl", "Boplatser", "kultur", "fire", 1], ["FL:hall", "Hällristningar", "kultur", "ship", 1],
   ["FL:rune", "Runristningar", "kultur", "runestone", 1], ["FL:borg", "Fornborgar", "kultur", "fort", 1], ["FL:ovr", "Övriga fornlämningar", "kultur", "stone", 1],
-  ["TO", "Toppar", "geo", "peak"], ["OE", "300 största öarna", "geo", "island"], ["SJ", "300 största sjöarna", "geo", "lake"], ["TA", "300 största tätorterna", "geo", "town"],
+  ["TO", "Toppar", "geo", "peak"], ["OE", "300 största öarna", "geo", "island"], ["SJ", "300 största sjöarna", "geo", "lake"], ["TA", "300 största tätorterna", "geo", "town"], ["VD", "Största vattendragen", "geo", "river"],
   ["LN", "Län", "omr", "shield"], ["KN", "Kommuner", "omr", "pin"], ["LS", "Landskap", "omr", "region"], ["SO", "Socknar och städer", "omr", "bell"]];
 const MKATIK = { natur: "tree", kultur: "columns", geo: "peak", omr: "region" };
 // Gränser: andel av totalen (uppåt), minst en mer än nivån under. Stora grupper (≥ naturreservatens 6 020): fasta 1, 100, 300, 1 200, 3 000, alla
@@ -2198,16 +2202,17 @@ const VTYPIK = {
   geo: `<path d="M3 26 12 10l5 8 4-5 8 13Z" fill="var(--geo)"/><path d="m12 10 2.5 4.5-2.5-1-2.5 1Z" fill="var(--card)"/>`,
   oe: `<path d="M5 21c3-5 19-5 22 0Z" fill="var(--geo)"/><path d="M4 26c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0" fill="none" stroke="var(--geo)" stroke-width="1.6"/>`,
   sj: `<path d="M4 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0M4 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0M4 24c2-2 4-2 6 0s4 2 6 0 4-2 6 0 4 2 6 0" fill="none" stroke="var(--geo)" stroke-width="2" stroke-linecap="round"/>`,
+  vd: `<path d="M10 4c6 4-6 8 0 12s-6 8 0 12M20 4c6 4-6 8 0 12s-6 8 0 12" fill="none" stroke="var(--geo)" stroke-width="2.4" stroke-linecap="round"/>`,
   ta: `<rect x="5" y="14" width="6" height="14" fill="var(--geo)"/><rect x="13" y="6" width="6" height="22" fill="var(--geo)"/><rect x="21" y="11" width="6" height="17" fill="var(--geo)"/>`
 };
 // [namn, märkesgrupper (summeras), ikon, kategori]
 const VTYPER = [["Naturreservat", ["NR"], "natur", "natur"], ["Nationalparker", ["NP"], "np", "natur"], ["Naturminnen", ["NM"], "ek", "natur"],
   ["Världsarv", ["VA"], "va", "kultur"], ["Kulturreservat", ["KR"], "kr", "kultur"], ["Byggnadsminnen", ["BM"], "bm", "kultur"], ["Kyrkor", ["KY"], "ky", "kultur"],
   ["Fyrar", ["FY"], "fy", "kultur"], ["Slott och herrgårdar", ["SH"], "sh", "kultur"], ["Fornlämningar", ["FL:sten", "FL:bopl", "FL:hall", "FL:rune", "FL:borg", "FL:ovr"], "fl", "kultur"],
-  ["Toppar", ["TO"], "geo", "geo"], ["Största öarna", ["OE"], "oe", "geo"], ["Största sjöarna", ["SJ"], "sj", "geo"], ["Största tätorterna", ["TA"], "ta", "geo"]];
+  ["Toppar", ["TO"], "geo", "geo"], ["Största öarna", ["OE"], "oe", "geo"], ["Största sjöarna", ["SJ"], "sj", "geo"], ["Största tätorterna", ["TA"], "ta", "geo"], ["Största vattendragen", ["VD"], "vd", "geo"]];
 // Reservsiffror (oktober 2026) om databasen inte svarar
 const VRESERV = { NR: 6020, NP: 31, NM: 1352, VA: 15, KR: 52, BM: 2174, KY: 3631, FY: 189, SH: 305, DK: 14, RE: 21, "FL:sten": 62683, "FL:bopl": 30353, "FL:hall": 19445, "FL:rune": 1874,
-  "FL:borg": 1227, "FL:ovr": 203324, TO: 390, OE: 300, SJ: 300, TA: 300 };
+  "FL:borg": 1227, "FL:ovr": 203324, TO: 390, OE: 300, SJ: 300, TA: 300, VD: 39 };
 async function ritaValkommenSiffror(){
   let tot = VRESERV;
   if (sb) { const { data } = await sb.from("marke_totaler").select("grupp,totalt"); if (data?.length) tot = Object.fromEntries(data.map(r => [r.grupp, r.totalt])); }

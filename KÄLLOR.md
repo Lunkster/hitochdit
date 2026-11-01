@@ -12,6 +12,7 @@ Uppgifterna kan innehålla fel – det är alltid skyltningen och föreskriftern
 | Landskap | Lantmäteriets distriktskarta via Per Liedmans *svenska-landskap* | Enligt källans villkor |
 | Tätorter | SCB, Tätorter 2023 | Öppna data, CC0 |
 | Sjöar | SMHI, Svenskt vattenarkiv (Vattenytor 2016) | Öppna data enligt SMHI:s villkor |
+| Vattendrag | SMHI, Svenskt vattenarkiv (Vattendragslinjer nätverk 2016); urval och siffror ur Hydrologi 102 Svenskt Vattendragsregister | Öppna data enligt SMHI:s villkor |
 | Öar och kompletterande kyrkor | © OpenStreetMap-bidragsgivare | ODbL 1.0 |
 
 ## Bakgrundskartor
