@@ -559,6 +559,11 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
     </div>
     <p class="liten">Enkel visar det viktigaste. Utförlig visar allt: radar, filter, skikt och detaljer. Valet sparas på ditt konto.</p>
   </div>
+  <div id="epostval" hidden>
+    <h3>E-post</h3>
+    <label class="toggle"><input type="checkbox" id="manadsrapport"> Skicka mig en månadsrapport</label>
+    <p class="liten">Strax efter midnatt när månaden är slut: dina loggningar, placeringar, medaljer och nya märken. Du kan också avregistrera dig med länken i mejlet.</p>
+  </div>
   <div id="minadata" hidden>
     <h3>Mina uppgifter</h3>
     <div class="btns"><button id="export" class="ghost small">Ladda ner (JSON)</button><button id="exportcsv" class="ghost small">Besök som CSV</button><button id="radera" class="ghost small farlig">Radera mitt konto</button></div>
@@ -589,6 +594,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
     <li><strong>Kartan</strong> – klicka på ett område för namn och besöksstatus. Besökta områden är orange. Flytta kartan med ett finger och zooma med två. Tryck ⤢ för stor karta och ⌖ för att centrera på din position. Bakgrundskartan väljs med kartikonen uppe till höger, skikten med knappen under – grupperade på natur, kultur, geografi och områden. Kryssrutan vid gruppens namn slår av eller på hela gruppen, och gruppen fälls ihop med ett tryck på namnet.</li>
     <li><strong>Mina besök</strong> – dina platser grupperade per typ. Klicka på ett namn för att visa platsen, ▾ för enskilda besök.</li>
     <li><strong>Enkel eller Utförlig</strong> – två sätt att se appen. Enkel visar det viktigaste: var du är, logga och det närmaste runt dig. Utförlig visar allt: radar, filter, kartskikt, alla topplistor och detaljer. Byt under ⚙ Inställningar; valet sparas på ditt konto.</li>
+    <li><strong>Månadsrapport</strong> – när en månad är slut får du ett mejl med dina loggningar, placeringar, medaljer och nya märken. Stäng av under ⚙ Inställningar eller med länken i mejlet.</li>
     <li><strong>Lägg på hemskärmen eller skrivbordet</strong> – i mobilen: webbläsarens meny → <em>Lägg till på startskärmen</em>. På datorn (Chrome/Edge): installationsikonen i adressfältet. Då öppnas Hit och Dit som en egen app.</li>
   </ul>
 
@@ -599,9 +605,10 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
   <p><strong>Personuppgiftsansvarig:</strong> Henrik Lundqvist. Frågor om dina uppgifter skickar du via <a href="#kontakt">kontaktformuläret</a> nedan.</p>
   <p><strong>Vad som sparas:</strong></p>
   <ul>
-    <li>Din e-postadress – för att du ska kunna logga in.</li>
+    <li>Din e-postadress – för att du ska kunna logga in och, om du inte stänger av den, få månadsrapporten.</li>
     <li>Ditt användarnamn – visas i appen och i topplistorna.</li>
-    <li>Dina val för kontot – visning (Enkel eller Utförlig) och om du syns i topplistorna.</li>
+    <li>Dina val för kontot – visning (Enkel eller Utförlig), om du syns i topplistorna och om du vill ha månadsrapporten.</li>
+    <li>Vilka månader du har fått månadsrapporten, och en slumpad nyckel till länken för avregistrering.</li>
     <li>Dina loggade besök – område, datum och tid, kommun, län, socken och landskap samt din position och dess noggrannhet när du loggade besöket.</li>
     <li>Dina vunna medaljer – vilken cup, period, placering och antal platser.</li>
     <li>Grupper du är med i – gruppens namn, din roll och när du gick med.</li>
@@ -610,12 +617,12 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
   <p><strong>Topplistor:</strong> andra inloggade ser ditt användarnamn, din placering och hur många platser du har besökt – aldrig din e-post eller dina enskilda besök. Eftersom det finns topplistor per län och kommun kan andra däremot se att du har loggat platser i ett visst län eller en viss kommun under en månad eller ett år. Alla är med från början; du kan dölja dig under <em>Statistik → Topplistor</em>.</p>
   <p><strong>Grupper:</strong> går du med i en grupp ser gruppens medlemmar ditt användarnamn, din placering och antal platser i gruppens topplista – även om du är dold i de vanliga topplistorna. Ingen i gruppen ser var eller när du har varit. Du kan lämna en grupp när du vill.</p>
   <p><strong>Din position</strong> hämtas bara när du trycker på <em>Var är jag?</em> eller <em>Centrera på min position</em>. Koordinaterna skickas då till Naturvårdsverkets karttjänst och till appens egen databas för att ta reda på vilka områden och kulturmiljöer du står i. Positionen sparas bara om du loggar ett besök.</p>
-  <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Inloggningsmejlen skickas via e-posttjänsten Brevo (EU), som får din e-postadress för att kunna skicka dem och också är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
+  <p><strong>Var uppgifterna finns:</strong> i databastjänsten Supabase, på servrar inom EU. Supabase är personuppgiftsbiträde. Inloggningsmejlen och månadsrapporten skickas via e-posttjänsten Brevo (EU), som får din e-postadress och rapportens innehåll för att kunna skicka dem och också är personuppgiftsbiträde. Kartbilder och geodata hämtas från Naturvårdsverket, Riksantikvarieämbetet, OpenStreetMap, OpenTopoMap och Esri, och appen och dess kodbibliotek levereras via GitHub Pages, cdnjs och jsDelivr. Dessa tjänster ser – som alla webbservrar – din IP-adress och vilket kartområde som hämtas, men får inga uppgifter om ditt konto.</p>
   <p><strong>I din webbläsare</strong> sparas din inloggning, en kopia av dina besök (så att listan syns direkt) och dina val av tema och bakgrundskarta. Det behövs för att appen ska fungera. Appen använder inga spårnings- eller reklamkakor.</p>
   <p><strong>Kontaktformuläret:</strong> ditt meddelande och den e-postadress du eventuellt anger sparas i Supabase tills ärendet är hanterat. Meddelandet skickas också till mig som en avisering via tjänsten ntfy.sh, där det mellanlagras en kort tid.</p>
   <p><strong>Hur länge:</strong> tills du tar bort besöket eller raderar ditt konto.</p>
   <p><strong>Dina rättigheter:</strong> du kan när som helst ladda ner dina uppgifter, ta bort enskilda besök, byta användarnamn och radera hela ditt konto under ⚙ Inställningar. Du har också rätt att begära rättelse och att klaga hos <a href="https://www.imy.se/" target="_blank" rel="noopener">Integritetsskyddsmyndigheten (IMY)</a>.</p>
-  <p class="liten">Senast uppdaterad 2026-10-14 (topplistor per län och kommun).</p>
+  <p class="liten">Senast uppdaterad 2026-11-01 (månadsrapport via e-post).</p>
   <p class="liten">Version <span class="appver"></span></p>
 
   <h3 id="kontakt">Kontakt</h3>
@@ -768,7 +775,7 @@ body.enkel #kartblock[open] #map{margin-top:.6rem}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ---- Version: höj vid varje ändring (0.MINOR för nya funktioner, 0.x.PATCH för rättningar) ----
-const VERSION = "0.45.0", VERSION_DATUM = "2026-10-22";
+const VERSION = "0.46.0", VERSION_DATUM = "2026-11-01";
 
 // ---- Inställningar ----
 const CFG = {
@@ -796,7 +803,7 @@ function setUser(u){
   if ((u?.id || null) === (user?.id || null)) return;
   user = u ? { id: u.id, email: u.email } : null;
   visits = user ? store.get("visits:" + user.id, []) : [];
-  $("#login").hidden = true; $("#who").hidden = true; $("#toppnamn").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user; $("#visningval").hidden = !user;
+  $("#login").hidden = true; $("#who").hidden = true; $("#toppnamn").hidden = !user; $("#nameform").hidden = true; $("#acctbtns").hidden = !user; $("#minadata").hidden = !user; $("#visningval").hidden = !user; $("#epostval").hidden = !user;
   $("#tipsvisning").hidden = true;
   tillampaVisning(user ? store.get("visning:" + user.id, "utforlig") : "utforlig");   // sparat på enheten tills profilen är läst
   showWho();
@@ -820,6 +827,11 @@ async function loadProfile(){
   if (u !== user?.id) return;
   user.namn = data?.namn || ""; user.topp = data?.i_topplistor !== false; user.profilLast = true;
   user.visning = data?.visning || "enkel"; user.tipsAktiv = !!data?.tips_aktiv;
+  sb.from("profiler").select("manadsrapport").eq("id", u).maybeSingle().then(({ data: m, error: e }) => {
+    if (u !== user?.id) return;
+    $("#epostval").hidden = !!e;   // kolumnen saknas (SQL inte körd) → dölj valet
+    user.manadsrapport = m?.manadsrapport !== false; $("#manadsrapport").checked = user.manadsrapport;
+  });
   store.set("visning:" + u, user.visning); tillampaVisning(user.visning);
   showWho();
   tipsAktivKolla();
@@ -857,6 +869,8 @@ function flat(f){
 function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.className = warn ? "warn" : ""; }
 
 const FIND_TEXT = "Se vad du står i och logga besöket";
+const RADIE_STD = 25, RADIE_KALLA = { KY: 50, KO: 50, FY: 50, SH: 50, BM: 50, DK: 50, RE: 50, SJ: 50, TO: 75 },
+      RADIE_MAX = Math.max(RADIE_STD, ...Object.values(RADIE_KALLA));
 function findLage(txt){ const b = $("#find"); b.disabled = !!txt; b.classList.toggle("letar", !!txt); $("#findsub").textContent = txt || FIND_TEXT; }
 function find(){
   if (!user) { setStatus("Logga in först, så att besöken sparas på ditt konto.", true); $("#email").focus(); return; }
@@ -875,7 +889,9 @@ function find(){
       const j = await r.json(), seen = new Set();
       // Naturreservat och nationalparker kommer från egen databas; NV:s WFS används bara för övriga skyddsformer (Natura 2000 m.fl.)
       hits = (j.features || []).map(flat).filter(h => h.scheme !== "IUCN" && !seen.has(h.key) && seen.add(h.key)).map(h => ({ ...h, skydd: false }));
-      const [egna, ind] = await Promise.all([objektVid(pos.lat, pos.lon, 25), indelningVid(pos.lat, pos.lon)]);
+      // Radie per källa (v0.46.0): byggnader 50 m eftersom GPS:en driver nära och inne i hus, sjöar 50 m och toppar 75 m (sätts även i databasen), övrigt 25 m
+      const [egnaAlla, ind] = await Promise.all([objektVid(pos.lat, pos.lon, RADIE_MAX), indelningVid(pos.lat, pos.lon)]);
+      const egna = egnaAlla.filter(o => o.avstand_m <= (RADIE_KALLA[o.kalla] ?? RADIE_STD));
       // Samma NV-objekt (t.ex. naturminne) ska inte visas två gånger – egen databas går före NV:s WFS
       hits = hits.filter(h => !h.nvrid || !egna.some(o => NV_KALLOR.has(o.kalla) && o.ext_id === h.nvrid));
       hits.unshift(...egna.map(o => ({ key: o.kalla + ":" + o.ext_id, id: o.ext_id, scheme: o.kalla, des: "", name: o.namn, typ: o.typ, skydd: true,
@@ -1042,6 +1058,9 @@ function initMap(){
     "Fyrar": symbolSkikt.FY.addTo(map),
     // Slott och herrgårdar (RAÄ, egen urvalsregel – supabase/ladda/slott.sql), slottssymboler från zoom 6
     "Slott och herrgårdar": symbolSkikt.SH.addTo(map),
+    // Domkyrkor (14) och residens (21) – små samlingar (v0.46.0, supabase/31_residens_domkyrkor.sql), symboler från zoom 5
+    "Domkyrkor": symbolSkikt.DK.addTo(map),
+    "Residens": symbolSkikt.RE.addTo(map),
     // Naturminnen är oftast enskilda träd (ytor på några m²) – ritas som ek-symboler från zoom 9 i stället för NV:s kartbild
     "Naturminnen": symbolSkikt.NM.addTo(map),
     // Toppar: 300 högsta + 5 högsta per län, bergssymboler från zoom 5
@@ -1108,7 +1127,7 @@ function drawPins(){
 // Varje grupp har en rubrik som fäller ihop/ut (valet sparas) och en kryssruta som slår av/på alla skikt i gruppen.
 const SKIKTGRUPPER = [
   ["natur", "Natur", "var(--natur)", ["Naturreservat", "Nationalparker", "Naturminnen"]],
-  ["kultur", "Kultur", "var(--kultur)", ["Världsarv", "Kulturreservat", "Byggnadsminnen", "Slott och herrgårdar", "Fornlämningar", "Kyrkor", "Fyrar"]],
+  ["kultur", "Kultur", "var(--kultur)", ["Världsarv", "Kulturreservat", "Byggnadsminnen", "Slott och herrgårdar", "Residens", "Domkyrkor", "Fornlämningar", "Kyrkor", "Fyrar"]],
   ["geo", "Geografi", "var(--geo)", ["Toppar", "Tätorter (300)", "Sjöar (300)", "Öar (300)"]],
   ["omr", "Områden", "var(--omr)", ["Socknar", "Kommuner"]],
   ["egna", "Mina besök", "var(--besokt)", ["Besökta områden"]]];
@@ -1215,7 +1234,7 @@ async function loadShapes(){
 // ---- Egna geodata i Supabase (PostGIS): världsarv m.m. ----
 // Kartskikt (overlay-namn) -> källkod i tabellen objekt
 const SKIKT_KALLA = { "Naturreservat": "NR", "Nationalparker": "NP", "Kulturreservat": "KR", "Naturminnen": "NM", "Världsarv": "VA", "Byggnadsminnen": "BM",
-  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Slott och herrgårdar": "SH", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE", "Toppar": "TO" };
+  "Fornlämningar": "FL", "Kyrkor": "KY", "Fyrar": "FY", "Slott och herrgårdar": "SH", "Domkyrkor": "DK", "Residens": "RE", "Tätorter (300)": "TA", "Sjöar (300)": "SJ", "Öar (300)": "OE", "Toppar": "TO" };
 // Rangordning i 300-listorna, t.ex. " · nr 4 av 300"
 const rangText = o => o.rangtext ? " · " + esc(o.rangtext) : o.rang ? ` · nr ${o.rang} av ${o.lista || 300}` : "";
 // ---- Geografi: tätorter och sjöar ritas som ytor från egen databas (förenklade efter zoom, klippta mot kartutsnittet) ----
@@ -1279,9 +1298,13 @@ SYMBOL.NM = `<svg viewBox="0 0 24 24" width="22" height="22"><defs><mask id="ekm
 SYMBOL.SH = `<svg viewBox="0 0 24 22" width="20" height="18"><path d="M2 21V8h3V5h2v3h2V5h2v3h2V5h2v3h2V5h2v3h3v13h-8v-5a2 2 0 0 0-4 0v5Z" fill="currentColor"/></svg>`;
 // Topp: berg med snötäckt topp (300 högsta + 5 högsta per län)
 SYMBOL.TO = `<svg viewBox="0 0 24 22" width="20" height="18"><path d="M1 21L9.5 5.5l3.2 5 3-4.5L23 21z" fill="currentColor"/><path d="M9.5 5.5l-2.6 4.8 1.6-.9 1.2 1.3 1.3-1.4 1.7.7z" fill="#fff" opacity=".9"/></svg>`;
-const symbolSkikt = window.L ? { KY: L.layerGroup(), FY: L.layerGroup(), NM: L.layerGroup(), TO: L.layerGroup(), SH: L.layerGroup() } : {};
+// Domkyrka: två västtorn med spiror och ett långhus
+SYMBOL.DK = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 23V9l2.5-6L8 9v4h8V9l2.5-6L21 9v14h-7v-5a2 2 0 0 0-4 0v5Z" fill="currentColor"/><circle cx="12" cy="15" r="1.4" fill="#fff"/></svg>`;
+// Residens: palatsfasad med fronton och flaggstång
+SYMBOL.RE = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 1v5" stroke="currentColor" stroke-width="1.2"/><path d="M12 1h4.5v2.6H12Z" fill="currentColor"/><path d="M12 6 2 11h20Z" fill="currentColor"/><path d="M3 12h18v11h-7v-4h-4v4H3Z" fill="currentColor"/><path d="M5.5 14h2v2.5h-2ZM16.5 14h2v2.5h-2Z" fill="#fff"/></svg>`;
+const symbolSkikt = window.L ? { KY: L.layerGroup(), FY: L.layerGroup(), NM: L.layerGroup(), TO: L.layerGroup(), SH: L.layerGroup(), DK: L.layerGroup(), RE: L.layerGroup() } : {};
 // Från vilken zoomnivå symbolerna ritas (toppar är få och syns från ungefär landskapsnivå)
-const SYMBOL_ZOOM = { KY: 9, FY: 9, NM: 9, TO: 5, SH: 6 };
+const SYMBOL_ZOOM = { KY: 9, FY: 9, NM: 9, TO: 5, SH: 6, DK: 5, RE: 5 };
 let symbolTimer;
 function ritaSymboler(){
   clearTimeout(symbolTimer);
@@ -1300,7 +1323,7 @@ function ritaSymboler(){
       const besokt = visits.some(v => v.scheme === o.kalla && v.id === o.ext_id);
       const grupp = o.kalla === "KO" ? "KY" : o.kalla;
       const nvrid = NV_KALLOR.has(o.kalla) ? o.ext_id : "";
-      const stor = grupp === "NM" ? [22, 22] : grupp === "TO" || grupp === "SH" ? [20, 18] : [18, 22];
+      const stor = grupp === "NM" ? [22, 22] : grupp === "TO" || grupp === "SH" ? [20, 18] : grupp === "DK" || grupp === "RE" ? [20, 20] : [18, 22];
       L.marker([o.lat, o.lon], { icon: L.divIcon({ className: "symbol" + (grupp === "NM" ? " nm" : grupp === "TO" ? " to" : "") + (besokt ? " besokt" : ""), html: SYMBOL[grupp], iconSize: stor, iconAnchor: [stor[0] / 2, stor[1]], popupAnchor: [0, -stor[1] + 2] }),
         title: o.namn, bubblingMouseEvents: false })
         .bindPopup(() => `<strong>${esc(o.namn)}</strong><br>${esc(o.typ)}${rangText(o)}<br><em>${besokStatus(nvrid, o.namn, o.typ)}</em>${lankRaa(o.url)}${efterForm({ oid: o.ext_id, scheme: o.kalla, nvrid, namn: o.namn, typ: o.typ })}`)
@@ -1542,6 +1565,15 @@ async function tipsAktivKolla(){
   sb.from("profiler").update({ tips_aktiv: true }).eq("id", user.id).then(({ error }) => { if (error) console.warn("tips_aktiv", error); });
 }
 document.addEventListener("change", e => { if (e.target.name === "visning" && e.target.checked) bytVisning(e.target.value); });
+// Månadsrapport via e-post (v0.46.0): på som förval, stängs av här eller via länken i mejlet
+document.addEventListener("change", async e => {
+  if (e.target.id !== "manadsrapport" || !user || !sb) return;
+  const pa = e.target.checked;
+  const { error } = await sb.from("profiler").update({ manadsrapport: pa }).eq("id", user.id);
+  if (error) { e.target.checked = !pa; notis("Kunde inte spara valet: " + error.message); return; }
+  user.manadsrapport = pa;
+  notis(pa ? "Du får månadsrapporten via e-post." : "Månadsrapporten är avstängd. Du kan slå på den igen här.");
+});
 document.addEventListener("click", e => {
   const b = e.target.closest?.("[data-visning],[data-tipsstang],[data-loggaalla]"); if (!b) return;
   if (b.dataset.visning) { $("#tipsvisning").hidden = true; bytVisning(b.dataset.visning); }
@@ -1549,7 +1581,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.loggaalla) loggaAlla();
 });
 // Ikon per källa (samma som på välkomstsidan)
-const KALLA_IKON = { NR: "natur", NP: "np", NM: "ek", VA: "va", KR: "kr", BM: "bm", KY: "ky", KO: "ky", SH: "sh", FY: "fy", FL: "fl", TO: "geo", OE: "oe", SJ: "sj", TA: "ta" };
+const KALLA_IKON = { NR: "natur", NP: "np", NM: "ek", VA: "va", KR: "kr", BM: "bm", KY: "ky", KO: "ky", SH: "sh", DK: "dk", RE: "re", FY: "fy", FL: "fl", TO: "geo", OE: "oe", SJ: "sj", TA: "ta" };
 const kallaIkon = (k, klass = "") => `<svg class="${klass}" viewBox="0 0 32 32" aria-hidden="true">${VTYPIK[KALLA_IKON[k] || "natur"]}</svg>`;
 const idag = () => new Date().toISOString().slice(0, 10);
 const loggatIdag = h => visits.some(v => v.scheme === h.scheme && v.id === h.id && v.datum.slice(0, 10) === idag());
@@ -1759,7 +1791,7 @@ document.addEventListener("toggle", e => {
 
 // ---- Min statistik (variant C "Sverige" ur mockupen): egna besök per tid, kategori och område ----
 const STAT_KAT = { natur: { n: "Natur", c: "var(--natur)" }, kultur: { n: "Kultur", c: "var(--kultur)" }, geo: { n: "Geografi", c: "var(--geo)" } };
-const KALLA_KAT = { NR: "natur", NP: "natur", NM: "natur", KR: "kultur", VA: "kultur", BM: "kultur", FL: "kultur", KY: "kultur", KO: "kultur", FY: "kultur", SH: "kultur", TA: "geo", SJ: "geo", OE: "geo", TO: "geo" };
+const KALLA_KAT = { NR: "natur", NP: "natur", NM: "natur", KR: "kultur", VA: "kultur", BM: "kultur", FL: "kultur", KY: "kultur", KO: "kultur", FY: "kultur", SH: "kultur", DK: "kultur", RE: "kultur", TA: "geo", SJ: "geo", OE: "geo", TO: "geo" };
 const MANAD = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const LANBOKSTAV = { "01": "AB", "03": "C", "04": "D", "05": "E", "06": "F", "07": "G", "08": "H", "09": "I", "10": "K", "12": "M", "13": "N", "14": "O", "17": "S", "18": "T", "19": "U", "20": "W", "21": "X", "22": "Y", "23": "Z", "24": "AC", "25": "BD" };
 const STAT = { t: "y", y: new Date().getFullYear(), m: new Date().getMonth(), kat: "alla", niva: "r", lan: null, kom: null, eft: true,
@@ -1988,13 +2020,15 @@ const IK = {
   oak:`<circle cx="14" cy="15" r="6"/><circle cx="26" cy="15" r="6"/><circle cx="20" cy="11" r="6.5"/><circle cx="20" cy="19" r="6"/><path d="M18 22h4l1 11h-6Z"/>`,
   bell:`<path d="M20 7a1.5 1.5 0 0 1 1.5 1.5v1A8 8 0 0 1 28 17v7l3 4H9l3-4v-7a8 8 0 0 1 6.5-7.5v-1A1.5 1.5 0 0 1 20 7Z"/><circle cx="20" cy="31" r="2.4"/>`
 };
+IK.cathedral = `<path d="M8 33V16l3-8 3 8v4h12v-4l3-8 3 8v17h-9v-6a3 3 0 0 0-6 0v6Z"/>`;
+IK.residens = `<path d="M20 5v6" stroke="#fff" stroke-width="1.6"/><path d="M20 5h6v3.5h-6Z"/><path d="M20 11 7 17h26Z"/><path d="M8 18h24v15h-9v-6h-6v6H8Z"/>`;
 IK.castle = `<path d="M8 33V16h4v-5h3v5h3v-5h4v5h3v-5h3v5h4v17h-9v-6a3 3 0 0 0-6 0v6Z"/>`;
 IK.kompass = `<path d="M20 5 23.2 16.8 35 20 23.2 23.2 20 35 16.8 23.2 5 20 16.8 16.8Z"/><path d="M20 11 21.4 18.6 29 20 21.4 21.4 20 29 18.6 21.4 11 20 18.6 18.6Z" fill="currentColor" opacity=".35"/><circle cx="20" cy="20" r="2.2" fill="currentColor"/>`;
 // Märkesgrupper: nyckel (som i databasen), namn, kategori, ikon
 const MRADER = [
   ["NR", "Naturreservat", "natur", "tree"], ["NP", "Nationalparker", "natur", "mountain"], ["NM", "Naturminnen", "natur", "oak"],
   ["VA", "Världsarv", "kultur", "globe"], ["KR", "Kulturreservat", "kultur", "house"], ["BM", "Byggnadsminnen", "kultur", "columns"],
-  ["KY", "Kyrkor", "kultur", "church"], ["FY", "Fyrar", "kultur", "lighthouse"], ["SH", "Slott och herrgårdar", "kultur", "castle"],
+  ["KY", "Kyrkor", "kultur", "church"], ["FY", "Fyrar", "kultur", "lighthouse"], ["SH", "Slott och herrgårdar", "kultur", "castle"], ["RE", "Residens", "kultur", "residens"], ["DK", "Domkyrkor", "kultur", "cathedral"],
   ["FL:sten", "Stensättningar", "kultur", "stones", 1], ["FL:bopl", "Boplatser", "kultur", "fire", 1], ["FL:hall", "Hällristningar", "kultur", "ship", 1],
   ["FL:rune", "Runristningar", "kultur", "runestone", 1], ["FL:borg", "Fornborgar", "kultur", "fort", 1], ["FL:ovr", "Övriga fornlämningar", "kultur", "stone", 1],
   ["TO", "Toppar", "geo", "peak"], ["OE", "300 största öarna", "geo", "island"], ["SJ", "300 största sjöarna", "geo", "lake"], ["TA", "300 största tätorterna", "geo", "town"],
@@ -2157,6 +2191,8 @@ const VTYPIK = {
   bm: `<path d="M16 4 4 11h24Z" fill="var(--bark)"/><rect x="7" y="13" width="3" height="10" fill="var(--bark)"/><rect x="14.5" y="13" width="3" height="10" fill="var(--bark)"/><rect x="22" y="13" width="3" height="10" fill="var(--bark)"/><rect x="4" y="24" width="24" height="3" fill="var(--bark)"/>`,
   ky: `<path d="M16 3v6M13 6h6" stroke="var(--bark)" stroke-width="2"/><path d="M16 9 10 15v13h12V15Z" fill="var(--bark)"/><path d="M14 28v-5a2 2 0 0 1 4 0v5Z" fill="var(--card)"/>`,
   sh: `<path d="M5 28V13h3V9h3v4h3V9h4v4h3V9h3v4h3v15h-8v-5a3 3 0 0 0-6 0v5Z" fill="var(--bark)"/>`,
+  dk: `<path d="M5 28V13l2.5-7L10 13v3h12v-3l2.5-7L27 13v15h-8v-5a3 3 0 0 0-6 0v5Z" fill="var(--bark)"/>`,
+  re: `<path d="M16 3v5" stroke="var(--bark)" stroke-width="1.4"/><path d="M16 3h5v3h-5Z" fill="var(--bark)"/><path d="M16 8 5 13h22Z" fill="var(--bark)"/><path d="M6 14h20v14h-7v-5h-6v5H6Z" fill="var(--bark)"/>`,
   fy: `<path d="M12 28 13.5 11h5L20 28Z" fill="var(--bark)"/><rect x="12" y="6" width="8" height="5" rx="1" fill="var(--bark)"/><path d="M20 7 29 4v8Z" fill="var(--orange)" opacity=".7"/>`,
   fl: `<path d="M11 28V11a5 5 0 0 1 10 0v17Z" fill="var(--bark)"/><path d="M14 13v10M14 15l4 3M18 13v10" stroke="var(--card)" stroke-width="1.3"/>`,
   geo: `<path d="M3 26 12 10l5 8 4-5 8 13Z" fill="var(--geo)"/><path d="m12 10 2.5 4.5-2.5-1-2.5 1Z" fill="var(--card)"/>`,
@@ -2170,7 +2206,7 @@ const VTYPER = [["Naturreservat", ["NR"], "natur", "natur"], ["Nationalparker", 
   ["Fyrar", ["FY"], "fy", "kultur"], ["Slott och herrgårdar", ["SH"], "sh", "kultur"], ["Fornlämningar", ["FL:sten", "FL:bopl", "FL:hall", "FL:rune", "FL:borg", "FL:ovr"], "fl", "kultur"],
   ["Toppar", ["TO"], "geo", "geo"], ["Största öarna", ["OE"], "oe", "geo"], ["Största sjöarna", ["SJ"], "sj", "geo"], ["Största tätorterna", ["TA"], "ta", "geo"]];
 // Reservsiffror (oktober 2026) om databasen inte svarar
-const VRESERV = { NR: 6020, NP: 31, NM: 1352, VA: 15, KR: 52, BM: 2174, KY: 3631, FY: 189, SH: 305, "FL:sten": 62683, "FL:bopl": 30353, "FL:hall": 19445, "FL:rune": 1874,
+const VRESERV = { NR: 6020, NP: 31, NM: 1352, VA: 15, KR: 52, BM: 2174, KY: 3631, FY: 189, SH: 305, DK: 14, RE: 21, "FL:sten": 62683, "FL:bopl": 30353, "FL:hall": 19445, "FL:rune": 1874,
   "FL:borg": 1227, "FL:ovr": 203324, TO: 390, OE: 300, SJ: 300, TA: 300 };
 async function ritaValkommenSiffror(){
   let tot = VRESERV;
@@ -2378,6 +2414,17 @@ async function grpLadda(tvinga){
   if (a.error || b.error) console.warn("grupper", a.error || b.error);
   GRP.lista = a.data || []; GRP.bef = (b.data || [])[0] || { niva: 0, verifierade: 0, upplast: 0, egna: 0, max_egna: 0 };
 }
+// Avregistrering från månadsrapporten: länken i mejlet ?avregistrera=<nyckel> (fungerar utan inloggning)
+(async () => {
+  const q = new URLSearchParams(location.search), n = q.get("avregistrera");
+  if (!n) return;
+  q.delete("avregistrera");
+  history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+  if (!sb || !/^[0-9a-f-]{36}$/i.test(n)) { setStatus("Länken för avregistrering är ogiltig.", true); return; }
+  const { data, error } = await sb.rpc("manadsrapport_avregistrera", { p_nyckel: n });
+  if (error || !data) setStatus("Kunde inte avregistrera dig just nu. Försök igen, eller stäng av månadsrapporten under ⚙ Inställningar.", true);
+  else { setStatus("Du är avregistrerad från månadsrapporten. Vill du ha den igen slår du på den under ⚙ Inställningar."); if (user) { user.manadsrapport = false; $("#manadsrapport").checked = false; } }
+})();
 // Inbjudningslänk ?grupp=XXXX-XXXX: sparas på enheten (inloggningslänken tappar adressens parametrar) och visas under Grupper
 (() => {
   const q = new URLSearchParams(location.search), k = q.get("grupp");
